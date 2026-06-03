@@ -1,0 +1,338 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Production Readiness'
+  slug: 'bugdrop-board-production-readiness'
+  kind: existing_plan
+  tranche: 'Complete Conveyor Board 7: production deploy readiness for self-hosters only, using completed Board 1-6 foundations and excluding hosted control plane, billing, realtime, comments, downvotes, and GitHub Projects.'
+  status: done
+  oracle:
+    signal: 'A self-hoster can follow production-oriented deploy readiness docs/config to configure Cloudflare Worker/D1/secrets/origins, run remote migration/deploy checks, provision a board, and understand remaining risks without relying on development-only defaults or hidden hosted-control-plane assumptions; validation gates pass; final audit confirms no hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or broad product expansion was added.'
+    cadence: 'after Scout, after Worker, and at final audit'
+    final_proof: 'Receipt-backed command output for documented non-secret checks, direct inspection of production deploy docs/config, proof that secrets/origins/D1 remote migration/deploy guidance matches current stack, npm run validate, make check, npm run build:widget, npm run test:e2e, provisioning command proof, and scope-drift scan.'
+  intake:
+    original_request: '$goal-prep Build Conveyor Board 7: production deploy readiness for self-hosters only, using completed Board 1-6 foundations and excluding hosted control plane, billing, realtime, comments, downvotes, and GitHub Projects.'
+    interpreted_outcome: 'Prepare a GoalBuddy board for the next conveyor slice: self-host production deploy readiness docs/config/checks, without implementing hosted control plane or broad production hardening.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers and self-hosting operators preparing deployment'
+    authority: requested
+    proof_type: artifact
+    completion_proof: 'Docs/config and non-secret verification prove a self-hoster has an executable deploy-readiness path for Worker, D1, secrets, allowed origins, widget build, board provisioning, and validation gates, while remaining production risks are clearly handed off.'
+    likely_misfire: 'Writing vague release notes or implementing broad production hardening/hosted product features instead of a bounded self-host deploy readiness path.'
+    blind_spots_considered:
+      - 'Board 7 must build on Board 6 provisioning rather than reintroducing E2E-only board setup.'
+      - 'Production deploy readiness can document and verify command shapes without requiring real Cloudflare or GitHub production credentials in this run.'
+      - 'ALLOWED_ORIGINS="*" is acceptable for development but should not be the implied production default.'
+      - 'Secret handling must distinguish .dev.vars from wrangler secret put for deployed Workers.'
+      - 'Production hardening remains a handoff/checklist unless the user explicitly starts a hardening implementation board.'
+    existing_plan_facts:
+      - 'Completed foundation: Board 1 D1/auth repository/token foundation.'
+      - 'Completed foundation: Board 2 create-item GitHub Issue mirror route.'
+      - 'Completed foundation: Board 3 board reads, upvote toggle, and event cursor polling APIs.'
+      - 'Completed foundation: Board 4 embedded widget, dummy host app, and Playwright E2E.'
+      - 'Completed foundation: Board 5 self-hosting docs/config and production-hardening handoff.'
+      - 'Completed foundation: Board 6 durable board provisioning/config flow with npm run provision:board.'
+      - 'User explicitly excludes hosted control plane, billing, realtime, comments, downvotes, and GitHub Projects.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: active
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-production-readiness/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-production-readiness'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: medium
+    objective: 'Validate current self-host deploy readiness docs/config gaps and recommend the smallest safe Worker package before any writes.'
+    inputs:
+      - 'docs/goals/bugdrop-board-data-auth/state.yaml'
+      - 'docs/goals/bugdrop-board-github-mirror/state.yaml'
+      - 'docs/goals/bugdrop-board-votes-polling/state.yaml'
+      - 'docs/goals/bugdrop-board-widget-host/state.yaml'
+      - 'docs/goals/bugdrop-board-self-hosting/state.yaml'
+      - 'docs/goals/bugdrop-board-provisioning/state.yaml'
+      - 'README.md'
+      - '.dev.vars.example'
+      - 'AGENTS.md'
+      - 'package.json'
+      - 'wrangler.toml'
+      - 'Makefile'
+      - 'scripts/'
+      - 'migrations/'
+      - 'src/types.ts'
+      - 'src/routes/api.ts'
+      - 'e2e/fixtures/host-app.ts'
+    constraints:
+      - 'Read-only.'
+      - 'Do not edit implementation, docs, scripts, config, or goal state during Scout except for the final receipt.'
+      - 'Inspect only facts needed for self-host production deploy readiness.'
+      - 'Do not implement hosted control plane, billing, production hardening, realtime, comments, downvotes, GitHub Projects, or product behavior changes.'
+      - 'Identify which production deploy steps can be verified without live production credentials and which must remain documented operator steps.'
+      - 'Prefer concrete repo/config evidence over generic deployment advice.'
+    expected_output:
+      - 'Current deploy-readiness docs/config gaps.'
+      - 'Actual Worker/D1/secrets/origin/provisioning command facts.'
+      - 'Recommended smallest Worker package with allowed_files.'
+      - 'Verification commands and direct inspection needed.'
+      - 'Stop conditions and forbidden carryover list.'
+    receipt:
+      summary: 'Scout found that Board 1-6 foundations already expose the needed deploy primitives: Worker env vars/secrets, DB binding, remote D1 migrations, local/remote board provisioning, widget build, and E2E polling smoke. The gap is that README/config still present a local-first path, leave production deployment as a handoff note, and do not make the deployed allowed-origin/secrets/D1 checklist concrete enough for self-hosters.'
+      evidence:
+        - 'README.md documents local setup, embed contract, token endpoint, GitHub mirroring, Cloudflare configuration, and standard verification, but only has brief deployed secret and remote migration snippets.'
+        - 'wrangler.toml currently defaults `ALLOWED_ORIGINS = "*"` and comments secrets as `.dev.vars` locally plus `wrangler secret put` for deployed environments.'
+        - 'scripts/provision-board.js supports `--local|--remote` and executes `wrangler d1 execute DB` against the configured D1 binding.'
+        - 'src/routes/api.ts allows `ALLOWED_ORIGINS="*"` or comma-separated exact origins and sends no CORS headers for non-matches.'
+      recommendation:
+        allowed_files:
+          - 'README.md'
+          - '.dev.vars.example'
+          - 'wrangler.toml'
+          - 'package.json'
+          - 'Makefile'
+          - 'AGENTS.md'
+          - 'docs/goals/bugdrop-board-production-readiness/state.yaml'
+        package: 'Make README and comments provide an executable self-host production deploy path for Worker/D1/secrets/origins/widget/provisioning/verification, without requiring live credentials or changing product behavior.'
+        verify:
+          - 'npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local'
+          - 'npm run build:widget'
+          - 'npm run test:e2e'
+          - 'npm run validate'
+          - 'make check'
+          - 'direct inspection for deployed Worker/D1/secrets/origins guidance'
+          - 'scope scan for out-of-scope implementation drift'
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: medium
+    objective: 'Review Scout findings and authorize the largest safe Board 7 Worker package.'
+    inputs:
+      - 'T001 receipt'
+      - 'Goal oracle'
+      - 'Board 1-6 completion receipts'
+      - 'AGENTS.md proof expectations'
+    constraints:
+      - 'Do not implement.'
+      - 'Keep the package to self-host production deploy readiness only.'
+      - 'Reject any plan that requires real production Cloudflare/GitHub credentials for local proof.'
+      - 'Reject any plan that implements hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or broad production hardening.'
+      - 'Require direct inspection proof that docs/config match current commands and stack.'
+    expected_output:
+      - 'Decision: proceed | revise | blocked'
+      - 'Exact Worker objective'
+      - 'allowed_files'
+      - 'verify commands'
+      - 'stop_if conditions'
+      - 'Deferred tasks for later conveyors'
+    receipt:
+      decision: proceed
+      worker_objective: 'Implement the self-host production deploy readiness docs/config package recommended by Scout.'
+      allowed_files:
+        - 'README.md'
+        - '.dev.vars.example'
+        - 'wrangler.toml'
+        - 'package.json'
+        - 'Makefile'
+        - 'AGENTS.md'
+        - 'docs/goals/bugdrop-board-production-readiness/state.yaml'
+      verify:
+        - 'npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local'
+        - 'npm run build:widget'
+        - 'npm run test:e2e'
+        - 'npm run validate'
+        - 'make check'
+        - 'rg inspection that README/config cover ALLOWED_ORIGINS, wrangler secrets, remote migrations, remote provisioning, deploy, health, and widget embed.'
+        - 'git diff scope scan for hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, and broad production hardening implementation drift.'
+      stop_if:
+        - 'Any proof requires real production Cloudflare or GitHub credentials.'
+        - 'Any needed change falls outside the allowed files.'
+        - 'The package needs product behavior changes instead of docs/config readiness.'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Implement the Judge-authorized production deploy readiness package.'
+    allowed_files:
+      - 'README.md'
+      - '.dev.vars.example'
+      - 'wrangler.toml'
+      - 'package.json'
+      - 'Makefile'
+      - 'AGENTS.md'
+      - 'docs/goals/bugdrop-board-production-readiness/state.yaml'
+    verify:
+      - 'Run Judge-authorized non-secret deploy-readiness checks.'
+      - 'npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local'
+      - 'npm run build:widget'
+      - 'npm run test:e2e'
+      - 'npm run validate'
+      - 'make check'
+      - 'direct inspection that README/config distinguish local and deployed Worker/D1/secrets/origins paths'
+      - 'scope scan for hosted control plane/billing/realtime/comments/downvotes/GitHub Projects implementation drift'
+    stop_if:
+      - 'Need real production Cloudflare or GitHub credentials for proof.'
+      - 'Need hosted control plane, billing, tenant management, realtime, comments, downvotes, GitHub Projects, or broad production hardening.'
+      - 'Need files outside Judge-authorized allowed_files.'
+      - 'Cannot produce concrete deploy-readiness evidence without inventing unsupported claims.'
+    receipt:
+      result: done
+      task_id: T003
+      changed_files:
+        - 'README.md'
+        - '.dev.vars.example'
+        - 'wrangler.toml'
+        - 'package.json'
+        - 'Makefile'
+        - 'docs/goals/bugdrop-board-production-readiness/state.yaml'
+      summary: 'Implemented the bounded self-host production deploy readiness package: README now contains a deployed Worker/D1/secrets/origins/provisioning/deploy runbook, config comments distinguish development defaults from deployed values, and `deploy:check`/`make deploy-check` provide a dry-run Worker packaging gate.'
+      commands:
+        - command: 'npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local'
+          result: passed
+          evidence: 'Printed board id `board_mean_weasel_deploy_demo` with binding `DB` and mode `local`.'
+        - command: 'npm run build:widget'
+          result: passed
+          evidence: 'Built BugDrop Board bundle 0.1.0.'
+        - command: 'npm run deploy:check'
+          result: passed
+          evidence: 'Wrangler deploy dry-run read `public` assets, reported DB/ASSETS/env bindings, and exited before upload.'
+        - command: 'npm run test:e2e'
+          result: passed
+          evidence: '1 Playwright test passed: embedded board creates, upvotes, and syncs through polling.'
+        - command: 'npm run validate'
+          result: passed
+          evidence: 'eslint, Prettier check, TypeScript typecheck, and 43 Vitest tests passed.'
+        - command: 'make check'
+          result: passed
+          evidence: 'eslint, format-check, typecheck, knip, critical npm audit, and Actions Node guard passed.'
+        - command: 'rg inspection for production deploy readiness terms'
+          result: passed
+          evidence: 'Found README/config coverage for exact origins, wrangler secrets, remote D1 migrations, remote provisioning, deploy dry-run, health check, and embed board id.'
+        - command: 'git diff scope scan for runtime drift'
+          result: passed
+          evidence: 'No matches in non-README config/script diffs for realtime/control-plane/voting/product-expansion implementation terms.'
+      remaining_blockers: []
+      verification_attempts: 1
+      stopped_because: null
+
+  - id: T004
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Review the completed Board 7 Worker package against the production deploy readiness oracle.'
+    inputs:
+      - 'T001 receipt'
+      - 'T002 receipt'
+      - 'T003 receipt'
+      - 'Current diff'
+      - 'Last verification output'
+    constraints:
+      - 'Do not implement unless promoting a tiny PM cleanup task is unavoidable and explicitly recorded.'
+      - 'Reject if docs/config claim deployment behavior that was not inspected or verified.'
+      - 'Reject if validation gates were not run after final edit.'
+      - 'Reject if the diff includes hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or broad production hardening.'
+    expected_output:
+      - 'approved | rejected'
+      - 'Evidence mapped to each oracle clause'
+      - 'Required cleanup task if rejected'
+      - 'Deferred follow-up tasks for later conveyors'
+    receipt:
+      decision: approved
+      evidence:
+        - 'README production runbook separates local dev from deployed Worker setup and covers remote D1, exact origins, Worker secrets, token issuer/audience alignment, remote board provisioning, deploy, and health/widget checks.'
+        - '`wrangler.toml` keeps the local wildcard default but labels it development-only and points production self-hosters at exact origins and real D1 ids.'
+        - 'New `npm run deploy:check` uses `wrangler deploy --dry-run`, verified locally without production credentials.'
+        - 'Validation gates passed after the final product edits: provisioning, build:widget, deploy:check, test:e2e, validate, and make check.'
+      deferred_follow_ups:
+        - 'Request throttling and misuse controls remain a later production-hardening tranche.'
+        - 'Secret rotation and recovery guidance remain a later operational tranche.'
+        - 'Release automation and embed package publishing flow remain later release-engineering work.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Final audit: decide whether Conveyor Board 7 is complete and ready for the next tranche.'
+    inputs:
+      - 'All done task receipts'
+      - 'Last verification'
+      - 'Current dirty diff'
+      - 'Goal oracle'
+    constraints:
+      - 'Do not implement.'
+      - 'Reject completion if required Worker or Judge tasks are still queued or active.'
+      - 'Reject completion if production deploy readiness is not proven by direct docs/config inspection and verification commands.'
+      - 'Reject completion if the board drifted into hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or broad production hardening.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'Evidence for self-host deploy readiness docs/config'
+      - 'Evidence for secrets/origins/D1 remote guidance'
+      - 'Evidence for provisioning command compatibility'
+      - 'Evidence for widget build'
+      - 'Evidence for E2E smoke'
+      - 'Evidence for make check'
+      - 'Evidence for npm run validate'
+      - 'Evidence for no out-of-scope implementation drift'
+      - 'Next starter command if complete'
+    receipt:
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'Self-host deploy readiness docs/config now cover Worker, D1, secrets, exact origins, host token alignment, remote migrations, board provisioning, deploy dry-run, deploy, and deployed smoke checks.'
+        - 'Board provisioning compatibility proven by `npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local`.'
+        - 'Widget and deploy package proven by `npm run build:widget` and `npm run deploy:check`.'
+        - 'Existing embedded behavior proven by `npm run test:e2e`.'
+        - 'Repository gates proven by `npm run validate` and `make check`.'
+        - 'Scope audit found only a README handoff note for future misuse controls and no runtime/control-plane drift in config/script diffs.'
+      next_starter_command: null
+
+checks:
+  dirty_fingerprint: 'README.md .dev.vars.example wrangler.toml package.json Makefile docs/goals/bugdrop-board-production-readiness/state.yaml'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local'
+      - 'npm run build:widget'
+      - 'npm run deploy:check'
+      - 'npm run test:e2e'
+      - 'npm run validate'
+      - 'make check'
+      - 'rg inspection for deploy readiness terms'
+      - 'git diff scope scan for implementation drift'

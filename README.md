@@ -83,6 +83,104 @@ Cloudflare Worker, D1 database, Worker secrets, and GitHub access token.
    `http://127.0.0.1:5177`, provisions a board through `npm run provision:board`, creates an item,
    upvotes it, and proves another viewer sees the update through polling.
 
+## Production Deploy Readiness
+
+Self-hosters deploy the same Worker and widget bundle that local development uses, but production
+configuration should be explicit before the first deploy.
+
+1. Choose the deployed Worker URL and the host app origins that may embed the board.
+
+   Example:
+   - Worker URL: `https://bugdrop-board.example.workers.dev`
+   - Host app origins: `https://app.example.com`, `https://admin.example.com`
+
+2. Create the remote D1 database:
+
+   ```bash
+   npx wrangler d1 create bugdrop-board-prod
+   ```
+
+   Keep the binding name as `DB` in `wrangler.toml`, then replace the placeholder
+   `database_id` with the id returned by Wrangler. Use the same remote D1 database for migrations,
+   provisioning, deployed API reads, upvotes, and item creation.
+
+3. Set deployed non-secret Worker vars in `wrangler.toml`:
+
+   ```toml
+   [vars]
+   ENVIRONMENT = "production"
+   ALLOWED_ORIGINS = "https://app.example.com,https://admin.example.com"
+   BOARD_TOKEN_AUDIENCE = "bugdrop-board"
+   BOARD_TOKEN_ISSUER = "your-host-app"
+   ```
+
+   `ALLOWED_ORIGINS="*"` is a local development default. For deployed Workers, use exact origins
+   for the app surfaces that will embed the widget. The host token endpoint must sign tokens with
+   the same `BOARD_TOKEN_SECRET`, `BOARD_TOKEN_AUDIENCE`, and `BOARD_TOKEN_ISSUER` values the
+   Worker expects.
+
+4. Set deployed Worker secrets:
+
+   ```bash
+   npx wrangler secret put BOARD_TOKEN_SECRET
+   npx wrangler secret put GITHUB_ISSUE_ACCESS_TOKEN
+   ```
+
+   Do not put these values in `wrangler.toml`, browser code, or the embed script. `.dev.vars` is
+   only for local `wrangler dev`.
+
+5. Build and dry-run the Worker bundle:
+
+   ```bash
+   npm run deploy:check
+   ```
+
+   This builds `public/board.js` and runs `wrangler deploy --dry-run`, which validates the Worker
+   bundle, assets, and bindings without uploading a deployment.
+
+6. Apply remote D1 migrations:
+
+   ```bash
+   npx wrangler d1 migrations apply DB --remote
+   ```
+
+7. Provision one board for the app's GitHub repo:
+
+   ```bash
+   npm run provision:board -- --repo mean-weasel/demo --name "Demo Board" --remote
+   ```
+
+   Save the printed `board.id`; that value becomes the embed script's `data-board-id`. Running the
+   command again updates the board name and keeps the same repo-backed board id.
+
+8. Deploy the Worker:
+
+   ```bash
+   npm run deploy
+   ```
+
+9. Verify the deployed surface:
+
+   ```bash
+   curl https://bugdrop-board.example.workers.dev/health
+   curl -I https://bugdrop-board.example.workers.dev/board.js
+   ```
+
+   Then embed the script in a signed-in test page and confirm that a created item appears in the
+   configured GitHub repo and that a second browser session sees the upvote after polling.
+
+Production readiness checklist:
+
+- Remote D1 database exists, `wrangler.toml` points at its real `database_id`, and remote migrations
+  have been applied.
+- `BOARD_TOKEN_SECRET` and `GITHUB_ISSUE_ACCESS_TOKEN` are deployed Worker secrets.
+- `ALLOWED_ORIGINS` names exact host app origins instead of `*`.
+- Host token endpoint signs short-lived user tokens with matching secret, audience, issuer, and
+  `boardId`.
+- GitHub access token can create issues in the provisioned board repo.
+- `npm run deploy:check`, `npm run validate`, `npm run test:e2e`, and `make check` pass before
+  deploy.
+
 ## Embed Contract
 
 Add the built widget script to a host app page:
@@ -152,7 +250,8 @@ fails, the D1 board item is not stored.
 - Worker defaults: `ENVIRONMENT`, `ALLOWED_ORIGINS`, `BOARD_TOKEN_AUDIENCE`, and
   `BOARD_TOKEN_ISSUER`
 
-Keep secrets out of `wrangler.toml`. For deployed environments, set them with:
+Keep secrets out of `wrangler.toml`. For local development, use `.dev.vars`. For deployed
+environments, set secrets with:
 
 ```bash
 npx wrangler secret put BOARD_TOKEN_SECRET
@@ -165,6 +264,12 @@ For deployed D1 migrations, use:
 npx wrangler d1 migrations apply DB --remote
 ```
 
+To check deploy packaging without uploading the Worker, use:
+
+```bash
+npm run deploy:check
+```
+
 ## Verification
 
 Run the standard checks before handing off changes:
@@ -172,6 +277,7 @@ Run the standard checks before handing off changes:
 ```bash
 npm run provision:board -- --repo mean-weasel/demo --name "Demo Board" --local
 npm run build:widget
+npm run deploy:check
 npm run test:e2e
 npm run validate
 make check
@@ -182,8 +288,7 @@ make check
 This repository is still an early vertical slice. Before release, the next tranche should decide
 and implement:
 
-- stricter origin policy defaults for deployed Workers;
 - request throttling and misuse controls;
-- secret rotation guidance;
-- deployment documentation for staging and production;
+- secret rotation and recovery guidance;
+- release automation and environment promotion;
 - package/version publishing flow for the embed script.

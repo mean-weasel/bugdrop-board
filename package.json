@@ -19,6 +19,7 @@
     "build": "tsc",
     "build:widget": "node scripts/build-widget.js",
     "deploy": "wrangler deploy",
+    "deploy:check": "npm run build:widget && wrangler deploy --dry-run",
     "provision:board": "node scripts/provision-board.js",
     "test": "vitest run",
     "test:e2e": "playwright test",
