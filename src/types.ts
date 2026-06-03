@@ -6,6 +6,7 @@ export interface Env {
   BOARD_TOKEN_SECRET: string;
   BOARD_TOKEN_AUDIENCE?: string;
   BOARD_TOKEN_ISSUER?: string;
+  GITHUB_ISSUE_ACCESS_TOKEN?: string;
 }
 
 export type BoardStatus = 'open' | 'planned' | 'in_progress' | 'shipped' | 'closed';

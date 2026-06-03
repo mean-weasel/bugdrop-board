@@ -5,7 +5,7 @@ goal:
   slug: 'bugdrop-board-github-mirror'
   kind: existing_plan
   tranche: 'Complete Conveyor Board 2: validation, GitHub Issue client/interface, and create-item GitHub mirror flow only.'
-  status: active
+  status: complete
   oracle:
     signal: 'Creating an item with a valid token persists a D1 item, creates one mocked GitHub Issue payload, stores the issue number/URL, appends an event, fails atomically when GitHub creation fails, make check passes, npm run validate passes, and final audit confirms no widget/polling/host-app/E2E/realtime drift.'
     cadence: 'after each Worker package and at final audit'
@@ -63,13 +63,13 @@ visual_board:
     url: 'http://goalbuddy.localhost:41737/bugdrop-board-github-mirror/'
     command: 'npx goalbuddy board docs/goals/bugdrop-board-github-mirror'
 
-active_task: T001
+active_task: null
 
 tasks:
   - id: T001
     type: scout
     assignee: Scout
-    status: active
+    status: done
     reasoning_hint: low
     objective: 'Validate the exact Board 2 create-item, validation, GitHub Issue client/interface, and atomicity strategy before any writes.'
     inputs:
@@ -98,12 +98,73 @@ tasks:
       - 'Recommended create-item route strategy using Board 1 auth/repository, including atomicity and D1 transaction/ordering implications.'
       - 'Exact candidate Worker package or packages with allowed_files and verification commands.'
       - 'Forbidden carryover list for widget/polling/E2E/realtime/screenshot behavior.'
-    receipt: null
+    receipt:
+      result: done
+      summary: 'Validated Board 2 strategy. Use one vertical Worker package for validation, GitHub Issue client/interface, create-item route, and focused tests. Reuse Board 1 D1/auth; create the GitHub issue before D1 insert so GitHub failure leaves no board item; avoid treating GITHUB_PRIVATE_KEY as an installation token.'
+      evidence:
+        - 'src/routes/api.ts currently exposes only GET /health; create-item route is absent.'
+        - 'src/lib/board-token.ts verifies HMAC signature, expiry, board scope, audience, issuer, and externalUserId.'
+        - 'src/lib/board-repository.ts createItem accepts optional githubIssueNumber/githubIssueUrl and appends item_created in the same D1 batch.'
+        - 'migrations/0001_initial.sql has github_issue_number and github_issue_url nullable, making older NOT NULL plan snippets stale.'
+        - 'test/board-repository.test.ts asserts createItem can append item_created without GitHub placeholders, preserving Board 1 nullable-field behavior.'
+        - 'Implementation plan Task 6 sample uses c.env.GITHUB_PRIVATE_KEY as a createGitHubIssue token, but the same plan and goal constraints require this to be refactored out of final code.'
+        - 'Design spec requires every new board item to create a GitHub Issue, with D1 as board presentation source of truth.'
+      validation_scope:
+        - 'Add parseCreateItemInput(value) for unknown JSON body.'
+        - 'Trim title/description.'
+        - 'Require object body.'
+        - 'Require title length 3..120.'
+        - 'Allow missing/empty description after trim, with max length 4000.'
+        - 'Reject arrays, non-objects, non-string title, non-string description, short title, long title, and long description.'
+      github_boundary:
+        - 'Define CreatedIssue plus IssueCreator/GitHubIssueClient boundary.'
+        - 'GitHub fetch client should accept an installation/access token value explicitly named as such, not GITHUB_PRIVATE_KEY.'
+        - 'Tests should mock fetch and assert POST /repos/{owner}/{repo}/issues, Authorization Bearer token, board item id and upvote note in body, 201 mapping, non-2xx failure, and malformed response failure.'
+        - 'Route tests should inject a fake issue creator instead of needing real GitHub credentials.'
+      route_strategy:
+        - 'Export an API factory so tests can inject IssueCreator while default api uses production dependencies.'
+        - 'POST /boards/:boardId/items should verify Bearer board token with BOARD_TOKEN_SECRET/AUD/ISS, parse input, get board via BoardRepository, create issue, then repo.createItem with issue number/url and verified token claims.'
+        - 'Never trust user id from request body.'
+        - 'Call GitHub before D1 item creation to prove GitHub failure leaves no item/event.'
+      atomicity_note:
+        - 'The required oracle is GitHub-failure atomicity: no D1 item when issue creation fails.'
+        - 'D1 failure after successful GitHub issue creation can still orphan a GitHub Issue unless compensation is added; this is stronger than the current oracle and should be Judge-scoped before adding broader GitHub behavior.'
+      candidate_worker_package:
+        allowed_files:
+          - 'src/types.ts'
+          - 'src/routes/api.ts'
+          - 'src/lib/board-repository.ts'
+          - 'src/lib/board-token.ts'
+          - 'src/lib/validation.ts'
+          - 'src/lib/github.ts'
+          - 'src/lib/ids.ts'
+          - 'test/routes.test.ts'
+          - 'test/github.test.ts'
+          - 'test/validation.test.ts'
+          - 'test/board-repository.test.ts'
+          - 'docs/goals/bugdrop-board-github-mirror/state.yaml'
+        verify:
+          - 'npm run test -- test/validation.test.ts'
+          - 'npm run test -- test/github.test.ts'
+          - 'npm run test -- test/routes.test.ts'
+          - 'npm run test -- test/board-repository.test.ts if repository changes'
+          - 'npm run validate'
+          - 'make check'
+          - 'forbidden-scope rg audit.'
+      contradictions:
+        - 'Current Board 1 schema/code has nullable/optional GitHub issue metadata; Board 2 should populate it through the mirrored create path, not revert the migration to NOT NULL.'
+        - 'Task 6 sample token: c.env.GITHUB_PRIVATE_KEY conflicts with Board 2 constraints and must not remain final code.'
+      ambiguity_requiring_judge:
+        - 'Whether Board 2 should implement real GitHub App installation-token generation now, or stop at an injectable issue-creator boundary plus fetch client tested with mocked installation/access tokens.'
+        - 'Whether to include src/lib/ids.ts so the route can pre-generate boardItemId before GitHub creation.'
+        - 'Whether to add compensation for D1 failure after successful GitHub issue creation, which is stronger than the current oracle.'
+      forbidden_carryover:
+        - 'No widget UI, widget API/client work, polling/events API beyond existing event append, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, realtime/WebSocket/Durable Object transport, screenshot capture, annotation, html-to-image, or GitHub vote/reaction writes.'
 
   - id: T002
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: medium
     objective: 'Review Scout findings and authorize the largest safe Board 2 Worker package.'
     inputs:
@@ -124,24 +185,35 @@ tasks:
       - 'verify commands'
       - 'stop_if conditions'
       - 'Deferred tasks for Conveyor Board 3+'
-    receipt: null
+    receipt:
+      result: done
+      decision: rejected
+      full_outcome_complete: false
+      summary: 'Rejected authorization based on evidence from the wrong repository path. The Judge inspected /Users/neonwatty/Desktop/bugdrop, not the active /Users/neonwatty/Desktop/bugdrop-board worktree. PM reorientation is required before authorizing T003.'
+      evidence:
+        - 'Judge rejection cited missing board-repository.ts, board-token.ts, and Board 1 tests under /Users/neonwatty/Desktop/bugdrop.'
+        - 'The active GoalBuddy board and current workdir are /Users/neonwatty/Desktop/bugdrop-board.'
+      required_follow_up:
+        - 'Run PM reorientation against the active bugdrop-board repo.'
+        - 'If Board 1 foundation is present, re-run Judge authorization with corrected evidence.'
 
   - id: T003
     type: worker
     assignee: Worker
-    status: queued
+    status: done
     reasoning_hint: medium
     objective: 'Implement the Judge-authorized Board 2 validation/GitHub mirror package.'
     allowed_files:
       - 'src/types.ts'
       - 'src/routes/api.ts'
       - 'src/lib/board-repository.ts'
-      - 'src/lib/board-token.ts'
       - 'src/lib/validation.ts'
       - 'src/lib/github.ts'
+      - 'src/lib/ids.ts'
       - 'test/routes.test.ts'
       - 'test/github.test.ts'
       - 'test/validation.test.ts'
+      - 'test/board-repository.test.ts'
       - 'docs/goals/bugdrop-board-github-mirror/state.yaml'
     verify:
       - 'npm run test -- test/github.test.ts'
@@ -159,12 +231,56 @@ tasks:
       - 'Final code would treat GITHUB_PRIVATE_KEY as an installation token.'
       - 'Cannot prove GitHub failure atomicity without changing Board 1 schema/repository beyond approved scope.'
       - 'Verification fails twice for the same unresolved cause.'
-    receipt: null
+    receipt:
+      result: done
+      summary: 'Implemented the Board 2 vertical create-item GitHub mirror package: validation helper, explicit access-token GitHub Issue client, injectable IssueCreator route dependency, host-signed create-item route, pre-generated item ids, D1 issue metadata persistence, and failure-path proof that GitHub creation failure leaves no item/event for that board.'
+      files_changed:
+        - 'src/types.ts'
+        - 'src/routes/api.ts'
+        - 'src/lib/board-repository.ts'
+        - 'src/lib/validation.ts'
+        - 'src/lib/github.ts'
+        - 'test/routes.test.ts'
+        - 'test/github.test.ts'
+        - 'test/validation.test.ts'
+        - 'test/board-repository.test.ts'
+      implementation_evidence:
+        - 'src/routes/api.ts exports createApi(dependencies) so route tests inject IssueCreator while the default route uses GITHUB_ISSUE_ACCESS_TOKEN through createGitHubIssueCreator.'
+        - 'src/routes/api.ts verifies Bearer board tokens with BOARD_TOKEN_SECRET plus optional audience/issuer, uses the :boardId scope, and persists createdByExternalUserId/displayName only from verified claims.'
+        - 'src/routes/api.ts pre-generates itemId, calls issueCreator.createIssue({ owner, repo, title, description, boardItemId }) before repo.createItem, and returns 502 before D1 writes if issue creation throws.'
+        - 'src/lib/github.ts posts to https://api.github.com/repos/{owner}/{repo}/issues with an explicitly named accessToken bearer header, maps number/html_url, and throws on non-2xx or malformed responses.'
+        - 'src/lib/validation.ts trims/validates title and description from unknown JSON bodies.'
+        - 'src/lib/board-repository.ts accepts optional createItem id and persists githubIssueNumber/githubIssueUrl when provided.'
+      verification:
+        - command: 'npm run test -- test/validation.test.ts test/github.test.ts test/routes.test.ts test/board-repository.test.ts'
+          exit_code: 0
+          output: 'Test Files 4 passed (4); Tests 21 passed (21). Includes route coverage for missing token, wrong board scope token, invalid input, exactly one mocked issue payload, verified-token identity persistence, issue metadata persistence, item_created event append, GitHub failure 502, and no D1 item/event after GitHub failure.'
+        - command: 'npm run validate'
+          exit_code: 0
+          output: 'eslint passed; prettier --check passed; tsc --noEmit and tsconfig.widget typecheck passed; vitest full suite Test Files 5 passed (5), Tests 32 passed (32).'
+        - command: 'make check'
+          exit_code: 0
+          output: 'eslint, format:check, typecheck, knip, npm audit --audit-level=critical, and check:actions-node24 all passed; output ended with "✓ All checks passed".'
+        - command: '! rg -n "GITHUB_PRIVATE_KEY" src test wrangler.toml package.json'
+          exit_code: 0
+          output: 'No matches.'
+        - command: '! rg -n "playwright|polling|WebSocket|DurableObject|screenshot|annotation|html-to-image|downvote|comment|GitHub Projects|projects" src/routes src/lib test'
+          exit_code: 0
+          output: 'No matches.'
+        - command: '! git diff --name-only -- src test package.json wrangler.toml | rg "^(src/widget/|public/)|playwright|e2e"'
+          exit_code: 0
+          output: 'No matches.'
+      strongest_failure_mode_checked:
+        claim: 'GitHub issue creation might fail after validation/auth and still leave an orphaned D1 item or event.'
+        proof: 'test/routes.test.ts failure-path case injects a rejecting IssueCreator, receives 502, asserts createIssue called once, and asserts repo.listItems(board.id) and repo.listEvents(board.id, 0) both have length 0.'
+      notes:
+        - 'An earlier focused test run failed because route tests reused the same D1 board name across tests; the route test suite now uses a unique repoName per test so the atomicity proof is isolated.'
+        - 'D1 failure after successful GitHub creation remains deferred as authorized by T006.'
 
   - id: T004
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
     objective: 'Review the completed Board 2 Worker package against the GitHub mirror oracle and decide whether cleanup or final audit is required.'
     inputs:
@@ -183,12 +299,137 @@ tasks:
       - 'Evidence mapped to each oracle clause'
       - 'Required cleanup task if rejected'
       - 'Deferred follow-up tasks for Conveyor Board 3'
-    receipt: null
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      summary: 'Approved the Board 2 Worker package. Direct inspection and receipts prove the vertical create-item mirror path: token-verified route, validation, injected GitHub issue creator, GitHub-before-D1 ordering, issue metadata persistence, event append, and failure atomicity. No cleanup is required before final audit.'
+      evidence:
+        - 'Goal oracle requires valid create to persist D1 item, create one mocked GitHub Issue, store issue number/URL, append event, fail atomically on GitHub failure, pass make check and npm run validate, and audit forbidden scope.'
+        - 'T003 verification: focused tests exited 0 with 4 files/21 tests passed; npm run validate exited 0 with 5 files/32 tests passed; make check exited 0.'
+        - 'src/routes/api.ts exports createApi, verifies Bearer board token against boardId, uses claims for user identity, creates one issue via injected IssueCreator, then calls repo.createItem with issue.number/htmlUrl.'
+        - 'test/routes.test.ts asserts createIssue called once with owner/repo/title/description/boardItemId, persisted D1 item has githubIssueNumber/githubIssueUrl, and one item_created event exists.'
+        - 'test/routes.test.ts GitHub failure case returns 502, createIssue called once, repo.listItems(board.id) length 0, and repo.listEvents(board.id, 0) length 0.'
+        - 'src/lib/board-repository.ts batches board_items insert and board_events item_created insert; test/board-repository.test.ts verifies provided id and GitHub metadata round-trip.'
+        - 'src/lib/github.ts uses an explicitly named accessToken and src/routes/api.ts reads GITHUB_ISSUE_ACCESS_TOKEN; rg found no GITHUB_PRIVATE_KEY in src/test/wrangler/package files.'
+        - 'Forbidden-scope audit from PM exited 0 for src/routes src/lib test; current diff does not add src/widget, public, Playwright, or E2E files.'
+      required_board_updates:
+        - 'Activate T999 final audit; no cleanup Worker is required before it.'
+        - 'T999 should not mark complete unless it reuses current verification and confirms no forbidden-scope drift in the final dirty diff.'
+      deferred_follow_ups:
+        - 'Board 3+: polling/events API and vote routes.'
+        - 'Board 3+: widget UI, dummy host app, and Playwright/E2E only when explicitly in scope.'
+        - 'Later production hardening: real GitHub App JWT/installation-token exchange if deployment requires it.'
+        - 'Later reliability policy: D1-failure-after-successful-GitHub compensation or orphan issue cleanup.'
+
+  - id: T005
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: low
+    objective: 'Reconcile the Board 2 authorization gate with the actual active bugdrop-board worktree after T002 inspected the wrong repo.'
+    allowed_files:
+      - 'docs/goals/bugdrop-board-github-mirror/state.yaml'
+    verify:
+      - 'pwd && git rev-parse --show-toplevel && git log --oneline -5'
+      - 'rg --files src test migrations | sort'
+      - 'rg -n "BoardRepository|board-token|boards|github_issue|board_id|createItem|BOARD_TOKEN" src test migrations wrangler.toml package.json'
+    stop_if:
+      - 'Board 1 D1/auth foundation is absent in /Users/neonwatty/Desktop/bugdrop-board.'
+      - 'Only the legacy widget/screenshot feedback API is present.'
+    receipt:
+      result: done
+      summary: 'Reconciled against the active /Users/neonwatty/Desktop/bugdrop-board repo. Board 1 D1/auth foundation is present and current; T002 rejection was based on the wrong /Users/neonwatty/Desktop/bugdrop path.'
+      commands:
+        - 'pwd && git rev-parse --show-toplevel && git log --oneline -5'
+        - 'rg --files src test migrations | sort'
+        - 'rg -n "BoardRepository|board-token|boards|github_issue|board_id|createItem|BOARD_TOKEN" src test migrations wrangler.toml package.json'
+      evidence:
+        - 'pwd and git root are both /Users/neonwatty/Desktop/bugdrop-board.'
+        - 'git log includes dc59193 feat: add board data auth foundation.'
+        - 'rg --files lists migrations/0001_initial.sql, src/lib/board-repository.ts, src/lib/board-token.ts, src/lib/ids.ts, test/board-repository.test.ts, test/board-token.test.ts, and test/routes.test.ts.'
+        - 'rg finds BOARD_TOKEN bindings in wrangler.toml and src/types.ts, board schema and nullable github_issue fields in migrations, BoardRepository/createItem in src/lib/board-repository.ts, and Board 1 tests in test/.'
+      next_action: 'Activate a fresh Judge authorization task using the corrected active repo evidence.'
+
+  - id: T006
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: medium
+    objective: 'Re-run Board 2 Worker authorization using corrected evidence from /Users/neonwatty/Desktop/bugdrop-board.'
+    inputs:
+      - 'T001 receipt'
+      - 'T002 rejected receipt'
+      - 'T005 PM reorientation receipt'
+      - 'Goal oracle'
+      - 'AGENTS.md proof expectations'
+    constraints:
+      - 'Do not implement.'
+      - 'Keep the package to Conveyor Board 2 only.'
+      - 'Reject any plan that includes widget UI, polling API, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, realtime, screenshot, or annotation behavior.'
+      - 'Reject any plan that treats GITHUB_PRIVATE_KEY as a GitHub installation token in final code.'
+      - 'Decide whether to implement real GitHub App installation-token generation now or stop at injected issue-creator boundary plus fetch client tested with mocked access token.'
+      - 'Decide whether src/lib/ids.ts and test/board-repository.test.ts are allowed.'
+      - 'Decide whether D1-failure-after-GitHub compensation is in scope.'
+    expected_output:
+      - 'Decision: proceed | revise | blocked'
+      - 'Exact Worker objective'
+      - 'allowed_files'
+      - 'verify commands'
+      - 'stop_if conditions'
+      - 'Deferred tasks for Conveyor Board 3+'
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      summary: 'Approved one vertical Board 2 Worker slice after correcting the repo evidence. Board 1 D1/auth foundation is present in /Users/neonwatty/Desktop/bugdrop-board.'
+      decisions:
+        github_auth_scope: 'Do not implement real GitHub App installation-token generation in Board 2; use injected IssueCreator plus fetch client tested with a mocked explicitly named access/installation token.'
+        ids_ts: 'Allowed for pre-generating a board item id before GitHub creation so the issue body and D1 row stay consistent.'
+        board_repository_test: 'Allowed because repository createItem needs optional pre-generated ids and issue metadata persistence coverage.'
+        d1_failure_after_github_compensation: 'Deferred; outside the current oracle and would require broader GitHub side effects.'
+      worker_package:
+        objective: 'Implement Conveyor Board 2 vertical create-item GitHub mirror only: validation, injected IssueCreator boundary, GitHub fetch client, POST /boards/:boardId/items with host-signed token verification, pre-generated item id, exactly one mocked GitHub Issue before D1 insert, issue metadata persistence, item_created event append, invalid input/token/scope rejection, and proof that GitHub creation failure leaves no D1 item/event.'
+        allowed_files:
+          - 'src/types.ts'
+          - 'src/routes/api.ts'
+          - 'src/lib/board-repository.ts'
+          - 'src/lib/validation.ts'
+          - 'src/lib/github.ts'
+          - 'src/lib/ids.ts'
+          - 'test/routes.test.ts'
+          - 'test/github.test.ts'
+          - 'test/validation.test.ts'
+          - 'test/board-repository.test.ts'
+        verify:
+          - 'npm run test -- test/validation.test.ts'
+          - 'npm run test -- test/github.test.ts'
+          - 'npm run test -- test/routes.test.ts'
+          - 'npm run test -- test/board-repository.test.ts'
+          - 'npm run validate'
+          - 'make check'
+          - '! rg -n "GITHUB_PRIVATE_KEY" src test wrangler.toml package.json'
+          - '! rg -n "playwright|polling|WebSocket|DurableObject|screenshot|annotation|html-to-image|downvote|comment|GitHub Projects|projects" src/routes src/lib test'
+          - '! git diff --name-only -- src test package.json wrangler.toml | rg "^(src/widget/|public/)|playwright|e2e"'
+        stop_if:
+          - 'Need files outside allowed_files.'
+          - 'Need widget UI, polling API, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, realtime, screenshot, or annotation behavior.'
+          - 'Need production GitHub credentials or live GitHub API calls for tests.'
+          - 'Need real GitHub App JWT/installation-token generation in this slice.'
+          - 'Final code would treat GITHUB_PRIVATE_KEY as an installation/access token.'
+          - 'Cannot prove GitHub failure leaves no D1 item/event without schema rewrites or later-board behavior.'
+          - 'Need D1-failure-after-GitHub compensation, issue closing, issue deletion, or cleanup webhooks.'
+          - 'Verification fails twice for the same unresolved cause.'
+      deferred_tasks:
+        - 'Real GitHub App JWT and installation-token exchange, if required for production deployment.'
+        - 'D1-failure-after-successful-GitHub compensation or orphan issue cleanup policy.'
+        - 'Polling/events API and vote routes for Conveyor Board 3.'
+        - 'Widget UI, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, realtime, screenshot, and annotation behavior.'
 
   - id: T999
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
     objective: 'Final audit: decide whether Conveyor Board 2 is complete and ready to hand off to the votes/polling board.'
     inputs:
@@ -213,11 +454,75 @@ tasks:
       - 'Evidence for npm run validate'
       - 'Evidence for no widget/polling/E2E/realtime drift'
       - 'Next starter command for Conveyor Board 3 if complete'
-    receipt: null
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: 'Conveyor Board 2 is complete. The final audit maps fresh verification to every GitHub mirror oracle clause and confirms the implementation stayed inside the Board 2 scope.'
+      evidence:
+        input_validation:
+          - 'src/lib/validation.ts parses unknown JSON bodies, rejects non-object bodies, trims title/description, requires title length 3..120, rejects non-string description, and caps description at 4000 characters.'
+          - 'test/validation.test.ts covers valid trim, missing description, non-object input, invalid title lengths, non-string description, and overlong description.'
+        exactly_one_mocked_github_issue:
+          - 'src/routes/api.ts creates one IssueCreator from dependencies and calls issueCreator.createIssue once on the valid create route before D1 persistence.'
+          - 'test/routes.test.ts valid create case asserts createIssue was called once with owner, repo, trimmed title, trimmed description, and the pre-generated boardItemId.'
+        d1_issue_metadata_persistence:
+          - 'src/lib/board-repository.ts createItem accepts a provided id plus githubIssueNumber/githubIssueUrl and maps nullable D1 fields back to BoardItem metadata.'
+          - 'test/routes.test.ts asserts the API response and repo.getItem both contain githubIssueNumber 7 and the mocked GitHub issue URL.'
+          - 'test/board-repository.test.ts verifies a provided id and GitHub metadata round-trip through D1.'
+        event_append:
+          - 'src/lib/board-repository.ts createItem inserts board_items and board_events item_created in one D1 batch.'
+          - 'test/routes.test.ts asserts repo.listEvents returns one item_created event with the created item id after the valid route call.'
+        github_failure_atomicity:
+          - 'src/routes/api.ts catches issueCreator.createIssue failure and returns 502 before calling repo.createItem.'
+          - 'test/routes.test.ts injects a rejecting IssueCreator, receives 502, asserts createIssue called once, and asserts repo.listItems(board.id) and repo.listEvents(board.id, 0) both have length 0.'
+        github_auth_boundary:
+          - 'src/lib/github.ts accepts an explicitly named accessToken and sends Authorization: Bearer <token> to the GitHub Issues API.'
+          - 'src/routes/api.ts uses GITHUB_ISSUE_ACCESS_TOKEN through createGitHubIssueCreator and does not reference GITHUB_PRIVATE_KEY.'
+        fresh_verification:
+          - command: 'npm run test -- test/validation.test.ts test/github.test.ts test/routes.test.ts test/board-repository.test.ts'
+            exit_code: 0
+            output: 'Test Files 4 passed (4); Tests 21 passed (21).'
+          - command: 'npm run validate'
+            exit_code: 0
+            output: 'lint, prettier --check, typecheck, and full vitest passed; Test Files 5 passed (5); Tests 32 passed (32).'
+          - command: 'make check'
+            exit_code: 0
+            output: 'eslint, format:check, typecheck, knip, npm audit --audit-level=critical, and check:actions-node24 passed; output ended with "✓ All checks passed".'
+          - command: '! rg -n "GITHUB_PRIVATE_KEY" src test wrangler.toml package.json'
+            exit_code: 0
+            output: 'No matches.'
+          - command: '! rg -n "playwright|polling|WebSocket|DurableObject|screenshot|annotation|html-to-image|downvote|comment|GitHub Projects|projects" src/routes src/lib test'
+            exit_code: 0
+            output: 'No matches.'
+          - command: '! git diff --name-only -- src test package.json wrangler.toml | rg "^(src/widget/|public/)|playwright|e2e"'
+            exit_code: 0
+            output: 'No matches.'
+        strongest_failure_mode_checked:
+          - 'Most realistic failure mode: GitHub issue creation fails after route auth/validation and leaves a D1 board item or event anyway. The focused route test directly disproves this with a rejecting IssueCreator and D1 list/event assertions of length 0.'
+      next_starter_command: '$goal-prep Build Conveyor Board 3 from docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md: voting and polling/event read APIs only, using the completed Board 1 D1/auth foundation and Board 2 create-item GitHub mirror foundation.'
 
 checks:
-  dirty_fingerprint: unknown
+  dirty_fingerprint: 'pending_commit_after_t999_audit'
   last_verification:
-    result: not_run
-    task: none
-    commands: []
+    result: pass
+    task: T999
+    commands:
+      - command: 'npm run test -- test/validation.test.ts test/github.test.ts test/routes.test.ts test/board-repository.test.ts'
+        exit_code: 0
+        output: 'Test Files 4 passed (4); Tests 21 passed (21).'
+      - command: 'npm run validate'
+        exit_code: 0
+        output: 'lint, format:check, typecheck, and full test suite passed; Test Files 5 passed (5); Tests 32 passed (32).'
+      - command: 'make check'
+        exit_code: 0
+        output: 'All checks passed, including knip, critical audit, and Actions Node 24 readiness.'
+      - command: '! rg -n "GITHUB_PRIVATE_KEY" src test wrangler.toml package.json'
+        exit_code: 0
+        output: 'No matches.'
+      - command: '! rg -n "playwright|polling|WebSocket|DurableObject|screenshot|annotation|html-to-image|downvote|comment|GitHub Projects|projects" src/routes src/lib test'
+        exit_code: 0
+        output: 'No matches.'
+      - command: '! git diff --name-only -- src test package.json wrangler.toml | rg "^(src/widget/|public/)|playwright|e2e"'
+        exit_code: 0
+        output: 'No matches.'

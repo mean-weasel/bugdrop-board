@@ -48,6 +48,29 @@ describe('BoardRepository', () => {
     expect(events[0]).toMatchObject({ eventType: 'item_created', itemId: item.id });
   });
 
+  it('persists a provided id and GitHub issue metadata', async () => {
+    const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName: 'demo' });
+    const item = await repo.createItem({
+      id: 'item_known',
+      boardId: board.id,
+      title: 'Add SSO',
+      description: 'Enterprise users need SSO.',
+      externalUserId: 'user_1',
+      githubIssueNumber: 7,
+      githubIssueUrl: 'https://github.com/mean-weasel/demo/issues/7',
+    });
+
+    expect(item).toMatchObject({
+      id: 'item_known',
+      githubIssueNumber: 7,
+      githubIssueUrl: 'https://github.com/mean-weasel/demo/issues/7',
+    });
+    await expect(repo.getItem(board.id, 'item_known')).resolves.toMatchObject({
+      githubIssueNumber: 7,
+      githubIssueUrl: 'https://github.com/mean-weasel/demo/issues/7',
+    });
+  });
+
   it('toggles one upvote per external user', async () => {
     const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName: 'demo' });
     const item = await repo.createItem({

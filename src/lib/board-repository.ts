@@ -87,6 +87,7 @@ export class BoardRepository {
   }
 
   async createItem(input: {
+    id?: string;
     boardId: string;
     title: string;
     description: string;
@@ -95,7 +96,7 @@ export class BoardRepository {
     githubIssueNumber?: number;
     githubIssueUrl?: string;
   }): Promise<BoardItem> {
-    const id = createId('item');
+    const id = input.id ?? createId('item');
     await this.db.batch([
       this.db
         .prepare(
