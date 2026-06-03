@@ -5,7 +5,7 @@ goal:
   slug: 'bugdrop-board-data-auth'
   kind: existing_plan
   tranche: 'Complete Conveyor Board 1: D1 data model, repository tests, local D1 harness, and host-signed token verification only.'
-  status: active
+  status: complete
   oracle:
     signal: 'D1 migrations apply locally, auth negative tests reject missing/expired/wrong-scope tokens, board/item/vote repositories pass uniqueness and cross-board tests, make check passes, npm run validate passes, and final audit confirms no GitHub mirroring/widget/polling/API-route drift.'
     cadence: 'after each Worker package and at final audit'
@@ -62,13 +62,13 @@ visual_board:
     url: 'http://goalbuddy.localhost:41737/bugdrop-board-data-auth/'
     command: 'npx goalbuddy board docs/goals/bugdrop-board-data-auth'
 
-active_task: T001
+active_task: null
 
 tasks:
   - id: T001
     type: scout
     assignee: Scout
-    status: active
+    status: done
     reasoning_hint: low
     objective: 'Validate the exact Board 1 D1 harness, repository, and host-signed token decisions before any writes.'
     inputs:
@@ -94,12 +94,65 @@ tasks:
       - 'Recommended token envelope, required claims, and negative test matrix.'
       - 'Exact candidate Worker package or packages with allowed_files and verification commands.'
       - 'Forbidden carryover list for GitHub mirroring/widget/polling/API-route/screenshot behavior.'
-    receipt: null
+    receipt:
+      result: done
+      summary: 'Validated Board 1 decisions. The active bugdrop-board repo has the Board 0 scaffold, but still lacks the D1/Vitest harness and DB binding needed for Board 1; a single bounded Worker package can safely add D1 schema/repository tests plus host-signed token helpers without Board 2+ behavior.'
+      evidence:
+        - 'package.json in the active repo has Hono, Vitest, Wrangler, and @cloudflare/workers-types, but no @cloudflare/vitest-pool-workers.'
+        - 'vitest.config.ts is plain Vitest with no cloudflareTest plugin, readD1Migrations, cloudflare:workers env, or migration setup file.'
+        - 'wrangler.toml has assets and vars, but no [[d1_databases]] DB binding.'
+        - 'src/types.ts Env lacks DB and token secret/audience/issuer bindings.'
+        - 'test/routes.test.ts exists and currently covers only the minimal /health route.'
+        - 'Official Cloudflare Workers testing docs describe applyD1Migrations(db, migrations) and readD1Migrations() from @cloudflare/vitest-pool-workers/config for D1 migration tests.'
+        - 'Official D1 migrations docs describe SQL migration files in the migrations folder, sequentially applied, with D1 binding configuration in Wrangler.'
+        - 'Design spec requires D1 tables for boards, board_items, board_votes, and board_events, and requires one upvote per app user per item.'
+        - 'Implementation plan Task 3 assumes the D1 harness was added in Task 1, but Board 0 intentionally omitted it; Board 1 must add it now.'
+      recommended_harness:
+        - 'Add @cloudflare/vitest-pool-workers as a dev dependency.'
+        - 'Configure vitest.config.ts with cloudflareTest and readD1Migrations(join(rootDir, "migrations")).'
+        - 'Add test/apply-migrations.ts using env from cloudflare:workers and applyD1Migrations(env.DB, env.TEST_MIGRATIONS) before each D1 test.'
+        - 'Add wrangler.toml [[d1_databases]] binding DB with local/placeholder database ids suitable for local tests.'
+        - 'Add Env.DB plus BOARD_TOKEN_SECRET, BOARD_TOKEN_AUDIENCE, and BOARD_TOKEN_ISSUER to src/types.ts.'
+      repository_scope:
+        - 'Migration constraints should include boards primary key and UNIQUE(repo_owner, repo_name); board_items FK to boards, status CHECK, upvote_count CHECK >= 0; board_votes FK constraints and UNIQUE(board_id, item_id, external_user_id); board_events autoincrement cursor and idx(board_id, id).'
+        - 'Repository methods should cover upsertBoard/getBoard, createItem/getItem, toggleUpvote, listEvents, and board-scoped item/event reads.'
+        - 'Tests should prove one board per repo, item creation event, upvote toggle/duplicate prevention, wrong-board item rejection, and cross-board event isolation.'
+      token_scope:
+        - 'Use compact HMAC-SHA256 token: base64url(JSON claims).base64url(signature), signed over the payload.'
+        - 'Required claims: boardId, externalUserId, exp. Optional claims: displayName, email, aud, iss.'
+        - 'Negative tests should reject missing token at caller boundary where applicable, malformed format, invalid JSON/base64, tampered signature, expired token, wrong board scope, wrong audience, wrong issuer, missing externalUserId, and wrong secret.'
+      candidate_worker_package:
+        allowed_files:
+          - 'package.json'
+          - 'package-lock.json'
+          - 'vitest.config.ts'
+          - 'wrangler.toml'
+          - 'migrations/0001_initial.sql'
+          - 'src/types.ts'
+          - 'src/lib/ids.ts'
+          - 'src/lib/board-repository.ts'
+          - 'src/lib/board-token.ts'
+          - 'test/apply-migrations.ts'
+          - 'test/board-repository.test.ts'
+          - 'test/board-token.test.ts'
+        verify:
+          - 'npm install'
+          - 'npm run test -- test/board-repository.test.ts'
+          - 'npm run test -- test/board-token.test.ts'
+          - 'npm run validate'
+          - 'make check'
+          - 'direct migration inspection for PK/FK/CHECK/UNIQUE(board_id, item_id, external_user_id)'
+          - 'rg audit for forbidden GitHub mirroring, item routes, widget UI, polling, Playwright, comments, downvotes, GitHub Projects, WebSocket, and screenshot/annotation carryover.'
+      forbidden_carryover:
+        - 'Do not add createGitHubIssue, api.github.com, item API routes, route handlers beyond existing health route, widget UI, polling API, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, WebSockets, screenshot, annotation, html-to-image, or feedback widget behavior.'
+      scout_corrections:
+        - 'The spawned Scout included stale references to /Users/neonwatty/Desktop/bugdrop; PM local inspection corrected those against /Users/neonwatty/Desktop/bugdrop-board.'
+        - 'Active repo package name is bugdrop-board, and test/routes.test.ts exists.'
 
   - id: T002
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: medium
     objective: 'Review Scout findings and authorize the largest safe Board 1 Worker package.'
     inputs:
@@ -119,12 +172,57 @@ tasks:
       - 'verify commands'
       - 'stop_if conditions'
       - 'Deferred tasks for Conveyor Board 2+'
-    receipt: null
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      summary: 'Approved one combined Board 1 Worker slice for D1 harness, migration/schema, repository behavior, and host-signed token helpers/tests. The harness and implementation are coupled through Env.DB, Vitest pool config, migrations, shared types, and tests.'
+      rationale:
+        - 'Splitting D1 and token work would add coordination without materially reducing risk.'
+        - 'GitHub issue fields must stay nullable in Board 1; fake issue numbers/URLs would create false proof and drift into Board 2 mirroring semantics.'
+      worker_package:
+        objective: 'Implement the Board 1 local D1 harness, migration/schema, board repository behavior, and host-signed token verification helpers/tests, without GitHub mirroring, API routes, widget UI, polling, Playwright/E2E, comments, downvotes, GitHub Projects, realtime, or dummy host app work.'
+        allowed_files:
+          - 'package.json'
+          - 'package-lock.json'
+          - 'vitest.config.ts'
+          - 'wrangler.toml'
+          - 'migrations/0001_initial.sql'
+          - 'src/types.ts'
+          - 'src/lib/ids.ts'
+          - 'src/lib/board-repository.ts'
+          - 'src/lib/board-token.ts'
+          - 'test/apply-migrations.ts'
+          - 'test/board-repository.test.ts'
+          - 'test/board-token.test.ts'
+        schema_decision: 'board_items.github_issue_number and board_items.github_issue_url are nullable for Board 1 tests; Board 2 can tighten mirror invariants when real GitHub issue creation exists.'
+        verify:
+          - 'npm install'
+          - 'npm run test -- test/board-repository.test.ts'
+          - 'npm run test -- test/board-token.test.ts'
+          - 'npm run validate'
+          - 'make check'
+          - 'direct migration inspection for primary keys, foreign keys, status/upvote CHECK constraints, nullable github_issue_number/github_issue_url, and UNIQUE(board_id, item_id, external_user_id)'
+          - 'rg --hidden forbidden-scope audit for GitHub mirroring, item routes, widget UI, polling, Playwright, comments, downvotes, GitHub Projects, WebSocket, screenshot, annotation, and html-to-image.'
+        stop_if:
+          - 'Need files outside allowed_files.'
+          - 'Need GitHub issue client, validation/GitHub clients, item API routes, widget UI, polling API, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, or realtime behavior.'
+          - 'Need production Cloudflare credentials or a remote D1 database.'
+          - 'D1 local harness cannot be made reliable without changing the Board 1 scope.'
+          - 'Token verification would trust an unsigned browser-provided user id.'
+          - 'Migration requires NOT NULL GitHub issue number/url or placeholder GitHub issue data for Board 1 item creation tests.'
+          - 'Verification fails twice for the same unresolved cause.'
+          - 'The implementation would copy screenshot-specific BugDrop behavior.'
+      deferred_tasks:
+        - 'Board 2: validation/GitHub client and real GitHub Issue mirroring.'
+        - 'Later board: item API routes and request validation boundaries.'
+        - 'Later board: widget UI, polling/event API, dummy host app, and Playwright/E2E.'
+        - 'Out of scope unless a newer spec says otherwise: comments, downvotes, GitHub Projects, and realtime/WebSocket behavior.'
 
   - id: T003
     type: worker
     assignee: Worker
-    status: queued
+    status: done
     reasoning_hint: medium
     objective: 'Implement the Judge-authorized Board 1 D1 data/auth package.'
     allowed_files:
@@ -156,12 +254,40 @@ tasks:
       - 'Token verification would trust an unsigned browser-provided user id.'
       - 'Verification fails twice for the same unresolved cause.'
       - 'The implementation would copy screenshot-specific BugDrop behavior.'
-    receipt: null
+    receipt:
+      result: done
+      summary: 'Implemented Board 1 D1/auth package: Cloudflare Workers Vitest D1 harness, D1 migration/schema, board repository with scoped items/votes/events, host-signed HMAC token helpers, and focused repository/token tests.'
+      files_changed:
+        - 'package.json'
+        - 'package-lock.json'
+        - 'vitest.config.ts'
+        - 'wrangler.toml'
+        - 'migrations/0001_initial.sql'
+        - 'src/types.ts'
+        - 'src/lib/ids.ts'
+        - 'src/lib/board-repository.ts'
+        - 'src/lib/board-token.ts'
+        - 'test/apply-migrations.ts'
+        - 'test/board-repository.test.ts'
+        - 'test/board-token.test.ts'
+      commands:
+        - 'npm install: passed, added @cloudflare/vitest-pool-workers 0.16.12.'
+        - 'npm run test -- test/board-repository.test.ts: passed, 5 tests.'
+        - 'npm run test -- test/board-token.test.ts: passed, 10 tests.'
+        - 'npm run validate: passed, 3 test files and 16 tests.'
+        - 'make check: passed.'
+        - 'direct migration rg inspection: found primary keys, foreign keys, status/upvote CHECK constraints, nullable github_issue_number/github_issue_url, UNIQUE(repo_owner, repo_name), UNIQUE(board_id, item_id, external_user_id), and board_events(board_id, id) index.'
+        - 'forbidden-scope rg audit: returned no matches.'
+      evidence:
+        - 'Repository tests cover one board per repo, item creation event without GitHub placeholders, upvote toggle, wrong-board item upvote rejection, and cross-board event/list isolation.'
+        - 'Token tests cover valid scoped token, malformed format, invalid payload/signature path, expired token, wrong board scope, wrong audience, wrong issuer, tampering, missing external user id, and wrong secret.'
+        - 'board_items.github_issue_number and github_issue_url are nullable in the migration, preserving Board 2 ownership of real GitHub mirroring.'
+        - 'No item API routes, GitHub client, widget UI, polling API, Playwright, comments, downvotes, GitHub Projects, realtime, screenshot, annotation, or html-to-image behavior was added.'
 
   - id: T004
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
     objective: 'Review the completed Board 1 Worker package against the D1/auth oracle and decide whether cleanup or final audit is required.'
     inputs:
@@ -180,12 +306,86 @@ tasks:
       - 'Evidence mapped to each oracle clause'
       - 'Required cleanup task if rejected'
       - 'Deferred follow-up tasks for Conveyor Board 2'
-    receipt: null
+    receipt:
+      result: done
+      decision: rejected
+      full_outcome_complete: false
+      summary: 'Board 1 implementation appears in scope, but final completion needs fresher full-oracle proof after the final edits and explicit missing-token negative evidence.'
+      evidence:
+        - 'Migration constraints were directly inspected and include PKs, FKs, CHECKs, nullable GitHub issue fields, vote uniqueness, and board event cursor index.'
+        - 'Repository tests and token tests were recorded passing, but Judge required them to be rerun after the final edit sequence.'
+        - 'Forbidden-scope rg audit returned no matches for GitHub mirroring, widget UI, polling, API routes, Playwright, screenshot, annotation, or html-to-image.'
+      missing_evidence:
+        - 'Post-final-edit npm run test -- test/board-repository.test.ts output.'
+        - 'Post-final-edit npm run test -- test/board-token.test.ts output.'
+        - 'Post-final-edit npm run validate output.'
+        - 'Direct missing-token negative test evidence, distinct from malformed-token and missing-user tests.'
+
+  - id: T006
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: low
+    objective: 'Close Board 1 proof gaps by adding explicit missing-token negative coverage, then rerun the complete D1/auth oracle after the final edit.'
+    allowed_files:
+      - 'test/board-token.test.ts'
+      - 'docs/goals/bugdrop-board-data-auth/state.yaml'
+    verify:
+      - 'npm run test -- test/board-repository.test.ts'
+      - 'npm run test -- test/board-token.test.ts'
+      - 'npm run validate'
+      - 'make check'
+      - 'direct migration inspection for primary keys, foreign keys, status/upvote CHECK constraints, nullable github_issue_number/github_issue_url, UNIQUE(repo_owner, repo_name), UNIQUE(board_id, item_id, external_user_id), and board_events(board_id, id) index'
+      - 'rg --hidden forbidden-scope audit for GitHub mirroring, widget UI, polling, API routes, Playwright, comments, downvotes, GitHub Projects, WebSocket, screenshot, annotation, and html-to-image.'
+    stop_if:
+      - 'Need files outside allowed_files.'
+      - 'Any oracle verification command fails after the cleanup edit.'
+      - 'Any forbidden later-board behavior is required or detected.'
+    receipt:
+      result: done
+      summary: 'Added explicit missing-token negative coverage and reran the complete Board 1 D1/auth oracle after the final cleanup edit.'
+      files_changed:
+        - 'test/board-token.test.ts'
+      commands:
+        - 'npm run test -- test/board-repository.test.ts: passed, 5 tests.'
+        - 'npm run test -- test/board-token.test.ts: passed, 11 tests.'
+        - 'npm run validate: passed, 3 test files and 17 tests.'
+        - 'make check: passed.'
+        - 'direct migration rg inspection: found primary keys, foreign keys, status/upvote CHECK constraints, nullable github_issue_number/github_issue_url, UNIQUE(repo_owner, repo_name), UNIQUE(board_id, item_id, external_user_id), and board_events(board_id, id) index.'
+        - 'forbidden-scope rg audit: returned no matches.'
+      evidence:
+        - 'Missing-token test verifies verifyBoardToken("", ...) rejects before trusting any claims.'
+        - 'No GitHub mirroring, widget UI, polling API, item route, Playwright, comments, downvotes, GitHub Projects, WebSocket, screenshot, annotation, or html-to-image behavior was added.'
+
+  - id: T005
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: low
+    objective: 'Account for Cloudflare Workers virtual test modules in Knip so Board 1 D1 tests can satisfy make check.'
+    allowed_files:
+      - 'knip.json'
+      - 'docs/goals/bugdrop-board-data-auth/state.yaml'
+    verify:
+      - 'npx knip'
+      - 'make check'
+    stop_if:
+      - 'Need to hide real unused files or dependencies.'
+      - 'Need changes outside allowed_files.'
+    receipt:
+      result: done
+      summary: 'Configured Knip to ignore only the Cloudflare Workers virtual module namespace used by cloudflare:workers and cloudflare:test imports.'
+      commands:
+        - 'npx knip: passed.'
+        - 'make check: passed.'
+      evidence:
+        - 'knip.json now has ignoreDependencies ["cloudflare"].'
+        - 'make check passed through lint, format:check, typecheck, knip, critical npm audit, and check:actions-node24.'
 
   - id: T999
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
     objective: 'Final audit: decide whether Conveyor Board 1 is complete and ready to hand off to the GitHub mirror board.'
     inputs:
@@ -208,11 +408,33 @@ tasks:
       - 'Evidence for npm run validate'
       - 'Evidence for no GitHub/widget/polling/API-route drift'
       - 'Next starter command for Conveyor Board 2 if complete'
-    receipt: null
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: 'Conveyor Board 1 is complete. Fresh verification proves the D1/auth oracle, including local D1 migration application, repository uniqueness/isolation, host-signed token negative tests with missing-token coverage, npm run validate, make check, and forbidden-scope audit.'
+      evidence:
+        - 'Task status audit found no queued or active tasks except T999 before final receipt; T999 is now done.'
+        - 'vitest.config.ts uses cloudflareTest, readD1Migrations(join(rootDir, "migrations")), and d1Databases ["DB"].'
+        - 'test/apply-migrations.ts calls applyD1Migrations(env.DB, env.TEST_MIGRATIONS) before each test.'
+        - 'Direct migration inspection found boards PRIMARY KEY and UNIQUE(repo_owner, repo_name), board_items FK plus status/upvote CHECKs and nullable GitHub issue fields, board_votes FK constraints plus UNIQUE(board_id, item_id, external_user_id), board_events AUTOINCREMENT PK, and idx_board_events_board_id.'
+        - 'npm run test -- test/board-repository.test.ts passed 1 file and 5 tests covering one board per repo, item-created event without GitHub placeholders, upvote toggle, wrong-board upvote rejection, and no item/event leakage across boards.'
+        - 'npm run test -- test/board-token.test.ts passed 1 file and 11 tests covering valid token, missing token, malformed token, invalid payload/signature path, expired token, wrong board, wrong audience, wrong issuer, tampering, missing external user id, and wrong secret.'
+        - 'npm run validate passed fresh with lint, Prettier check, typecheck, and Vitest reporting 3 files and 17 tests.'
+        - 'make check passed fresh through eslint, format:check, typecheck, knip, critical npm audit, and check:actions-node24.'
+        - 'Forbidden drift audit returned no matches for createGitHubIssue, api.github.com, item routes, polling, Playwright, widget UI, dummy host, comments, downvotes, GitHub Projects, WebSocket, screenshot, annotation, or html-to-image.'
+        - 'Current diff scope is Board 1 harness/schema/repository/token/tests plus board state and Knip config; src/routes/api.ts and src/widget files are unchanged.'
+      next_starter_command: '$goal-prep Build Conveyor Board 2 from docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md: validation/GitHub client and real GitHub Issue mirroring only, using the completed Board 1 D1/auth foundation and excluding widget UI, polling, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, and realtime.'
 
 checks:
   dirty_fingerprint: unknown
   last_verification:
-    result: not_run
-    task: none
-    commands: []
+    result: passed
+    task: T006
+    commands:
+      - 'npm run test -- test/board-repository.test.ts'
+      - 'npm run test -- test/board-token.test.ts'
+      - 'npm run validate'
+      - 'make check'
+      - 'direct migration rg inspection'
+      - 'forbidden-scope rg audit'

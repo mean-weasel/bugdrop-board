@@ -1,9 +1,25 @@
+import { cloudflareTest, readD1Migrations } from '@cloudflare/vitest-pool-workers';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
+const rootDir = dirname(fileURLToPath(import.meta.url));
+
 export default defineConfig({
+  plugins: [
+    cloudflareTest(async () => ({
+      miniflare: {
+        bindings: {
+          TEST_MIGRATIONS: await readD1Migrations(join(rootDir, 'migrations')),
+        },
+        d1Databases: ['DB'],
+      },
+    })),
+  ],
   test: {
     globals: true,
     include: ['test/**/*.test.ts'],
+    setupFiles: ['./test/apply-migrations.ts'],
     coverage: {
       reporter: ['text', 'json-summary'],
     },

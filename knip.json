@@ -3,5 +3,5 @@
   "entry": ["src/widget/index.ts"],
   "project": ["src/**/*.ts", "scripts/**/*.js"],
   "ignore": [],
-  "ignoreDependencies": []
+  "ignoreDependencies": ["cloudflare"]
 }

@@ -9,3 +9,13 @@ binding = "ASSETS"
 [vars]
 ENVIRONMENT = "development"
 ALLOWED_ORIGINS = "*"
+BOARD_TOKEN_SECRET = "replace-with-a-long-random-secret"
+BOARD_TOKEN_AUDIENCE = "bugdrop-board"
+BOARD_TOKEN_ISSUER = "dummy-host"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bugdrop-board-dev"
+database_id = "00000000-0000-0000-0000-000000000000"
+preview_database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
