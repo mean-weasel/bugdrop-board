@@ -1,14 +1,12 @@
 import { Hono, type Context } from 'hono';
 import { BoardRepository } from '../lib/board-repository';
-import { verifyBoardToken } from '../lib/board-token';
 import { createGitHubIssueCreator, type IssueCreator } from '../lib/github';
 import { createId } from '../lib/ids';
-import { parseCreateItemInput } from '../lib/validation';
 import type { Env } from '../types';
+import { applyCorsHeaders, authorizeBoardRequest, parseJsonBody, parseSince } from './api-helpers';
+import { enforceWriteThrottle } from './write-throttle';
 
 type ApiEnv = { Bindings: Env };
-type BoardTokenClaims = Awaited<ReturnType<typeof verifyBoardToken>>;
-type AuthorizedRequest = { ok: true; claims: BoardTokenClaims } | { ok: false; response: Response };
 
 interface ApiDependencies {
   createIssueCreator(env: Env): IssueCreator | null;
@@ -47,27 +45,7 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
     applyCorsHeaders(c);
   });
 
-  api.post('/__e2e/reset', async c => {
-    if (c.env.ENVIRONMENT !== 'e2e') {
-      return c.json({ error: 'Not found' }, 404);
-    }
-
-    const repo = new BoardRepository(c.env.DB);
-    const boardId = 'board_mean_weasel_demo';
-    await c.env.DB.batch([
-      c.env.DB.prepare('DELETE FROM board_votes WHERE board_id = ?').bind(boardId),
-      c.env.DB.prepare('DELETE FROM board_events WHERE board_id = ?').bind(boardId),
-      c.env.DB.prepare('DELETE FROM board_items WHERE board_id = ?').bind(boardId),
-      c.env.DB.prepare('DELETE FROM boards WHERE id = ?').bind(boardId),
-    ]);
-    const board = await repo.upsertBoard({
-      repoOwner: 'mean-weasel',
-      repoName: 'demo',
-      name: 'Demo Board',
-    });
-
-    return c.json({ board });
-  });
+  api.post('/__e2e/reset', resetE2eBoard);
 
   api.get('/health', c => {
     return c.json({
@@ -93,6 +71,16 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
     const board = await repo.getBoard(boardId);
     if (!board) {
       return c.json({ error: 'Board not found' }, 404);
+    }
+
+    const throttled = await enforceWriteThrottle(
+      c,
+      'create_item',
+      boardId,
+      authorized.claims.externalUserId
+    );
+    if (throttled) {
+      return throttled;
     }
 
     const issueCreator = deps.createIssueCreator(c.env);
@@ -158,6 +146,16 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
       return c.json({ error: 'Board not found' }, 404);
     }
 
+    const throttled = await enforceWriteThrottle(
+      c,
+      'toggle_upvote',
+      boardId,
+      authorized.claims.externalUserId
+    );
+    if (throttled) {
+      return throttled;
+    }
+
     try {
       const item = await repo.toggleUpvote(
         boardId,
@@ -198,102 +196,27 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
   return api;
 }
 
-function applyCorsHeaders(c: Context<ApiEnv>): void {
-  const origin = c.req.header('Origin');
-  const allowedOrigin = allowedCorsOrigin(c.env.ALLOWED_ORIGINS, origin);
-  if (!allowedOrigin) {
-    return;
+async function resetE2eBoard(c: Context<ApiEnv>) {
+  if (c.env.ENVIRONMENT !== 'e2e') {
+    return c.json({ error: 'Not found' }, 404);
   }
 
-  c.header('Access-Control-Allow-Origin', allowedOrigin);
-  c.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  c.header('Access-Control-Allow-Headers', 'Authorization, Content-Type');
-  c.header('Access-Control-Max-Age', '600');
+  const repo = new BoardRepository(c.env.DB);
+  const boardId = 'board_mean_weasel_demo';
+  await c.env.DB.batch([
+    c.env.DB.prepare('DELETE FROM board_votes WHERE board_id = ?').bind(boardId),
+    c.env.DB.prepare('DELETE FROM board_events WHERE board_id = ?').bind(boardId),
+    c.env.DB.prepare('DELETE FROM board_items WHERE board_id = ?').bind(boardId),
+    c.env.DB.prepare('DELETE FROM boards WHERE id = ?').bind(boardId),
+  ]);
+  const board = await repo.upsertBoard({
+    repoOwner: 'mean-weasel',
+    repoName: 'demo',
+    name: 'Demo Board',
+  });
+
+  return c.json({ board });
 }
-
-function allowedCorsOrigin(allowedOrigins: string, origin: string | undefined): string | null {
-  if (!origin) {
-    return null;
-  }
-  if (allowedOrigins === '*') {
-    return '*';
-  }
-
-  const allowed = allowedOrigins
-    .split(',')
-    .map(value => value.trim())
-    .filter(Boolean);
-  return allowed.includes(origin) ? origin : null;
-}
-
-async function authorizeBoardRequest(
-  c: Context<ApiEnv>,
-  boardId: string
-): Promise<AuthorizedRequest> {
-  const token = parseBearerToken(c.req.header('Authorization'));
-  if (!token) {
-    return { ok: false, response: c.json({ error: 'Missing bearer token' }, 401) };
-  }
-  if (!c.env.BOARD_TOKEN_SECRET) {
-    return { ok: false, response: c.json({ error: 'Board token secret is not configured' }, 500) };
-  }
-
-  const claims = await verifyToken(token, c.env, boardId);
-  if (!claims) {
-    return { ok: false, response: c.json({ error: 'Invalid board token' }, 401) };
-  }
-
-  return { ok: true, claims };
-}
-
-function parseBearerToken(header: string | undefined): string | null {
-  if (!header?.startsWith('Bearer ')) {
-    return null;
-  }
-  const token = header.slice('Bearer '.length).trim();
-  return token.length > 0 ? token : null;
-}
-
-function parseSince(value: string | undefined) {
-  if (typeof value === 'undefined') {
-    return { ok: true as const, value: 0 };
-  }
-  if (!/^\d+$/.test(value)) {
-    return { ok: false as const, error: 'Since cursor must be a nonnegative integer' };
-  }
-
-  const parsed = Number(value);
-  if (!Number.isSafeInteger(parsed)) {
-    return { ok: false as const, error: 'Since cursor must be a safe integer' };
-  }
-
-  return { ok: true as const, value: parsed };
-}
-
-async function verifyToken(token: string, env: Env, boardId: string) {
-  try {
-    return await verifyBoardToken(token, {
-      secret: env.BOARD_TOKEN_SECRET,
-      expectedBoardId: boardId,
-      expectedAudience: env.BOARD_TOKEN_AUDIENCE,
-      expectedIssuer: env.BOARD_TOKEN_ISSUER,
-    });
-  } catch {
-    return null;
-  }
-}
-
-async function parseJsonBody(request: Request) {
-  try {
-    return { ok: true as const, value: parseCreateItemInput(await request.json()) };
-  } catch (error) {
-    return {
-      ok: false as const,
-      error: error instanceof Error ? error.message : 'Invalid JSON body',
-    };
-  }
-}
-
 const api = createApi();
 
 export default api;
