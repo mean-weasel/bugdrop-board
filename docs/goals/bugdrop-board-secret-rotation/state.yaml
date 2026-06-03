@@ -1,0 +1,334 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Secret Rotation'
+  slug: 'bugdrop-board-secret-rotation'
+  kind: existing_plan
+  tranche: 'Complete Conveyor Board 9: self-host secret rotation and recovery guidance only, using completed Board 1-8 foundations and excluding hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, release automation, package publishing, and new product behavior.'
+  status: done
+  oracle:
+    signal: 'A self-hoster can follow current-stack-accurate docs to rotate and recover BOARD_TOKEN_SECRET and GITHUB_ISSUE_ACCESS_TOKEN, understand token audience/issuer/origin/D1 recovery context, run non-secret checks, and verify local/deployed behavior without hosted infrastructure; validation gates pass; final audit confirms no hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, release automation, package publishing, or new product behavior was added.'
+    cadence: 'after Scout, after Worker, and at final audit'
+    final_proof: 'Receipt-backed direct inspection of secret rotation/recovery docs/config, proof that commands match current stack, npm run validate, make check, npm run build:widget, npm run deploy:check, npm run test:e2e, provisioning command proof, and scope-drift scan.'
+  intake:
+    original_request: '$goal-prep Build Conveyor Board 9: self-host secret rotation and recovery guidance only, using completed Board 1-8 foundations and excluding hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, release automation, package publishing, and new product behavior.'
+    interpreted_outcome: 'Prepare a GoalBuddy board for the next conveyor slice: self-host operator guidance for rotating and recovering current BugDrop Board secrets, without new runtime behavior.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers and self-hosting operators responsible for credential rotation and incident recovery'
+    authority: requested
+    proof_type: artifact
+    completion_proof: 'Docs/config and verification prove a self-hoster has an executable rotation and recovery path for current secrets, while existing behavior still passes and no excluded product/infrastructure work is introduced.'
+    likely_misfire: 'Implementing a secret-management system, dual-secret runtime behavior, or release automation instead of writing accurate self-host operator guidance.'
+    blind_spots_considered:
+      - 'BOARD_TOKEN_SECRET rotation affects host-issued browser tokens and requires host app coordination.'
+      - 'GITHUB_ISSUE_ACCESS_TOKEN rotation affects item creation because GitHub issue creation happens before D1 item persistence.'
+      - 'Some recovery proof requires real operator credentials, so this board should distinguish local proof from operator-only deployed steps.'
+      - 'Token audience/issuer and allowed origins are non-secret settings but matter during recovery diagnosis.'
+      - 'Board 9 should not add new product behavior, hosted control plane, automation, or package publishing.'
+    existing_plan_facts:
+      - 'Completed foundation: Board 1 D1/auth repository/token foundation.'
+      - 'Completed foundation: Board 2 create-item GitHub Issue mirror route.'
+      - 'Completed foundation: Board 3 board reads, upvote toggle, and event cursor polling APIs.'
+      - 'Completed foundation: Board 4 embedded widget, dummy host app, and Playwright E2E.'
+      - 'Completed foundation: Board 5 self-hosting docs/config and production-hardening handoff.'
+      - 'Completed foundation: Board 6 durable board provisioning/config flow with npm run provision:board.'
+      - 'Completed foundation: Board 7 production deploy readiness docs/config and deploy dry-run gate.'
+      - 'Completed foundation: Board 8 request throttling and misuse controls.'
+      - 'User explicitly excludes hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, release automation, package publishing, and new product behavior.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: active
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-secret-rotation/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-secret-rotation'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: high
+    objective: 'Validate current secret/config surfaces and recommend the smallest safe Board 9 guidance package before any writes.'
+    inputs:
+      - 'docs/goals/bugdrop-board-data-auth/state.yaml'
+      - 'docs/goals/bugdrop-board-github-mirror/state.yaml'
+      - 'docs/goals/bugdrop-board-votes-polling/state.yaml'
+      - 'docs/goals/bugdrop-board-widget-host/state.yaml'
+      - 'docs/goals/bugdrop-board-self-hosting/state.yaml'
+      - 'docs/goals/bugdrop-board-provisioning/state.yaml'
+      - 'docs/goals/bugdrop-board-production-readiness/state.yaml'
+      - 'docs/goals/bugdrop-board-request-throttling/state.yaml'
+      - 'README.md'
+      - '.dev.vars.example'
+      - 'wrangler.toml'
+      - 'package.json'
+      - 'Makefile'
+      - 'src/types.ts'
+      - 'src/routes/api.ts'
+      - 'src/lib/board-token.ts'
+      - 'src/lib/github.ts'
+      - 'scripts/'
+      - 'e2e/'
+    constraints:
+      - 'Read-only.'
+      - 'Do not edit implementation, docs, scripts, config, or goal state during Scout except for the final receipt.'
+      - 'Inspect only facts needed for Board 9 secret rotation and recovery guidance.'
+      - 'Do not implement hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, release automation, package publishing, new product behavior, or broad production hardening.'
+      - 'Identify which rotation/recovery steps can be verified without real production Cloudflare/GitHub credentials and which must remain operator steps.'
+      - 'Prefer concrete repo/config/command evidence over generic credential advice.'
+    expected_output:
+      - 'Current secrets and adjacent non-secret settings.'
+      - 'Actual token/GitHub/deploy command facts that affect rotation guidance.'
+      - 'Current docs/config gaps.'
+      - 'Recommended smallest Worker package with allowed_files.'
+      - 'Verification commands and direct inspection needed.'
+      - 'Stop conditions and forbidden carryover list.'
+    receipt:
+      result: done
+      task_id: T001
+      summary: 'Scout found two current self-host secrets: BOARD_TOKEN_SECRET for HMAC board tokens and GITHUB_ISSUE_ACCESS_TOKEN for GitHub Issue creation. Adjacent recovery settings are BOARD_TOKEN_AUDIENCE, BOARD_TOKEN_ISSUER, ALLOWED_ORIGINS, and the D1 DB binding/database id. README has setup snippets but no rotation/recovery runbook, and the handoff still lists secret rotation as future work.'
+      evidence:
+        - 'src/lib/board-token.ts signs payload.signature tokens with BOARD_TOKEN_SECRET and rejects invalid signatures, expired tokens, board-scope mismatches, audience mismatches, and issuer mismatches.'
+        - 'src/routes/api.ts returns `Invalid board token` for verification failures and uses GITHUB_ISSUE_ACCESS_TOKEN to create GitHub Issues before D1 item persistence.'
+        - 'src/lib/github.ts sends GitHub API issue creation requests with `Authorization: Bearer <token>` and throws on non-OK GitHub responses.'
+        - 'README.md documents `wrangler secret put` and deploy checks, but does not explain rotation sequencing, rollback, or recovery symptoms.'
+        - 'wrangler.toml contains non-secret audience/issuer/origin and D1 binding/database identity; .dev.vars.example contains only local placeholders for the two secrets.'
+      facts:
+        - 'Local E2E uses ENVIRONMENT=e2e fake GitHub issue creation and `e2e-secret`, so it proves app flow but not a real deployed GitHub token.'
+        - 'Changing BOARD_TOKEN_SECRET without coordinating the host token signer causes existing browser tokens to fail signature verification until refreshed.'
+        - 'Changing BOARD_TOKEN_AUDIENCE or BOARD_TOKEN_ISSUER without matching host claims causes token audience/issuer mismatch.'
+      ambiguity_requiring_judge: []
+      commands:
+        - 'rg -n "BOARD_TOKEN_SECRET|GITHUB_ISSUE_ACCESS_TOKEN|BOARD_TOKEN_AUDIENCE|BOARD_TOKEN_ISSUER|ALLOWED_ORIGINS|wrangler secret put|deploy:check|provision:board|secret|token|issuer|audience|GitHub" README.md .dev.vars.example wrangler.toml package.json Makefile src e2e scripts docs/goals/bugdrop-board-*/state.yaml'
+        - 'sed -n "1,160p" src/lib/board-token.ts'
+        - 'sed -n "1,120p" src/lib/github.ts'
+        - 'sed -n "1,140p" src/routes/api.ts'
+        - 'sed -n "90,330p" README.md'
+      note_needed: false
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Review Scout findings and authorize the largest safe Board 9 Worker package.'
+    inputs:
+      - 'T001 receipt'
+      - 'Goal oracle'
+      - 'Board 1-8 completion receipts'
+      - 'AGENTS.md proof expectations'
+    constraints:
+      - 'Do not implement.'
+      - 'Keep the package to secret rotation and recovery guidance only.'
+      - 'Reject any plan that requires production Cloudflare or GitHub credentials for local proof.'
+      - 'Reject any plan that implements hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, release automation, package publishing, new product behavior, or broad production hardening.'
+      - 'Require direct inspection proof that guidance matches current commands, secret names, and auth/GitHub behavior.'
+    expected_output:
+      - 'Decision: proceed | revise | blocked'
+      - 'Exact Worker objective'
+      - 'allowed_files'
+      - 'verify commands'
+      - 'stop_if conditions'
+      - 'Deferred tasks for later conveyors'
+    receipt:
+      decision: proceed
+      worker_objective: 'Add a README-only self-host secret rotation and recovery runbook for BOARD_TOKEN_SECRET and GITHUB_ISSUE_ACCESS_TOKEN, including adjacent non-secret recovery context and current command verification.'
+      allowed_files:
+        - 'README.md'
+        - 'docs/goals/bugdrop-board-secret-rotation/state.yaml'
+      verify:
+        - 'direct inspection that README explains current secrets, adjacent non-secret settings, BOARD_TOKEN_SECRET rotation/recovery, GITHUB_ISSUE_ACCESS_TOKEN rotation/recovery, rollback, failure symptoms, and current commands'
+        - 'npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local'
+        - 'npm run build:widget'
+        - 'npm run deploy:check'
+        - 'npm run test:e2e'
+        - 'npm run validate'
+        - 'make check'
+        - 'scope scan for hosted control plane/billing/realtime/comments/downvotes/GitHub Projects/release automation/package publishing/new product behavior drift'
+      stop_if:
+        - 'Any proof requires production Cloudflare or GitHub credentials.'
+        - 'Any implementation change beyond README/docs is needed.'
+        - 'The guidance requires secret dual-read/rollover behavior, hosted control plane, release automation, package publishing, or new product behavior.'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Implement the Judge-authorized secret rotation and recovery guidance package.'
+    allowed_files:
+      - 'README.md'
+      - '.dev.vars.example'
+      - 'wrangler.toml'
+      - 'package.json'
+      - 'Makefile'
+      - 'AGENTS.md'
+      - 'docs/goals/bugdrop-board-secret-rotation/state.yaml'
+    verify:
+      - 'Run Judge-authorized non-secret docs/config checks.'
+      - 'npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local'
+      - 'npm run build:widget'
+      - 'npm run deploy:check'
+      - 'npm run test:e2e'
+      - 'npm run validate'
+      - 'make check'
+      - 'direct inspection that docs/config explain BOARD_TOKEN_SECRET and GITHUB_ISSUE_ACCESS_TOKEN rotation and recovery for self-hosters'
+      - 'scope scan for hosted control plane/billing/realtime/comments/downvotes/GitHub Projects/release automation/package publishing/new product behavior drift'
+    stop_if:
+      - 'Need real production Cloudflare or GitHub credentials for proof.'
+      - 'Need hosted control plane, billing, tenant management, realtime, comments, downvotes, GitHub Projects, release automation, package publishing, new product behavior, or broad production hardening.'
+      - 'Need files outside Judge-authorized allowed_files.'
+      - 'Cannot produce concrete rotation/recovery evidence without inventing unsupported claims.'
+    receipt:
+      result: done
+      task_id: T003
+      changed_files:
+        - 'README.md'
+        - 'docs/goals/bugdrop-board-secret-rotation/state.yaml'
+      summary: 'Implemented the authorized README-only self-host secret rotation and recovery guidance. The new section names both current secrets, explains adjacent recovery settings, gives operator steps for BOARD_TOKEN_SECRET and GITHUB_ISSUE_ACCESS_TOKEN rotation, documents rollback and expected failures, distinguishes local E2E proof from deployed GitHub-token proof, and removes secret rotation from handoff notes.'
+      commands:
+        - command: 'npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local'
+          result: passed
+          evidence: 'Printed board id `board_mean_weasel_deploy_demo` with binding `DB` and mode `local`.'
+        - command: 'npm run build:widget'
+          result: passed
+          evidence: 'Built BugDrop Board bundle 0.1.0.'
+        - command: 'npm run deploy:check'
+          result: passed
+          evidence: 'Wrangler deploy dry-run reported DB, ASSETS, and Worker vars without uploading.'
+        - command: 'npm run test:e2e'
+          result: passed
+          evidence: '1 Playwright test passed: embedded board creates, upvotes, and syncs through polling.'
+        - command: 'npm run validate'
+          result: passed
+          evidence: 'eslint, Prettier check, TypeScript typecheck, and 47 Vitest tests passed.'
+        - command: 'make check'
+          result: passed
+          evidence: 'eslint, format-check, typecheck, knip, critical npm audit, and Actions Node guard passed.'
+        - command: 'rg inspection for secret rotation/recovery terms in README.md'
+          result: passed
+          evidence: 'Found Board token secret rotation, GitHub token rotation, rollback, expected failure messages, adjacent audience/issuer/origin/D1 settings, wrangler secret commands, deploy checks, provisioning, and local/deployed verification notes.'
+        - command: 'git diff scope scan for added out-of-scope terms and non-doc implementation drift'
+          result: passed
+          evidence: 'No added README lines or non-doc diffs introduced hosted control plane, billing, realtime, comments/downvotes behavior, GitHub Projects, release automation implementation, package publishing, dual-secret behavior, or new product behavior.'
+      remaining_blockers: []
+      verification_attempts: 1
+      stopped_because: null
+
+  - id: T004
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Review the completed Board 9 Worker package against the secret rotation oracle.'
+    inputs:
+      - 'T001 receipt'
+      - 'T002 receipt'
+      - 'T003 receipt'
+      - 'Current diff'
+      - 'Last verification output'
+    constraints:
+      - 'Do not implement unless promoting a tiny PM cleanup task is unavoidable and explicitly recorded.'
+      - 'Reject if docs/config claim rotation behavior that was not inspected or verified.'
+      - 'Reject if validation gates were not run after final edit.'
+      - 'Reject if the diff includes hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, release automation, package publishing, new product behavior, or broad production hardening.'
+    expected_output:
+      - 'approved | rejected'
+      - 'Evidence mapped to each oracle clause'
+      - 'Required cleanup task if rejected'
+      - 'Deferred follow-up tasks for later conveyors'
+    receipt:
+      decision: approved
+      evidence:
+        - 'README now identifies BOARD_TOKEN_SECRET and GITHUB_ISSUE_ACCESS_TOKEN as the current self-host secrets.'
+        - 'README explains BOARD_TOKEN_SECRET coordination with the host signer, short-lived token refresh impact, expected Invalid board token failures, rollback, and verification.'
+        - 'README explains GitHub token creation requirements, Worker secret replacement, expected missing/rejected-token failures, rollback, and deployed verification.'
+        - 'README names adjacent recovery settings: BOARD_TOKEN_AUDIENCE, BOARD_TOKEN_ISSUER, ALLOWED_ORIGINS, DB binding, and database_id.'
+        - 'The package is README-only plus GoalBuddy receipts; no runtime behavior, automation, or config mutation was added.'
+        - 'Validation gates passed after the final README edit: provisioning, build:widget, deploy:check, test:e2e, validate, and make check.'
+      deferred_follow_ups:
+        - 'Release automation and environment promotion remain a later release-engineering tranche.'
+        - 'Package/version publishing flow remains a later packaging tranche.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Final audit: decide whether Conveyor Board 9 is complete and ready for the next tranche.'
+    inputs:
+      - 'All done task receipts'
+      - 'Last verification'
+      - 'Current dirty diff'
+      - 'Goal oracle'
+    constraints:
+      - 'Do not implement.'
+      - 'Reject completion if required Worker or Judge tasks are still queued or active.'
+      - 'Reject completion if secret rotation/recovery guidance is not proven by direct docs/config inspection and verification commands.'
+      - 'Reject completion if the board drifted into hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, release automation, package publishing, new product behavior, or broad production hardening.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'Evidence for BOARD_TOKEN_SECRET rotation/recovery guidance'
+      - 'Evidence for GITHUB_ISSUE_ACCESS_TOKEN rotation/recovery guidance'
+      - 'Evidence for token audience/issuer/origin/D1 recovery context'
+      - 'Evidence for current command compatibility'
+      - 'Evidence for widget build'
+      - 'Evidence for E2E smoke'
+      - 'Evidence for make check'
+      - 'Evidence for npm run validate'
+      - 'Evidence for no out-of-scope implementation drift'
+      - 'Next starter command if complete'
+    receipt:
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'BOARD_TOKEN_SECRET rotation/recovery guidance is present and covers host coordination, token expiry/refresh, expected auth failures, rollback, and verification.'
+        - 'GITHUB_ISSUE_ACCESS_TOKEN rotation/recovery guidance is present and covers GitHub issue-create capability, Worker secret replacement, failure symptoms, rollback, and deployed verification.'
+        - 'Token audience/issuer/origin/D1 recovery context is documented.'
+        - 'Current command compatibility is proven by direct README inspection plus successful provisioning, build:widget, deploy:check, test:e2e, validate, and make check.'
+        - 'Scope audit found no new hosted control plane, billing, realtime, comments/downvotes behavior, GitHub Projects, release automation implementation, package publishing, secret rollover runtime behavior, or new product behavior.'
+      next_starter_command: '$goal-prep Build the next BugDrop Board tranche after choosing the next remaining release gap.'
+
+checks:
+  dirty_fingerprint: 'README.md docs/goals/bugdrop-board-secret-rotation/state.yaml'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local'
+      - 'npm run build:widget'
+      - 'npm run deploy:check'
+      - 'npm run test:e2e'
+      - 'npm run validate'
+      - 'make check'
+      - 'rg inspection for secret rotation/recovery terms in README.md'
+      - 'git diff scope scan for added out-of-scope terms and non-doc implementation drift'
