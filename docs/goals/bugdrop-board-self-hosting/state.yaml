@@ -1,0 +1,354 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Self-Hosting'
+  slug: 'bugdrop-board-self-hosting'
+  kind: existing_plan
+  tranche: 'Complete Conveyor Board 5: self-hosting docs/config, README/embed instructions, .dev.vars.example, and production-hardening handoff only.'
+  status: done
+  oracle:
+    signal: 'A fresh checkout or clean worktree follows the documented setup to configure local dev, prepare local secrets, apply D1 migrations, build the widget, start or exercise the local Worker/dummy host, and run the E2E smoke without hidden hosted-only assumptions; npm run validate, make check, npm run build:widget, and the selected E2E smoke pass; final audit confirms no out-of-scope feature or production-hardening implementation drift.'
+    cadence: 'after Scout, after Worker, and at final audit'
+    final_proof: 'Receipt-backed clean-shell or clean-worktree walkthrough output for documented setup commands; direct inspection of README, .dev.vars.example, wrangler.toml, and embed/token instructions; npm run validate, make check, npm run build:widget, E2E smoke output; source/diff audit against realtime, comments, downvotes, GitHub Projects, billing, hosted control plane, and broad production-hardening implementation.'
+  intake:
+    original_request: '$goal-prep Build Conveyor Board 5 from docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md: self-hosting docs/config, README/embed instructions, .dev.vars.example, and production-hardening handoff only.'
+    interpreted_outcome: 'Prepare a GoalBuddy board that executes only Conveyor Board 5: self-hosting documentation/configuration, embed instructions, .dev.vars.example, and a production-hardening handoff.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers and future self-hosters'
+    authority: requested
+    proof_type: demo
+    completion_proof: 'A clean checkout/worktree can follow the documented commands to prepare local config, run migrations, build the widget, and run the local E2E smoke; repository validation gates pass; final audit maps evidence to the self-hosting oracle.'
+    likely_misfire: 'Writing a pleasant README that is not executable by a self-hoster, leaving hidden D1/secret/GitHub assumptions, or drifting into implementing production hardening rather than documenting the handoff.'
+    blind_spots_considered:
+      - 'The plan sample may name GitHub App credentials while the current implementation may use a GitHub issue access token; Scout must inspect the actual Board 2 GitHub client before authorizing docs.'
+      - 'The documented D1 migration command must match current wrangler.toml and Wrangler behavior.'
+      - 'The embed instructions must align with the Board 4 widget attributes: data-board-id, data-api-url, data-token-endpoint, data-poll-interval, and optional color.'
+      - 'The self-hosting pitch should preserve the earlier product promise: hosted users should need only GitHub, while self-hosters own Cloudflare/D1/secrets.'
+      - 'Production-hardening belongs in a handoff/checklist unless the user explicitly starts a later implementation board.'
+    existing_plan_facts:
+      - 'Input plan path: docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md'
+      - 'Conveyor Board 5 plan slug: docs/goals/bugdrop-board-self-hosting'
+      - 'Plan oracle: a fresh clone can follow docs to configure local dev, run migrations, start the Worker and dummy host, and execute the E2E smoke without hidden hosted-only assumptions.'
+      - 'Plan likely misfire: hosted path works, but self-hosters lack required bindings, secrets, or setup docs.'
+      - 'Plan seed board shape: Scout runs docs from scratch in a clean checkout/worktree; Worker adds self-host docs, .dev.vars.example, migration docs, and config checks; Judge runs documented commands and records proof.'
+      - 'Plan Task 10 files include .dev.vars.example, README.md, wrangler.toml, and AGENTS.md if verification commands change.'
+      - 'Completed foundation: Board 1 D1/auth, Board 2 GitHub mirror, Board 3 voting/polling APIs, and Board 4 embedded widget/dummy host/E2E.'
+      - 'Board 4 final receipt recommends this Board 5 as the self-hosting/hardening handoff.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: active
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-self-hosting/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-self-hosting'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: medium
+    objective: 'Validate the exact current self-hosting/docs/config surface and the safest Worker package before any writes.'
+    inputs:
+      - 'docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md'
+      - 'docs/goals/bugdrop-board-data-auth/state.yaml'
+      - 'docs/goals/bugdrop-board-github-mirror/state.yaml'
+      - 'docs/goals/bugdrop-board-votes-polling/state.yaml'
+      - 'docs/goals/bugdrop-board-widget-host/state.yaml'
+      - 'README.md'
+      - 'AGENTS.md'
+      - 'package.json'
+      - 'wrangler.toml'
+      - 'Makefile'
+      - 'migrations/'
+      - 'src/lib/github.ts'
+      - 'src/lib/board-token.ts'
+      - 'src/widget/index.ts'
+      - 'e2e/fixtures/host-app.ts'
+      - 'playwright.config.ts'
+    constraints:
+      - 'Read-only.'
+      - 'Do not edit README, config, scripts, implementation files, or goal state during Scout except for the final receipt.'
+      - 'Inspect only facts needed for Board 5 docs/config/handoff.'
+      - 'Do not implement production hardening, deployment automation, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or product behavior changes.'
+      - 'Compare the plan sample docs to the current implementation; identify stale credential names, command names, ports, bindings, or widget attributes.'
+      - 'Prefer a clean worktree or temporary checkout strategy for proof, but do not run destructive commands.'
+    expected_output:
+      - 'Current README/config/docs gaps for self-hosters.'
+      - 'Actual required environment variables and GitHub credential shape.'
+      - 'Actual D1 binding/name/migration command and local Worker/E2E command shape.'
+      - 'Actual widget embed attributes and host token endpoint contract.'
+      - 'Recommended production-hardening handoff content, explicitly separated from implementation.'
+      - 'Exact Worker package with allowed_files, verify commands, and stop_if conditions.'
+      - 'Forbidden carryover list for later conveyors.'
+    receipt:
+      result: done
+      summary: 'Validated the Board 5 self-hosting surface. Current README is only a one-line investigation note; no .dev.vars.example exists; wrangler.toml contains a placeholder BOARD_TOKEN_SECRET in plain vars; current GitHub mirroring uses GITHUB_ISSUE_ACCESS_TOKEN, not the plan sample GITHUB_APP_ID/GITHUB_PRIVATE_KEY; Board 4 E2E already provides a local separate-origin Worker/dummy-host smoke.'
+      evidence:
+        - 'README.md currently contains only "# bugdrop-board" and a short investigation sentence.'
+        - '.gitignore ignores .dev.vars but not .dev.vars.example, so an example file can be committed safely.'
+        - 'src/routes/api.ts creates GitHub issues from env.GITHUB_ISSUE_ACCESS_TOKEN and returns "GitHub issue creator is not configured" without it outside ENVIRONMENT=e2e.'
+        - 'src/lib/github.ts sends GitHub Issue creation requests with Authorization: Bearer <access token>.'
+        - 'wrangler.toml defines DB binding, database_name bugdrop-board-dev, assets directory public, dev vars ENVIRONMENT/ALLOWED_ORIGINS/BOARD_TOKEN_AUDIENCE/BOARD_TOKEN_ISSUER, and currently has a placeholder BOARD_TOKEN_SECRET.'
+        - 'package.json e2e:worker applies local migrations with wrangler d1 migrations apply DB --local and serves the Worker at 127.0.0.1:8788.'
+        - 'e2e/fixtures/host-app.ts serves the dummy host at 127.0.0.1:5177, signs board tokens with createBoardToken, and embeds /board.js with data-board-id, data-api-url, data-token-endpoint, data-poll-interval, and data-color.'
+        - 'src/widget/index.ts requires data-token-endpoint and reads data-board-id or data-repo, data-api-url, data-color, and data-poll-interval.'
+      recommended_worker_shape:
+        - 'Replace README with executable self-hosting docs aligned to current Worker/D1/token/GitHub/widget behavior.'
+        - 'Add .dev.vars.example with placeholder-only local secrets, including GITHUB_ISSUE_ACCESS_TOKEN and BOARD_TOKEN_SECRET.'
+        - 'Move BOARD_TOKEN_SECRET out of wrangler.toml plain vars, leaving non-secret defaults there and documenting wrangler secret put for production.'
+        - 'Document local D1 creation/update, local migrations via DB binding, widget build, Worker dev port, E2E smoke, embed script attributes, and host token endpoint contract.'
+        - 'Add a production-hardening handoff section without implementing hardening.'
+        - 'Run a clean-worktree docs walkthrough after final docs/config edits, then npm run build:widget, npm run test:e2e, npm run validate, make check, GoalBuddy checker, direct inspection, and forbidden-scope scan.'
+      stale_plan_notes:
+        - 'Plan sample .dev.vars.example names GITHUB_APP_ID and GITHUB_PRIVATE_KEY, but current code uses GITHUB_ISSUE_ACCESS_TOKEN.'
+        - 'Plan sample migration command uses bugdrop-board-dev; current e2e script proves DB binding works for local migration and is less sensitive to user-changed database names.'
+        - 'Plan Task 10 says modify AGENTS.md only if verification commands change; current expected verification commands already include the Board 5 gates.'
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: medium
+    objective: 'Review Scout findings and authorize the largest safe Board 5 Worker package.'
+    inputs:
+      - 'T001 receipt'
+      - 'Goal oracle'
+      - 'Board 1-4 completion receipts'
+      - 'AGENTS.md proof expectations'
+    constraints:
+      - 'Do not implement.'
+      - 'Keep the package to Conveyor Board 5 only.'
+      - 'Reject any plan that documents stale or guessed credential/config names.'
+      - 'Reject any plan that lacks a fresh-checkout or clean-worktree proof path.'
+      - 'Reject any plan that implements production hardening instead of documenting the handoff.'
+      - 'Reject any plan that includes realtime, comments, downvotes, GitHub Projects, billing, or hosted control plane work.'
+    expected_output:
+      - 'Decision: proceed | revise | blocked'
+      - 'Exact Worker objective'
+      - 'allowed_files'
+      - 'verify commands'
+      - 'stop_if conditions'
+      - 'Deferred tasks for later conveyors'
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      summary: 'Approved one Board 5 Worker package: executable self-hosting docs/config only, with .dev.vars.example and wrangler secret hygiene. No product behavior, production-hardening implementation, hosted control plane, billing, realtime, comments, downvotes, or GitHub Projects work is authorized.'
+      worker_package:
+        objective: 'Implement self-hosting docs/config/handoff: README setup and embed instructions, placeholder-only .dev.vars.example, wrangler.toml secret hygiene, and production-hardening handoff aligned to the current Board 1-4 implementation.'
+        allowed_files:
+          - 'README.md'
+          - '.dev.vars.example'
+          - 'wrangler.toml'
+          - 'docs/goals/bugdrop-board-self-hosting/state.yaml'
+        verify:
+          - 'npx prettier --write README.md .dev.vars.example wrangler.toml docs/goals/bugdrop-board-self-hosting/state.yaml'
+          - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-self-hosting/state.yaml'
+          - 'clean-worktree docs walkthrough using the documented install/config/migration/build/E2E commands'
+          - 'npm run build:widget'
+          - 'npm run test:e2e'
+          - 'npm run validate'
+          - 'make check'
+          - 'direct inspection that README embed/token/D1/GitHub setup matches current implementation'
+          - 'direct inspection that .dev.vars.example contains placeholders only'
+          - 'git diff -- README.md .dev.vars.example wrangler.toml | rg -n "WebSocket|DurableObject|EventSource|downvote|comment|GitHub Projects|projects|billing|tenant|rate limit|abuse" should return no matches'
+        stop_if:
+          - 'Need files outside README.md, .dev.vars.example, wrangler.toml, or this state file.'
+          - 'Need real secrets or live GitHub credentials for local docs proof.'
+          - 'Need production-hardening implementation rather than a handoff/checklist.'
+          - 'Need hosted control plane, billing, tenant management, realtime, comments, downvotes, GitHub Projects, or product behavior changes.'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Implement the Judge-authorized Board 5 self-hosting docs/config/handoff package.'
+    allowed_files:
+      - 'README.md'
+      - '.dev.vars.example'
+      - 'wrangler.toml'
+      - 'AGENTS.md'
+      - 'package.json'
+      - 'Makefile'
+      - 'docs/goals/bugdrop-board-self-hosting/state.yaml'
+    verify:
+      - 'Run the Judge-authorized clean-checkout or clean-worktree docs walkthrough.'
+      - 'npm run build:widget'
+      - 'npm run test:e2e'
+      - 'npm run validate'
+      - 'make check'
+      - 'direct inspection that README embed/token/D1/GitHub setup matches current implementation'
+      - 'direct inspection that .dev.vars.example contains placeholders only'
+      - 'git diff -- README.md .dev.vars.example wrangler.toml | rg -n "WebSocket|DurableObject|EventSource|downvote|comment|GitHub Projects|projects|billing|tenant|rate limit|abuse" should return no matches'
+    stop_if:
+      - 'Need production-hardening implementation rather than a handoff/checklist.'
+      - 'Need hosted control plane, billing, tenant management, realtime, comments, downvotes, GitHub Projects, or product behavior changes.'
+      - 'Need real secrets or live GitHub credentials for local docs proof.'
+      - 'Cannot make the documented commands executable from a clean checkout/worktree.'
+      - 'Need files outside the Judge-authorized allowed_files.'
+      - 'Verification fails twice for the same unresolved cause.'
+    receipt:
+      result: done
+      summary: 'Implemented the approved Board 5 self-hosting docs/config package. README now documents the current product shape, local setup, D1 migration command, Worker port, E2E smoke, embed script attributes, host token endpoint contract, GitHub access-token mirroring, Cloudflare secrets, and hardening handoff. .dev.vars.example contains placeholder-only local secrets. wrangler.toml no longer stores BOARD_TOKEN_SECRET as a plain var.'
+      changed_files:
+        - 'README.md'
+        - '.dev.vars.example'
+        - 'wrangler.toml'
+        - 'docs/goals/bugdrop-board-self-hosting/state.yaml'
+      commands:
+        - command: 'npx prettier --write README.md docs/goals/bugdrop-board-self-hosting/state.yaml'
+          status: pass
+          evidence: 'README.md and state.yaml formatted; repo format:check also passed.'
+        - command: 'npx wrangler d1 migrations apply DB --local && npm run build:widget && npm run test:e2e && npm run validate && make check'
+          status: pass
+          evidence: 'Current worktree local migration had no pending migrations; widget build passed; Playwright E2E passed; validate passed with 5 test files and 38 tests; make check passed.'
+        - command: 'npm ci && cp .dev.vars.example .dev.vars && npx wrangler d1 migrations apply DB --local && npm run build:widget && npm run test:e2e'
+          status: pass
+          evidence: 'Clean temporary worktree /private/tmp/bugdrop-board-self-hosting-check installed 381 packages, copied local vars, applied 0001_initial.sql to local D1, built widget bundle 0.1.0, and passed the embedded Playwright smoke.'
+        - command: 'git diff -- README.md .dev.vars.example wrangler.toml | rg -n "WebSocket|DurableObject|EventSource|downvote|comment|GitHub Projects|projects|billing|tenant|rate limit|abuse" || true'
+          status: pass
+          evidence: 'No out-of-scope terms found in the docs/config diff.'
+        - command: 'rg -n "GITHUB_ISSUE_ACCESS_TOKEN|BOARD_TOKEN_SECRET|wrangler d1 migrations apply DB --local|data-token-endpoint|data-board-id|data-api-url|wrangler secret put|board_mean_weasel_demo|127.0.0.1:8788|127.0.0.1:5177|payload.signature|externalUserId" README.md .dev.vars.example wrangler.toml src/routes/api.ts src/widget/index.ts e2e/fixtures/host-app.ts'
+          status: pass
+          evidence: 'Direct inspection matched README/.dev.vars/wrangler docs to current implementation, widget attributes, local ports, token claims, and GitHub env var.'
+        - command: 'if rg -n "= *(ghp_|github_pat_|[A-Za-z0-9_]{30,})" .dev.vars.example; then exit 1; fi'
+          status: pass
+          evidence: '.dev.vars.example contains placeholders only, no token-shaped real secret.'
+        - command: 'git diff --check'
+          status: pass
+          evidence: 'No whitespace errors.'
+      notes:
+        - 'The clean worktree proof used a temporary commit tree for the current Board 5 docs/config edits, so it did not rely on warmed node_modules or local D1 state from the main workspace.'
+        - 'README explicitly says durable board provisioning outside the E2E-only reset route remains a later tranche.'
+
+  - id: T004
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Review the completed Board 5 Worker package against the self-hosting oracle.'
+    inputs:
+      - 'T001 receipt'
+      - 'T002 receipt'
+      - 'T003 receipt'
+      - 'Current diff'
+      - 'Last verification output'
+    constraints:
+      - 'Do not implement unless promoting a tiny PM cleanup task is unavoidable and explicitly recorded.'
+      - 'Reject if the clean-checkout/worktree walkthrough was not run after final docs/config edits.'
+      - 'Reject if README, .dev.vars.example, wrangler.toml, and embed/token docs were not directly inspected.'
+      - 'Reject if validation gates were not run after final edit.'
+      - 'Reject if production hardening was implemented instead of handed off.'
+    expected_output:
+      - 'approved | rejected'
+      - 'Evidence mapped to each oracle clause'
+      - 'Required cleanup task if rejected'
+      - 'Deferred follow-up tasks for later conveyors'
+    receipt:
+      result: done
+      decision: approved
+      summary: 'Approved the Board 5 Worker package against the self-hosting oracle. The docs/config now describe executable local setup, secrets, D1, embed/token contracts, GitHub mirroring, and handoff boundaries, and the clean temporary worktree proved the documented setup path through E2E smoke.'
+      evidence_map:
+        clean_walkthrough: 'In /private/tmp/bugdrop-board-self-hosting-check, npm ci, cp .dev.vars.example .dev.vars, npx wrangler d1 migrations apply DB --local, npm run build:widget, and npm run test:e2e all passed.'
+        readme_setup: 'README.md documents npm ci, .dev.vars copy, D1 create/update, local migration via DB binding, widget build, Worker dev port, and E2E smoke.'
+        embed_token: 'README.md documents script attributes data-board-id, data-api-url, data-token-endpoint, data-poll-interval, data-color, and token claims boardId/externalUserId/exp/aud/iss.'
+        config_alignment: 'wrangler.toml keeps DB binding/database name/assets/non-secret vars; BOARD_TOKEN_SECRET moved to .dev.vars.example and wrangler secret instructions.'
+        handoff_boundary: 'README.md Current Handoff Notes separates later provisioning/origin/misuse/rotation/deployment/package work from this slice.'
+        gates: 'Current worktree migration, build:widget, test:e2e, validate, make check, direct inspection, placeholder scan, diff scan, and git diff --check passed.'
+      conclusion: 'No cleanup task required; proceed to final audit.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Final audit: decide whether Conveyor Board 5 is complete and ready for the next implementation tranche.'
+    inputs:
+      - 'All done task receipts'
+      - 'Last verification'
+      - 'Current dirty diff'
+      - 'Goal oracle'
+    constraints:
+      - 'Do not implement.'
+      - 'Reject completion if required Worker or Judge tasks are still queued or active.'
+      - 'Reject completion if the self-hosting oracle is not proven with clean-checkout/worktree evidence.'
+      - 'Reject completion if the board drifted into production hardening implementation or later-conveyor functionality.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'Evidence for fresh checkout/worktree docs walkthrough'
+      - 'Evidence for README setup and embed instructions'
+      - 'Evidence for .dev.vars.example placeholders'
+      - 'Evidence for wrangler/D1/config alignment'
+      - 'Evidence for production-hardening handoff'
+      - 'Evidence for widget build'
+      - 'Evidence for E2E smoke'
+      - 'Evidence for make check'
+      - 'Evidence for npm run validate'
+      - 'Evidence for no out-of-scope implementation drift'
+      - 'Next starter command if complete'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: 'Conveyor Board 5 is complete. The final state proves self-hosting docs/config from a clean temporary worktree, README setup/embed instructions, placeholder-only local vars, wrangler/D1/config alignment, production-hardening handoff, widget build, E2E smoke, npm run validate, make check, and no out-of-scope implementation drift.'
+      evidence:
+        - 'Fresh worktree docs walkthrough: /private/tmp/bugdrop-board-self-hosting-check ran npm ci, copied .dev.vars.example to .dev.vars, applied local D1 migration 0001_initial.sql, built board.js, and passed the Playwright embedded smoke.'
+        - 'README setup and embed instructions: direct inspection found local setup, D1 commands, Worker port, E2E smoke, script embed attributes, and host token endpoint contract.'
+        - '.dev.vars.example placeholders: direct scan found no token-shaped real secret and only BOARD_TOKEN_SECRET/GITHUB_ISSUE_ACCESS_TOKEN placeholder values.'
+        - 'wrangler/D1/config alignment: direct inspection found DB binding, bugdrop-board-dev database name, public assets binding, non-secret vars in wrangler.toml, and secret setup instructions.'
+        - 'Production-hardening handoff: README Current Handoff Notes lists later provisioning, stricter origin defaults, request throttling/misuse controls, secret rotation, deployment docs, and package/version flow without implementing them.'
+        - 'Widget build: npm run build:widget passed in both current and clean temporary worktrees.'
+        - 'E2E smoke: npm run test:e2e passed in both current and clean temporary worktrees.'
+        - 'Validation: npm run validate passed with 5 Vitest files and 38 tests.'
+        - 'Repository checks: make check passed, including eslint, format:check, typecheck, knip, critical audit, and Actions Node 24 guard.'
+        - 'Out-of-scope drift: docs/config diff scan found no forbidden realtime/comments/downvotes/GitHub Projects/billing/tenant/rate-limit/abuse terms added.'
+      next_starter: '$goal-prep Build Conveyor Board 6 from docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md after choosing the next tranche.'
+
+checks:
+  dirty_fingerprint: 'README.md .dev.vars.example wrangler.toml docs/goals/bugdrop-board-self-hosting/goal.md docs/goals/bugdrop-board-self-hosting/state.yaml docs/goals/bugdrop-board-self-hosting/notes/.gitkeep'
+  last_verification:
+    result: pass
+    task: T999
+    commands:
+      - command: 'npx wrangler d1 migrations apply DB --local && npm run build:widget && npm run test:e2e && npm run validate && make check'
+        status: pass
+      - command: 'npm ci && cp .dev.vars.example .dev.vars && npx wrangler d1 migrations apply DB --local && npm run build:widget && npm run test:e2e'
+        status: pass
+      - command: 'git diff -- README.md .dev.vars.example wrangler.toml | rg -n "WebSocket|DurableObject|EventSource|downvote|comment|GitHub Projects|projects|billing|tenant|rate limit|abuse" || true'
+        status: pass
+      - command: 'rg -n "GITHUB_ISSUE_ACCESS_TOKEN|BOARD_TOKEN_SECRET|wrangler d1 migrations apply DB --local|data-token-endpoint|data-board-id|data-api-url|wrangler secret put|board_mean_weasel_demo|127.0.0.1:8788|127.0.0.1:5177|payload.signature|externalUserId" README.md .dev.vars.example wrangler.toml src/routes/api.ts src/widget/index.ts e2e/fixtures/host-app.ts'
+        status: pass
+      - command: 'if rg -n "= *(ghp_|github_pat_|[A-Za-z0-9_]{30,})" .dev.vars.example; then exit 1; fi'
+        status: pass
+      - command: 'git diff --check'
+        status: pass

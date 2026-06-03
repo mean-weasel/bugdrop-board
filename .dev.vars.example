@@ -1,0 +1,5 @@
+# Local-only secrets. Copy this file to .dev.vars and fill in real values.
+# Do not commit .dev.vars.
+
+BOARD_TOKEN_SECRET=replace-with-a-long-random-secret
+GITHUB_ISSUE_ACCESS_TOKEN=github-token-that-can-create-issues
