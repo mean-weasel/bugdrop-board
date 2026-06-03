@@ -50,13 +50,22 @@ Cloudflare Worker, D1 database, Worker secrets, and GitHub access token.
    npx wrangler d1 migrations apply DB --local
    ```
 
-6. Build the widget bundle:
+6. Provision a board:
+
+   ```bash
+   npm run provision:board -- --repo mean-weasel/demo --name "Demo Board" --local
+   ```
+
+   The command creates or updates one D1 board for the repo and prints the stable `board.id` to
+   use in the embed script.
+
+7. Build the widget bundle:
 
    ```bash
    npm run build:widget
    ```
 
-7. Start the Worker:
+8. Start the Worker:
 
    ```bash
    npm run dev
@@ -64,15 +73,15 @@ Cloudflare Worker, D1 database, Worker secrets, and GitHub access token.
 
    The development Worker listens on `http://127.0.0.1:8788`.
 
-8. Run the local embedded smoke:
+9. Run the local embedded smoke:
 
    ```bash
    npm run test:e2e
    ```
 
    The E2E command starts the Worker with local test vars, serves a dummy host app on
-   `http://127.0.0.1:5177`, seeds `board_mean_weasel_demo`, creates an item, upvotes it, and proves
-   another viewer sees the update through polling.
+   `http://127.0.0.1:5177`, provisions a board through `npm run provision:board`, creates an item,
+   upvotes it, and proves another viewer sees the update through polling.
 
 ## Embed Contract
 
@@ -161,6 +170,7 @@ npx wrangler d1 migrations apply DB --remote
 Run the standard checks before handing off changes:
 
 ```bash
+npm run provision:board -- --repo mean-weasel/demo --name "Demo Board" --local
 npm run build:widget
 npm run test:e2e
 npm run validate
@@ -172,7 +182,6 @@ make check
 This repository is still an early vertical slice. Before release, the next tranche should decide
 and implement:
 
-- durable board provisioning outside the E2E-only reset route;
 - stricter origin policy defaults for deployed Workers;
 - request throttling and misuse controls;
 - secret rotation guidance;

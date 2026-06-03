@@ -1,13 +1,13 @@
 import { expect, test } from '@playwright/test';
-import { resetBoard, startHostApp } from './fixtures/host-app';
+import { provisionBoard, startHostApp } from './fixtures/host-app';
 
 test('embedded board creates, upvotes, and syncs through polling', async ({ browser, page }) => {
-  const host = await startHostApp();
+  const board = await provisionBoard();
+  const host = await startHostApp(board.id);
   const secondContext = await browser.newContext();
   const secondPage = await secondContext.newPage();
 
   try {
-    await resetBoard();
     await page.goto(`${host.url}/viewer-a`);
     await secondPage.goto(`${host.url}/viewer-b`);
 

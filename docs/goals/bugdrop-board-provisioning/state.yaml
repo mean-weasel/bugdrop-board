@@ -1,0 +1,387 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Provisioning'
+  slug: 'bugdrop-board-provisioning'
+  kind: existing_plan
+  tranche: 'Complete Conveyor Board 6: durable board provisioning/config flow only, using completed Board 1-5 foundations and excluding production hardening, billing, realtime, comments, downvotes, and GitHub Projects.'
+  status: done
+  oracle:
+    signal: 'A self-hoster or local operator can create/configure a durable board for one app/repo without using the E2E-only reset route, embed the widget against that board id, and prove the existing create/GitHub mirror/upvote/polling smoke still works; final audit confirms no production hardening, billing, realtime, comments, downvotes, GitHub Projects, hosted control plane, or broad release work was added.'
+    cadence: 'after Scout, after Worker, and at final audit'
+    final_proof: 'Receipt-backed command output for the selected durable provisioning flow, direct D1/API evidence of the provisioned board, widget/E2E proof using that board without __e2e/reset as the operator path, npm run validate, make check, npm run build:widget, npm run test:e2e or a Judge-authorized provisioning E2E, docs inspection, and scope-drift scan.'
+  intake:
+    original_request: '$goal-prep Build Conveyor Board 6 from docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md: durable board provisioning/config flow only, using completed Board 1-5 foundations and excluding production hardening, billing, realtime, comments, downvotes, and GitHub Projects.'
+    interpreted_outcome: 'Prepare a GoalBuddy board for the next conveyor slice: durable board provisioning/config flow, replacing the Board 5 handoff gap that board creation currently exists only in code/tests/E2E reset.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board implementers and self-hosting operators'
+    authority: requested
+    proof_type: demo
+    completion_proof: 'A documented local provisioning/config flow creates or upserts a durable board, exposes the stable board id for embedding, and a smoke test uses that board through the existing widget/API path; validation gates pass and final audit proves out-of-scope features were not added.'
+    likely_misfire: 'Adding another test-only seed path, relying on __e2e/reset as the operator path, or drifting into hosted tenant/control-plane/product-hardening work instead of a narrow local provisioning flow.'
+    blind_spots_considered:
+      - 'The original implementation plan stops at Conveyor Board 5; Board 6 is derived from the Board 5 final handoff note and must not pretend to be pre-specified by the plan.'
+      - 'The current repository already has BoardRepository.upsertBoard in tests and E2E reset, but no durable operator path is documented or exposed.'
+      - 'The right provisioning surface is not assumed during prep; Scout must compare CLI/script, admin route, config-file, and migration/seed options against the existing Worker/D1/Hono architecture.'
+      - 'Hosted users should eventually need only GitHub and the embed script, but hosted control-plane implementation is out of scope for this board.'
+      - 'The E2E reset route can remain for test setup, but the operator docs/path must not depend on it.'
+    existing_plan_facts:
+      - 'Input plan path: docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md'
+      - 'The original plan defines Conveyor Boards 0-5; this Board 6 is a user-requested follow-on tranche.'
+      - 'Board 5 final receipt says README Current Handoff Notes lists durable board provisioning outside the E2E-only reset route as later work.'
+      - 'Completed foundation: Board 1 D1/auth repository/token foundation.'
+      - 'Completed foundation: Board 2 create-item GitHub Issue mirror route.'
+      - 'Completed foundation: Board 3 board reads, upvote toggle, and event cursor polling APIs.'
+      - 'Completed foundation: Board 4 embedded widget, dummy host app, and Playwright E2E.'
+      - 'Completed foundation: Board 5 self-hosting docs/config and production-hardening handoff.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: active
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-provisioning/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-provisioning'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: medium
+    objective: 'Validate the current board creation/provisioning surface and recommend the smallest durable operator path before any writes.'
+    inputs:
+      - 'docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md'
+      - 'docs/goals/bugdrop-board-data-auth/state.yaml'
+      - 'docs/goals/bugdrop-board-github-mirror/state.yaml'
+      - 'docs/goals/bugdrop-board-votes-polling/state.yaml'
+      - 'docs/goals/bugdrop-board-widget-host/state.yaml'
+      - 'docs/goals/bugdrop-board-self-hosting/state.yaml'
+      - 'README.md'
+      - 'AGENTS.md'
+      - 'package.json'
+      - 'wrangler.toml'
+      - 'migrations/'
+      - 'src/lib/board-repository.ts'
+      - 'src/routes/api.ts'
+      - 'e2e/fixtures/host-app.ts'
+      - 'e2e/board-widget.spec.ts'
+      - 'test/board-repository.test.ts'
+      - 'test/routes.test.ts'
+    constraints:
+      - 'Read-only.'
+      - 'Do not edit implementation, docs, scripts, config, or goal state during Scout except for the final receipt.'
+      - 'Inspect only facts needed for durable board provisioning/config flow.'
+      - 'Do not implement production hardening, billing, hosted control plane, realtime, comments, downvotes, GitHub Projects, or status workflow expansion.'
+      - 'Evaluate CLI/script, admin route, config-file, and seed-command options against current repo patterns; do not assume the provisioning surface up front.'
+      - 'Identify how to prove the operator path without real GitHub credentials, preferably by reusing the existing E2E fake issue path where appropriate.'
+    expected_output:
+      - 'Current board creation/provisioning facts.'
+      - 'Recommended provisioning/config surface and why it is the smallest durable operator path.'
+      - 'Exact files likely needed.'
+      - 'Verification commands and direct evidence needed to prove the oracle.'
+      - 'Stop conditions and forbidden carryover list.'
+      - 'Largest safe Worker package proposal.'
+    receipt:
+      result: done
+      summary: 'Validated current provisioning surface. BoardRepository.upsertBoard already provides stable board ids and one-board-per-repo behavior, and tests cover duplicate upsert plus board isolation. The only runtime/operator-like board seed path is POST /__e2e/reset, gated to ENVIRONMENT=e2e and used by the current Playwright fixture. No durable operator provisioning command, script, route, or documented config flow exists yet.'
+      evidence:
+        - 'src/lib/board-repository.ts upsertBoard derives id as board_${owner}_${repo} with non-alphanumerics replaced by underscores and uses ON CONFLICT(repo_owner, repo_name) DO UPDATE.'
+        - 'migrations/0001_initial.sql declares boards.id as primary key and UNIQUE(repo_owner, repo_name).'
+        - 'test/board-repository.test.ts creates and loads one board per repo, verifies duplicate upsert returns the same id, and verifies item/event isolation across boards.'
+        - 'src/routes/api.ts only creates a board in POST /__e2e/reset, and that route returns 404 unless ENVIRONMENT is e2e.'
+        - 'e2e/fixtures/host-app.ts resetBoard calls /__e2e/reset before the widget smoke, so the current E2E does not prove an operator provisioning path.'
+        - 'README.md still lists durable board provisioning outside the E2E-only reset route as a handoff gap.'
+      recommendation:
+        surface: 'Add a local operator command, npm run provision:board, backed by a small Node script that validates repo/name input, computes the same stable board id as BoardRepository.upsertBoard, executes an idempotent D1 upsert through wrangler d1 execute, and prints JSON containing the board id for embedding.'
+        rationale: 'A script is the smallest durable operator path for the current self-hosted stack. It avoids inventing a public admin API or hosted control plane, works locally and remotely through Wrangler flags, keeps __e2e/reset test-only, and can be proven without real GitHub credentials.'
+      worker_package:
+        likely_files:
+          - 'scripts/provision-board.js'
+          - 'test/provision-board.test.ts'
+          - 'package.json'
+          - 'README.md'
+          - 'e2e/fixtures/host-app.ts'
+          - 'e2e/board-widget.spec.ts'
+          - 'docs/goals/bugdrop-board-provisioning/state.yaml'
+        verify:
+          - 'npm run provision:board -- --repo mean-weasel/demo-board --name "Demo Board" --local'
+          - 'npx wrangler d1 execute DB --local --command "SELECT id, repo_owner, repo_name, name FROM boards WHERE id = ...;"'
+          - 'npm run test:e2e proving widget smoke uses a provisioned board id without resetBoard/__e2e/reset'
+          - 'npm run validate'
+          - 'make check'
+      forbidden:
+        - 'Do not add hosted control plane, billing, tenant management, realtime, comments, downvotes, GitHub Projects, status workflow expansion, or production-hardening implementation.'
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: medium
+    objective: 'Review Scout findings and authorize the largest safe Board 6 Worker package.'
+    inputs:
+      - 'T001 receipt'
+      - 'Goal oracle'
+      - 'Board 1-5 completion receipts'
+      - 'AGENTS.md proof expectations'
+    constraints:
+      - 'Do not implement.'
+      - 'Keep the package to durable board provisioning/config flow only.'
+      - 'Reject any plan that depends on __e2e/reset as the operator path.'
+      - 'Reject any plan that requires real GitHub credentials for local proof.'
+      - 'Reject any plan that implements production hardening, billing, hosted control plane, realtime, comments, downvotes, GitHub Projects, or status workflow expansion.'
+      - 'Require at least one proof that a provisioned board id can be used through the existing embedded/widget/API flow.'
+    expected_output:
+      - 'Decision: proceed | revise | blocked'
+      - 'Exact Worker objective'
+      - 'allowed_files'
+      - 'verify commands'
+      - 'stop_if conditions'
+      - 'Deferred tasks for later conveyors'
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      summary: 'Approved one Board 6 Worker package: local operator provisioning command plus docs/E2E proof only. The package must keep __e2e/reset test-only, avoid real GitHub credentials by relying on ENVIRONMENT=e2e for the widget smoke, and avoid hosted-control-plane or production-hardening work.'
+      worker_package:
+        objective: 'Implement a durable local board provisioning/config flow: npm run provision:board upserts one board per owner/repo into D1, prints the stable board id, README documents it, and Playwright provisions a unique board for the embedded smoke without treating __e2e/reset as the operator path.'
+        allowed_files:
+          - 'scripts/provision-board.js'
+          - 'test/provision-board.test.ts'
+          - 'package.json'
+          - 'README.md'
+          - 'e2e/fixtures/host-app.ts'
+          - 'e2e/board-widget.spec.ts'
+          - 'docs/goals/bugdrop-board-provisioning/state.yaml'
+        verify:
+          - 'npm run provision:board -- --repo mean-weasel/demo-board --name "Demo Board" --local'
+          - 'npx wrangler d1 execute DB --local --command "SELECT id, repo_owner, repo_name, name FROM boards WHERE id = ''board_mean_weasel_demo_board'';"'
+          - 'npm run build:widget'
+          - 'npm run test:e2e'
+          - 'npm run validate'
+          - 'make check'
+          - 'direct inspection that E2E no longer calls resetBoard/__e2e/reset as setup'
+          - 'scope scan for realtime/comments/downvotes/GitHub Projects/billing/tenant/control-plane/hardening implementation drift'
+        stop_if:
+          - 'Need real GitHub credentials for local proof.'
+          - 'Need files outside the approved Worker package.'
+          - 'Need hosted control plane, billing, tenant management, realtime, comments, downvotes, GitHub Projects, status workflow expansion, or production-hardening implementation.'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Implement the Judge-authorized durable board provisioning/config-flow package.'
+    allowed_files:
+      - 'README.md'
+      - '.dev.vars.example'
+      - 'wrangler.toml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'Makefile'
+      - 'scripts/'
+      - 'scripts/provision-board.js'
+      - 'scripts/provision-board-core.js'
+      - 'src/lib/board-repository.ts'
+      - 'src/routes/api.ts'
+      - 'src/types.ts'
+      - 'e2e/fixtures/host-app.ts'
+      - 'e2e/board-widget.spec.ts'
+      - 'test/provision-board.test.ts'
+      - 'test/board-repository.test.ts'
+      - 'test/routes.test.ts'
+      - 'docs/goals/bugdrop-board-provisioning/state.yaml'
+    verify:
+      - 'Run Judge-authorized provisioning command/API/config flow from a clean or explicit local state.'
+      - 'Directly inspect D1/API output proving the board exists with stable id and repo owner/name.'
+      - 'Run widget/API smoke using the provisioned board id without treating __e2e/reset as the operator path.'
+      - 'npm run build:widget'
+      - 'npm run test:e2e or Judge-authorized provisioning E2E command'
+      - 'npm run validate'
+      - 'make check'
+      - 'direct inspection that README/docs name the new provisioning path and no longer leave provisioning only as a handoff gap'
+      - 'scope scan for realtime/comments/downvotes/GitHub Projects/billing/tenant/control-plane/hardening implementation drift'
+    stop_if:
+      - 'Need real GitHub credentials for local proof.'
+      - 'Need production-hardening implementation rather than a durable provisioning path.'
+      - 'Need hosted control plane, billing, tenant management, realtime, comments, downvotes, GitHub Projects, status workflow expansion, or broad release work.'
+      - 'Need files outside Judge-authorized allowed_files.'
+      - 'Cannot prove a provisioned board id through the existing widget/API flow.'
+      - 'Verification fails twice for the same unresolved cause.'
+    receipt:
+      result: done
+      summary: 'Implemented the approved Board 6 durable provisioning package. Added npm run provision:board as a local/remote operator command backed by Wrangler D1 execute, split pure board-id/upsert helpers for focused tests, documented the provisioning path in README, and changed Playwright E2E to provision a unique durable board id before embedding instead of calling resetBoard/__e2e/reset as setup.'
+      changed_files:
+        - 'README.md'
+        - 'package.json'
+        - 'scripts/provision-board.js'
+        - 'scripts/provision-board-core.js'
+        - 'test/provision-board.test.ts'
+        - 'e2e/fixtures/host-app.ts'
+        - 'e2e/board-widget.spec.ts'
+        - 'docs/goals/bugdrop-board-provisioning/state.yaml'
+      commands:
+        - command: 'npm run test -- test/provision-board.test.ts'
+          status: pass
+          evidence: '5 focused provisioning helper tests passed, including stable board id derivation, malformed repo rejection, SQL escaping, and local/remote mode parsing.'
+        - command: 'npm run build:widget'
+          status: pass
+          evidence: 'Built BugDrop Board bundle 0.1.0.'
+        - command: 'npm run test:e2e'
+          status: pass
+          evidence: 'Playwright embedded smoke passed after provisioning a unique board id through scripts/provision-board.js; create, fake issue mirror, upvote, and polling sync all passed.'
+        - command: 'npm run validate'
+          status: pass
+          evidence: 'lint, format:check, typecheck, and Vitest passed; 6 test files and 43 tests passed.'
+        - command: 'make check'
+          status: pass
+          evidence: 'eslint, format:check, typecheck, knip, critical audit, and Actions Node 24 guard passed.'
+        - command: 'npx wrangler d1 migrations apply DB --local && npm run provision:board -- --repo mean-weasel/final-demo --name "Final Demo" --local && npm run provision:board -- --repo mean-weasel/final-demo --name "Final Demo Updated" --local && npx wrangler d1 execute DB --local --command "SELECT id, repo_owner, repo_name, name FROM boards WHERE id = ''board_mean_weasel_final_demo'';"'
+          status: pass
+          evidence: 'No pending local migrations; provisioning returned board_mean_weasel_final_demo both times; D1 query returned repo_owner mean-weasel, repo_name final-demo, and updated name Final Demo Updated.'
+        - command: 'rg -n "resetBoard|__e2e/reset" e2e src/routes/api.ts'
+          status: pass
+          evidence: 'Only src/routes/api.ts still contains the guarded __e2e/reset route; e2e no longer imports or calls resetBoard/__e2e/reset.'
+        - command: 'git diff -- src e2e test scripts package.json README.md | rg -n "WebSocket|DurableObject|EventSource|downvote|GitHub Projects|billing|tenant|control plane|hardening" || true'
+          status: pass
+          evidence: 'No out-of-scope implementation drift terms found in the product/test/script/docs diff.'
+        - command: 'git diff --check'
+          status: pass
+          evidence: 'No whitespace errors.'
+      notes:
+        - 'The E2E-only reset route remains guarded in src/routes/api.ts, but it is no longer the widget smoke setup path.'
+        - 'The provisioning command supports --local by default and --remote for deployed D1, without adding a public admin surface.'
+
+  - id: T004
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Review the completed Board 6 Worker package against the durable provisioning oracle.'
+    inputs:
+      - 'T001 receipt'
+      - 'T002 receipt'
+      - 'T003 receipt'
+      - 'Current diff'
+      - 'Last verification output'
+    constraints:
+      - 'Do not implement unless promoting a tiny PM cleanup task is unavoidable and explicitly recorded.'
+      - 'Reject if provisioning proof relies on __e2e/reset as the operator path.'
+      - 'Reject if the provisioned board was not used through the existing widget/API flow.'
+      - 'Reject if validation gates were not run after final edit.'
+      - 'Reject if the diff includes out-of-scope feature/hardening/control-plane work.'
+    expected_output:
+      - 'approved | rejected'
+      - 'Evidence mapped to each oracle clause'
+      - 'Required cleanup task if rejected'
+      - 'Deferred follow-up tasks for later conveyors'
+    receipt:
+      result: done
+      decision: approved
+      summary: 'Approved the Board 6 Worker package against the durable provisioning oracle. The diff adds a local/remote operator command, focused helper tests, README instructions, and E2E proof using a provisioned board id. It does not add hosted control plane, billing, realtime transport, comments, downvotes, GitHub Projects, status workflows, or production-hardening implementation.'
+      evidence_map:
+        durable_provisioning: 'npm run provision:board upserts a board by --repo owner/name and optional --name, then prints JSON with board id, repoOwner, repoName, name, binding, and local/remote mode.'
+        stable_board_id: 'Direct command proof returned board_mean_weasel_final_demo twice for mean-weasel/final-demo and D1 query showed the updated same row.'
+        widget_smoke: 'npm run test:e2e passed with provisionBoard() running scripts/provision-board.js and startHostApp(board.id) embedding/tokening against that provisioned id.'
+        reset_boundary: 'rg found resetBoard/__e2e/reset only in src/routes/api.ts; e2e fixture/spec no longer call the reset route.'
+        docs: 'README now documents npm run provision:board before build/dev/E2E and removes durable board provisioning from the handoff gap.'
+        gates: 'build:widget, test:e2e, validate, make check, focused helper tests, D1 inspection, scope scan, and git diff --check passed.'
+      conclusion: 'No cleanup task required; proceed to final audit.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Final audit: decide whether Conveyor Board 6 is complete and ready for the next tranche.'
+    inputs:
+      - 'All done task receipts'
+      - 'Last verification'
+      - 'Current dirty diff'
+      - 'Goal oracle'
+    constraints:
+      - 'Do not implement.'
+      - 'Reject completion if required Worker or Judge tasks are still queued or active.'
+      - 'Reject completion if durable provisioning is not proven independently of __e2e/reset as the operator path.'
+      - 'Reject completion if the board drifted into production hardening, hosted control plane, billing, realtime, comments, downvotes, or GitHub Projects.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'Evidence for durable board provisioning/config flow'
+      - 'Evidence for stable board id and one-board-per-app/repo behavior'
+      - 'Evidence for widget/API smoke using the provisioned board'
+      - 'Evidence for docs/config alignment'
+      - 'Evidence for widget build'
+      - 'Evidence for E2E/provisioning smoke'
+      - 'Evidence for make check'
+      - 'Evidence for npm run validate'
+      - 'Evidence for no out-of-scope implementation drift'
+      - 'Next starter command if complete'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: 'Conveyor Board 6 is complete. The current state proves a durable board provisioning/config flow independent of __e2e/reset as the operator path, stable one-board-per-repo ids, widget/API smoke with a provisioned board, docs/config alignment, widget build, E2E smoke, npm run validate, make check, and no out-of-scope implementation drift.'
+      evidence:
+        - 'Durable provisioning flow: npm run provision:board -- --repo mean-weasel/final-demo --name "Final Demo" --local returned board_mean_weasel_final_demo.'
+        - 'Stable board id and one-board-per-repo behavior: running the same command again with name "Final Demo Updated" returned the same board id, and D1 query showed the same row updated.'
+        - 'Widget/API smoke using provisioned board: npm run test:e2e passed after provisionBoard() created a unique board and the dummy host embedded/tokened against that board id.'
+        - 'Docs/config alignment: README documents npm run provision:board and no longer lists durable board provisioning as a handoff gap.'
+        - 'Widget build: npm run build:widget passed.'
+        - 'E2E/provisioning smoke: npm run test:e2e passed.'
+        - 'Validation: npm run validate passed with 6 Vitest files and 43 tests.'
+        - 'Repository checks: make check passed, including eslint, format:check, typecheck, knip, critical audit, and Actions Node 24 guard.'
+        - 'No out-of-scope drift: diff scan found no realtime/comments/downvotes/GitHub Projects/billing/tenant/control-plane/hardening implementation terms.'
+      next_starter: '$goal-prep Build the next BugDrop Board tranche after choosing the next product gap.'
+
+checks:
+  dirty_fingerprint: 'README.md package.json scripts/provision-board.js scripts/provision-board-core.js test/provision-board.test.ts e2e/fixtures/host-app.ts e2e/board-widget.spec.ts docs/goals/bugdrop-board-provisioning/goal.md docs/goals/bugdrop-board-provisioning/state.yaml docs/goals/bugdrop-board-provisioning/notes/.gitkeep'
+  last_verification:
+    result: pass
+    task: T999
+    commands:
+      - command: 'npm run test -- test/provision-board.test.ts'
+        status: pass
+      - command: 'npm run build:widget'
+        status: pass
+      - command: 'npm run test:e2e'
+        status: pass
+      - command: 'npm run validate'
+        status: pass
+      - command: 'make check'
+        status: pass
+      - command: 'npx wrangler d1 migrations apply DB --local && npm run provision:board -- --repo mean-weasel/final-demo --name "Final Demo" --local && npm run provision:board -- --repo mean-weasel/final-demo --name "Final Demo Updated" --local && npx wrangler d1 execute DB --local --command "SELECT id, repo_owner, repo_name, name FROM boards WHERE id = ''board_mean_weasel_final_demo'';"'
+        status: pass
+      - command: 'rg -n "resetBoard|__e2e/reset" e2e src/routes/api.ts'
+        status: pass
+      - command: 'git diff -- src e2e test scripts package.json README.md | rg -n "WebSocket|DurableObject|EventSource|downvote|GitHub Projects|billing|tenant|control plane|hardening" || true'
+        status: pass
+      - command: 'git diff --check'
+        status: pass
