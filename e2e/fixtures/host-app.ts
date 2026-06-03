@@ -1,14 +1,23 @@
 import { createServer, type Server } from 'node:http';
+import { execFile } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { promisify } from 'node:util';
 import { createBoardToken } from '../../src/lib/board-token';
 
-export const BOARD_ID = 'board_mean_weasel_demo';
 export const HOST_ORIGIN = 'http://127.0.0.1:5177';
 const WORKER_ORIGIN = 'http://127.0.0.1:8788';
 const TOKEN_SECRET = 'e2e-secret';
 const TOKEN_AUDIENCE = 'bugdrop-board';
 const TOKEN_ISSUER = 'dummy-host';
+const execFileAsync = promisify(execFile);
+
+interface ProvisionedBoard {
+  id: string;
+  repoOwner: string;
+  repoName: string;
+  name: string;
+}
 
 interface HostApp {
   server: Server;
@@ -16,7 +25,18 @@ interface HostApp {
   close(): Promise<void>;
 }
 
-export async function startHostApp(): Promise<HostApp> {
+export async function provisionBoard(): Promise<ProvisionedBoard> {
+  const repo = `mean-weasel/demo-${Date.now()}-${process.pid}`;
+  const { stdout } = await execFileAsync(
+    process.execPath,
+    ['scripts/provision-board.js', '--repo', repo, '--name', 'Demo Board', '--local'],
+    { cwd: process.cwd() }
+  );
+  const result = JSON.parse(stdout) as { board: ProvisionedBoard };
+  return result.board;
+}
+
+export async function startHostApp(boardId: string): Promise<HostApp> {
   const server = createServer(async (req, res) => {
     try {
       const url = new URL(req.url ?? '/', HOST_ORIGIN);
@@ -28,12 +48,14 @@ export async function startHostApp(): Promise<HostApp> {
       }
       if (url.pathname === '/token') {
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ token: await createToken(url.searchParams.get('viewer')) }));
+        res.end(
+          JSON.stringify({ token: await createToken(boardId, url.searchParams.get('viewer')) })
+        );
         return;
       }
       if (url.pathname === '/viewer-a' || url.pathname === '/viewer-b') {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(renderHostPage(url.pathname.endsWith('a') ? 'a' : 'b'));
+        res.end(renderHostPage(boardId, url.pathname.endsWith('a') ? 'a' : 'b'));
         return;
       }
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
@@ -59,18 +81,11 @@ export async function startHostApp(): Promise<HostApp> {
   };
 }
 
-export async function resetBoard(): Promise<void> {
-  const res = await fetch(`${WORKER_ORIGIN}/__e2e/reset`, { method: 'POST' });
-  if (!res.ok) {
-    throw new Error(`Board reset failed with ${res.status}: ${await res.text()}`);
-  }
-}
-
-async function createToken(viewer: string | null): Promise<string> {
+async function createToken(boardId: string, viewer: string | null): Promise<string> {
   const suffix = viewer === 'b' ? 'b' : 'a';
   return createBoardToken(
     {
-      boardId: BOARD_ID,
+      boardId,
       externalUserId: `user_e2e_${suffix}`,
       displayName: suffix === 'b' ? 'Grace' : 'Ada',
       exp: Math.floor(Date.now() / 1000) + 300,
@@ -81,7 +96,7 @@ async function createToken(viewer: string | null): Promise<string> {
   );
 }
 
-function renderHostPage(viewer: 'a' | 'b'): string {
+function renderHostPage(boardId: string, viewer: 'a' | 'b'): string {
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -113,7 +128,7 @@ function renderHostPage(viewer: 'a' | 'b'): string {
     </main>
     <script
       src="/board.js"
-      data-board-id="${BOARD_ID}"
+      data-board-id="${boardId}"
       data-api-url="${WORKER_ORIGIN}"
       data-token-endpoint="/token?viewer=${viewer}"
       data-poll-interval="750"
