@@ -10,6 +10,4 @@ node_modules/
 coverage/
 dist/
 public/board.js
-public/board.v*.js
-playwright-report/
 test-results/

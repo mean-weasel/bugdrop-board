@@ -1,35 +1,35 @@
 version: 2
 
 goal:
-  title: "BugDrop Board Scaffold"
-  slug: "bugdrop-board-scaffold"
+  title: 'BugDrop Board Scaffold'
+  slug: 'bugdrop-board-scaffold'
   kind: existing_plan
-  tranche: "Complete Conveyor Board 0: scaffold quality gates, CI, build/test/Worker/widget rails only, then stop after the scaffold oracle is proven."
-  status: active
+  tranche: 'Complete Conveyor Board 0: scaffold quality gates, CI, build/test/Worker/widget rails only, then stop after the scaffold oracle is proven.'
+  status: complete
   oracle:
-    signal: "make check passes, npm run validate passes, npm run build:widget exits 0, public/board.js exists, starter CI/knip/commit-hook rules are present, and final audit confirms no BugDrop screenshot/annotation feedback code was copied."
-    cadence: "after each Worker package and at final audit"
-    final_proof: "Receipt-backed command output for make check, npm run validate, and npm run build:widget; direct file inspection of public/board.js; direct inspection of CI/knip/commit-hook configs; and source scan/audit against screenshot-specific copied code."
+    signal: 'make check passes, npm run validate passes, npm run build:widget exits 0, public/board.js exists, starter CI/knip/commit-hook rules are present, and final audit confirms no BugDrop screenshot/annotation feedback code was copied.'
+    cadence: 'after each Worker package and at final audit'
+    final_proof: 'Receipt-backed command output for make check, npm run validate, and npm run build:widget; direct file inspection of public/board.js; direct inspection of CI/knip/commit-hook configs; and source scan/audit against screenshot-specific copied code.'
   intake:
-    original_request: "$goal-prep Build Conveyor Board 0 from docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md, preserving the scaffold oracle and constraints."
-    interpreted_outcome: "Prepare a GoalBuddy board that executes only the scaffold/build-rails tranche from the accepted implementation plan."
+    original_request: '$goal-prep Build Conveyor Board 0 from docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md, preserving the scaffold oracle and constraints.'
+    interpreted_outcome: 'Prepare a GoalBuddy board that executes only the scaffold/build-rails tranche from the accepted implementation plan.'
     input_shape: existing_plan
-    audience: "BugDrop Board implementation workers and reviewers"
+    audience: 'BugDrop Board implementation workers and reviewers'
     authority: requested
     proof_type: test
-    completion_proof: "make check passes, npm run validate passes, npm run build:widget creates public/board.js, starter CI/knip/commit-hook configs exist, and final audit maps receipts to Conveyor Board 0 constraints."
-    likely_misfire: "Copying BugDrop too literally and dragging screenshot, annotation, or feedback-category behavior into a scaffold-only tranche."
+    completion_proof: 'make check passes, npm run validate passes, npm run build:widget creates public/board.js, starter CI/knip/commit-hook configs exist, and final audit maps receipts to Conveyor Board 0 constraints.'
+    likely_misfire: 'Copying BugDrop too literally and dragging screenshot, annotation, or feedback-category behavior into a scaffold-only tranche.'
     blind_spots_considered:
-      - "Board 0 should not implement D1 repositories, auth, GitHub issue creation, upvotes, polling, or E2E host app work."
-      - "The scaffold should establish current Cloudflare/TypeScript build rails that later boards can extend."
-      - "The Worker and widget should be intentionally minimal, so passing validation is not mistaken for product completion."
+      - 'Board 0 should not implement D1 repositories, auth, GitHub issue creation, upvotes, polling, or E2E host app work.'
+      - 'The scaffold should establish current Cloudflare/TypeScript build rails that later boards can extend.'
+      - 'The Worker and widget should be intentionally minimal, so passing validation is not mistaken for product completion.'
     existing_plan_facts:
-      - "Input plan path: docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md"
-      - "Conveyor Board 0 goal oracle: make check passes, npm run validate passes, npm run build:widget creates public/board.js, and CI/knip/commit-hook rails exist."
-      - "Likely misfire: copying screenshot-specific BugDrop code into the board repo."
-      - "Worker stack: Cloudflare Worker using Hono."
-      - "Widget stack: vanilla TypeScript bundled to public/board.js with esbuild."
-      - "This tranche excludes D1 schema, host-signed auth, GitHub mirroring, upvotes, polling, comments, downvotes, GitHub Projects, and realtime."
+      - 'Input plan path: docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md'
+      - 'Conveyor Board 0 goal oracle: make check passes, npm run validate passes, npm run build:widget creates public/board.js, and CI/knip/commit-hook rails exist.'
+      - 'Likely misfire: copying screenshot-specific BugDrop code into the board repo.'
+      - 'Worker stack: Cloudflare Worker using Hono.'
+      - 'Widget stack: vanilla TypeScript bundled to public/board.js with esbuild.'
+      - 'This tranche excludes D1 schema, host-signed auth, GitHub mirroring, upvotes, polling, comments, downvotes, GitHub Projects, and realtime.'
 
 rules:
   pm_owns_state: true
@@ -60,174 +60,397 @@ visual_board:
   selected: local
   local:
     status: live
-    url: "http://goalbuddy.localhost:41737/bugdrop-board-scaffold/"
-    command: "npx goalbuddy board docs/goals/bugdrop-board-scaffold"
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-scaffold/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-scaffold'
 
-active_task: T001
+active_task: null
 
 tasks:
   - id: T001
     type: scout
     assignee: Scout
-    status: active
+    status: done
     reasoning_hint: low
-    objective: "Map the exact reusable scaffold inputs and forbidden BugDrop carryovers before any writes."
+    objective: 'Map the exact reusable scaffold inputs and forbidden BugDrop carryovers before any writes.'
     inputs:
-      - "docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md"
-      - "docs/superpowers/specs/2026-06-03-bugdrop-board-design.md"
-      - "AGENTS.md"
-      - "/Users/neonwatty/Desktop/bugdrop/package.json"
-      - "/Users/neonwatty/Desktop/bugdrop/Makefile"
-      - "/Users/neonwatty/Desktop/bugdrop/tsconfig.json"
-      - "/Users/neonwatty/Desktop/bugdrop/tsconfig.widget.json"
-      - "/Users/neonwatty/Desktop/bugdrop/eslint.config.js"
-      - "/Users/neonwatty/Desktop/bugdrop/.prettierrc"
-      - "/Users/neonwatty/Desktop/bugdrop/commitlint.config.cjs"
-      - "/Users/neonwatty/Desktop/bugdrop/knip.json"
-      - "/Users/neonwatty/Desktop/bugdrop/wrangler.toml"
-      - "/Users/neonwatty/Desktop/bugdrop/scripts/build-widget.js"
-      - "/Users/neonwatty/Desktop/bugdrop/.github/workflows/ci.yml"
-      - "/Users/neonwatty/Desktop/bugdrop/.husky/pre-commit"
-      - "/Users/neonwatty/Desktop/bugdrop/.husky/commit-msg"
+      - 'docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md'
+      - 'docs/superpowers/specs/2026-06-03-bugdrop-board-design.md'
+      - 'AGENTS.md'
+      - '/Users/neonwatty/Desktop/bugdrop/package.json'
+      - '/Users/neonwatty/Desktop/bugdrop/Makefile'
+      - '/Users/neonwatty/Desktop/bugdrop/tsconfig.json'
+      - '/Users/neonwatty/Desktop/bugdrop/tsconfig.widget.json'
+      - '/Users/neonwatty/Desktop/bugdrop/eslint.config.js'
+      - '/Users/neonwatty/Desktop/bugdrop/.prettierrc'
+      - '/Users/neonwatty/Desktop/bugdrop/commitlint.config.cjs'
+      - '/Users/neonwatty/Desktop/bugdrop/knip.json'
+      - '/Users/neonwatty/Desktop/bugdrop/wrangler.toml'
+      - '/Users/neonwatty/Desktop/bugdrop/scripts/build-widget.js'
+      - '/Users/neonwatty/Desktop/bugdrop/.github/workflows/ci.yml'
+      - '/Users/neonwatty/Desktop/bugdrop/.husky/pre-commit'
+      - '/Users/neonwatty/Desktop/bugdrop/.husky/commit-msg'
     constraints:
-      - "Read-only."
-      - "Do not edit implementation files."
-      - "Identify only scaffold/build-rails facts for Conveyor Board 0."
-      - "Explicitly list BugDrop screenshot, annotation, picker, and feedback-category files or concepts that must not be copied."
-      - "Prefer concrete file-path evidence over generic advice."
+      - 'Read-only.'
+      - 'Do not edit implementation files.'
+      - 'Identify only scaffold/build-rails facts for Conveyor Board 0.'
+      - 'Explicitly list BugDrop screenshot, annotation, picker, and feedback-category files or concepts that must not be copied.'
+      - 'Prefer concrete file-path evidence over generic advice.'
     expected_output:
-      - "Reusable scaffold and CI/quality-gate facts from the implementation plan and BugDrop reference."
-      - "Forbidden carryover list for screenshot/annotation feedback behavior."
-      - "Exact candidate Worker package for scaffold/build rails."
-      - "Verification commands and final oracle evidence, including make check and CI config inspection."
-    receipt: null
+      - 'Reusable scaffold and CI/quality-gate facts from the implementation plan and BugDrop reference.'
+      - 'Forbidden carryover list for screenshot/annotation feedback behavior.'
+      - 'Exact candidate Worker package for scaffold/build rails.'
+      - 'Verification commands and final oracle evidence, including make check and CI config inspection.'
+    receipt:
+      result: done
+      summary: 'Mapped Board 0 scaffold inputs and forbidden BugDrop carryovers. Board 0 should establish package/tooling/CI/quality gates, a minimal Hono health route, and a vanilla TypeScript widget bundle to public/board.js only.'
+      evidence:
+        - 'state.yaml limits this tranche to scaffold quality gates, CI, build/test/Worker/widget rails.'
+        - 'state.yaml requires make check, npm run validate, npm run build:widget, public/board.js, and CI/knip/commit-hook rails.'
+        - 'Implementation plan defines Conveyor Board 0 oracle and Worker scope.'
+        - 'BugDrop package/config files provide reusable strict TS, ESLint, Prettier, commitlint, husky, lint-staged, knip, audit, Actions guard, Vitest, Wrangler, Hono, and esbuild patterns.'
+        - 'Targeted BugDrop scan found forbidden screenshot/annotation/picker/mask/capture files and concepts that must not be copied.'
+      facts:
+        - 'Candidate Worker package is T003 allowed_files plus verification commands as already listed in this board.'
+        - 'Minimal Worker behavior should be only Hono app health route plus focused route test.'
+        - 'Widget build should emit public/board.js and not public/widget.js.'
+        - 'Verification should include npm install, make check, npm run validate, npm run build:widget, test -s public/board.js, CI/knip/hook file inspection, Actions guard, and forbidden source scan.'
+      contradictions:
+        - 'The full implementation plan includes later D1/auth/GitHub/widget-host work, but this board explicitly excludes those from Conveyor Board 0.'
+        - 'BugDrop reference includes html-to-image, screenshot benchmark scripts, MAX_SCREENSHOT_SIZE_MB, RATE_LIMIT KV, preview deploy/live E2E, and screenshot hooks; those are forbidden or premature here.'
+        - 'BugDrop ESLint ignores large screenshot-specific widget files; Board 0 should avoid inheriting ignores that mask copied complexity.'
+      ambiguity_requiring_judge:
+        - 'Whether to include Playwright dependency/config in Board 0 when the oracle does not require E2E.'
+        - 'Whether versioned board.v*.js and versions.json are required in Board 0 or a single public/board.js is enough.'
+        - 'Whether knip should ignore only esbuild or any future release/deploy-only package.'
+      commands:
+        - 'sed/rg inspections of goal.md, state.yaml, implementation plan, design spec, AGENTS.md, and BugDrop reference configs.'
 
   - id: T002
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: medium
-    objective: "Review Scout findings and authorize the largest safe scaffold and CI/quality-rails Worker package."
+    objective: 'Review Scout findings and authorize the largest safe scaffold and CI/quality-rails Worker package.'
     inputs:
-      - "T001 receipt"
-      - "Goal oracle"
-      - "AGENTS.md proof expectations"
+      - 'T001 receipt'
+      - 'Goal oracle'
+      - 'AGENTS.md proof expectations'
     constraints:
-      - "Do not implement."
-      - "Keep the package to Conveyor Board 0 only."
-      - "Reject any plan that includes D1 schema, auth, GitHub issue mirroring, board items, upvotes, polling, or E2E host app behavior."
-      - "Pick one coherent Worker slice with allowed_files, verify commands, and stop_if conditions."
+      - 'Do not implement.'
+      - 'Keep the package to Conveyor Board 0 only.'
+      - 'Reject any plan that includes D1 schema, auth, GitHub issue mirroring, board items, upvotes, polling, or E2E host app behavior.'
+      - 'Pick one coherent Worker slice with allowed_files, verify commands, and stop_if conditions.'
     expected_output:
-      - "Decision: proceed | revise | blocked"
-      - "Exact Worker objective"
-      - "allowed_files"
-      - "verify commands"
-      - "stop_if conditions"
-      - "Deferred tasks for later conveyor boards"
-    receipt: null
+      - 'Decision: proceed | revise | blocked'
+      - 'Exact Worker objective'
+      - 'allowed_files'
+      - 'verify commands'
+      - 'stop_if conditions'
+      - 'Deferred tasks for later conveyor boards'
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      summary: 'Proceed with one Board 0 Worker slice, revised to exclude Playwright, D1 harness/schema, versioned bundles, and broad knip ignores. The safe slice is scaffold/tooling/CI plus minimal Hono health route and a single widget bundle at public/board.js.'
+      evidence:
+        - 'T001 receipt identifies Board 0 as scaffold rails only with public/board.js and no screenshot carryover.'
+        - 'goal.md excludes D1 schema, auth, GitHub mirroring, items, upvotes, polling, and E2E host app work.'
+        - 'Implementation plan Board 0 oracle requires make check, npm run validate, npm run build:widget, public/board.js, and starter CI rails.'
+        - 'AGENTS.md requires proof by exact commands/config inspection.'
+      ambiguity_resolutions:
+        playwright: 'Defer; do not add @playwright/test, Playwright config, E2E scripts, or dummy host app in Board 0.'
+        bundle_versioning: 'Use single public/board.js only; defer board.v*.js and versions.json.'
+        knip_ignore_scope: 'Prefer no ignored dependencies by importing esbuild from the build script; ignore only esbuild if unavoidable.'
+      worker_package:
+        objective: 'Scaffold Conveyor Board 0 only: package/tooling, strict TypeScript, lint/format/knip/audit/test gates, commit hooks, Node-24-ready CI, Wrangler Worker config, a minimal Hono /health route with Vitest coverage, and a vanilla TypeScript widget build that emits exactly public/board.js.'
+        allowed_files:
+          - 'package.json'
+          - 'package-lock.json'
+          - 'Makefile'
+          - 'tsconfig.json'
+          - 'tsconfig.widget.json'
+          - 'eslint.config.js'
+          - '.prettierrc'
+          - 'commitlint.config.cjs'
+          - 'knip.json'
+          - '.husky/pre-commit'
+          - '.husky/commit-msg'
+          - '.github/workflows/ci.yml'
+          - 'vitest.config.ts'
+          - 'wrangler.toml'
+          - 'scripts/build-widget.js'
+          - 'src/index.ts'
+          - 'src/types.ts'
+          - 'src/routes/api.ts'
+          - 'src/widget/index.ts'
+          - 'src/widget/types.ts'
+          - 'test/routes.test.ts'
+          - '.gitignore'
+          - 'public/board.js'
+        verify_commands:
+          - 'npm install'
+          - 'make check'
+          - 'npm run validate'
+          - 'npm run build:widget'
+          - 'test -s public/board.js'
+          - 'npm run check:actions-node24'
+          - 'test -f .github/workflows/ci.yml && test -f knip.json && test -f commitlint.config.cjs && test -f .husky/pre-commit && test -f .husky/commit-msg'
+          - 'rg -n "screenshot|annotation|annotator|picker|feedback category|html-to-image|data-bugdrop-mask|D1|migration|board_items|upvote|polling|GitHub Issue|playwright" src scripts test package.json wrangler.toml .github/workflows/ci.yml knip.json || true'
 
   - id: T003
     type: worker
     assignee: Worker
-    status: queued
+    status: done
     reasoning_hint: medium
-    objective: "Scaffold package/tooling/CI/quality gates/Worker health/widget build rails selected by Judge."
+    objective: 'Scaffold Conveyor Board 0 only: package/tooling, strict TypeScript, lint/format/knip/audit/test gates, commit hooks, Node-24-ready CI, Wrangler Worker config, a minimal Hono /health route with Vitest coverage, and a vanilla TypeScript widget build that emits exactly public/board.js.'
     allowed_files:
-      - "package.json"
-      - "package-lock.json"
-      - "Makefile"
-      - "tsconfig.json"
-      - "tsconfig.widget.json"
-      - "eslint.config.js"
-      - ".prettierrc"
-      - "commitlint.config.cjs"
-      - "knip.json"
-      - ".husky/pre-commit"
-      - ".husky/commit-msg"
-      - ".github/workflows/ci.yml"
-      - "vitest.config.ts"
-      - "wrangler.toml"
-      - "scripts/build-widget.js"
-      - "src/index.ts"
-      - "src/types.ts"
-      - "src/routes/api.ts"
-      - "src/widget/index.ts"
-      - "src/widget/types.ts"
-      - "test/routes.test.ts"
-      - ".gitignore"
+      - 'package.json'
+      - 'package-lock.json'
+      - 'Makefile'
+      - 'tsconfig.json'
+      - 'tsconfig.widget.json'
+      - 'eslint.config.js'
+      - '.prettierrc'
+      - 'commitlint.config.cjs'
+      - 'knip.json'
+      - '.husky/pre-commit'
+      - '.husky/commit-msg'
+      - '.github/workflows/ci.yml'
+      - 'vitest.config.ts'
+      - 'wrangler.toml'
+      - 'scripts/build-widget.js'
+      - 'src/index.ts'
+      - 'src/types.ts'
+      - 'src/routes/api.ts'
+      - 'src/widget/index.ts'
+      - 'src/widget/types.ts'
+      - 'test/routes.test.ts'
+      - '.gitignore'
+      - 'public/board.js'
     verify:
-      - "npm install"
-      - "make check"
-      - "npm run validate"
-      - "npm run build:widget"
-      - "test -s public/board.js"
-      - "npm run check:actions-node24"
-      - "test -f .github/workflows/ci.yml && test -f knip.json && test -f commitlint.config.cjs && test -f .husky/pre-commit && test -f .husky/commit-msg"
-      - "rg -n \"screenshot|annotation|annotator|picker|feedback category|html-to-image|data-bugdrop-mask\" src scripts test package.json || true"
+      - 'npm install'
+      - 'make check'
+      - 'npm run validate'
+      - 'npm run build:widget'
+      - 'test -s public/board.js'
+      - 'npm run check:actions-node24'
+      - 'test -f .github/workflows/ci.yml && test -f knip.json && test -f commitlint.config.cjs && test -f .husky/pre-commit && test -f .husky/commit-msg'
+      - 'rg -n "screenshot|annotation|annotator|picker|feedback category|html-to-image|data-bugdrop-mask" src scripts test package.json || true'
     stop_if:
-      - "Need files outside allowed_files."
-      - "Need credentials, production Cloudflare resources, or a real D1 database."
-      - "Scaffold requires D1 schema, auth, GitHub mirroring, items, upvotes, polling, or E2E host app behavior."
-      - "Verification fails twice for the same unresolved cause."
-      - "The implementation would copy screenshot-specific BugDrop behavior."
-    receipt: null
+      - 'Need files outside allowed_files.'
+      - 'Need Playwright dependency/config/scripts, dummy host app, browser E2E behavior, or test:e2e wiring.'
+      - 'Need credentials, production Cloudflare resources, or a real D1 database.'
+      - 'Scaffold requires D1 schema, auth, GitHub mirroring, items, upvotes, polling, or E2E host app behavior.'
+      - 'Need versioned bundles such as public/board.v*.js or public/versions.json.'
+      - 'Need knip ignoreDependencies broader than none, or at most esbuild if unavoidable.'
+      - 'Verification fails twice for the same unresolved cause.'
+      - 'The implementation would copy screenshot-specific BugDrop behavior.'
+    receipt:
+      result: done
+      summary: 'Scaffolded Board 0 rails: package/tooling, Makefile, strict TS configs, ESLint/Prettier/Knip/audit gates, commit hooks, Node-24-ready CI, Wrangler config, minimal Hono /health route with Vitest coverage, and vanilla TypeScript widget build emitting public/board.js.'
+      files_changed:
+        - 'package.json'
+        - 'package-lock.json'
+        - 'Makefile'
+        - 'tsconfig.json'
+        - 'tsconfig.widget.json'
+        - 'eslint.config.js'
+        - '.prettierrc'
+        - 'commitlint.config.cjs'
+        - 'knip.json'
+        - '.husky/pre-commit'
+        - '.husky/commit-msg'
+        - '.github/workflows/ci.yml'
+        - 'vitest.config.ts'
+        - 'wrangler.toml'
+        - 'scripts/build-widget.js'
+        - 'src/index.ts'
+        - 'src/types.ts'
+        - 'src/routes/api.ts'
+        - 'src/widget/index.ts'
+        - 'src/widget/types.ts'
+        - 'test/routes.test.ts'
+        - 'public/board.js'
+      commands:
+        - 'npm install: passed, added 371 packages, found 0 vulnerabilities'
+        - 'make check: passed after fixing formatting and quieting Knip config'
+        - 'npm run validate: passed with 1 Vitest file and 1 test'
+        - 'npm run build:widget: passed, built BugDrop Board bundle 0.1.0'
+        - 'test -s public/board.js && wc -c public/board.js: passed, 505 bytes'
+        - 'npm run check:actions-node24: passed, GitHub Actions are Node 24-ready'
+        - 'quality file inspection: passed for CI workflow, knip, commitlint, husky pre-commit, and husky commit-msg'
+        - 'forbidden carryover scan: no matches in src scripts test package.json wrangler.toml .github/workflows/ci.yml knip.json'
+        - 'make ci: passed'
+      evidence:
+        - 'public/board.js exists and starts with a minimal bundle that reads data-board-id/data-repo and appends data-bugdrop-board-root text.'
+        - '.github/workflows/ci.yml uses actions/checkout@v5 and actions/setup-node@v5, and runs make check, make test, and make build-all.'
+        - 'knip.json has one widget source entry and no ignored dependencies.'
+        - 'package.json has no Playwright dependency or test:e2e script.'
+        - 'wrangler.toml has no D1 binding.'
+      scope_notes:
+        - 'Did not add D1 schema, migrations, repositories, auth, GitHub mirroring, board item routes, upvotes, polling, E2E host app, versioned bundles, or screenshot/annotation behavior.'
 
   - id: T004
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
-    objective: "Review the scaffold Worker output against the Conveyor Board 0 oracle."
+    objective: 'Review the scaffold Worker output against the Conveyor Board 0 oracle.'
     inputs:
-      - "T001 receipt"
-      - "T002 receipt"
-      - "T003 receipt"
-      - "Current diff"
-      - "Last verification output"
+      - 'T001 receipt'
+      - 'T002 receipt'
+      - 'T003 receipt'
+      - 'Current diff'
+      - 'Last verification output'
     constraints:
-      - "Do not implement unless promoting a tiny PM cleanup task is unavoidable and explicitly recorded."
-      - "Reject completion if make check, npm run validate, or npm run build:widget was not run after the final edit."
-      - "Reject completion if public/board.js was not directly inspected."
-      - "Reject completion if CI/knip/commit-hook rules are missing."
-      - "Reject completion if screenshot/annotation feedback code was copied."
+      - 'Do not implement unless promoting a tiny PM cleanup task is unavoidable and explicitly recorded.'
+      - 'Reject completion if make check, npm run validate, or npm run build:widget was not run after the final edit.'
+      - 'Reject completion if public/board.js was not directly inspected.'
+      - 'Reject completion if CI/knip/commit-hook rules are missing.'
+      - 'Reject completion if screenshot/annotation feedback code was copied.'
     expected_output:
-      - "approved | rejected"
-      - "Evidence mapped to each oracle clause"
-      - "Required cleanup task if rejected"
-      - "Deferred follow-up tasks for Conveyor Board 1"
-    receipt: null
+      - 'approved | rejected'
+      - 'Evidence mapped to each oracle clause'
+      - 'Required cleanup task if rejected'
+      - 'Deferred follow-up tasks for Conveyor Board 1'
+    receipt:
+      result: done
+      decision: rejected
+      full_outcome_complete: false
+      summary: 'Scaffold mostly proves the oracle, but includes later-scope traces: GITHUB_APP_NAME env/type/test values and .gitignore entries for public/board.v*.js and playwright-report. Cleanup is tiny and bounded, then verification must rerun.'
+      evidence:
+        - 'make check, npm run validate, npm run build:widget, npm run check:actions-node24, and make ci were claimed passed in T003, but cleanup requires rerun.'
+        - 'public/board.js was directly inspected as a minimal IIFE mounting data-bugdrop-board-root text.'
+        - 'CI, knip, and commit-hook rules are present.'
+        - 'No screenshot/annotation carryover was found.'
+        - 'Later-board drift was found through GITHUB_APP_NAME plus versioned bundle and Playwright ignore entries.'
+      missing_evidence:
+        - 'Post-cleanup proof for make check, npm run validate, npm run build:widget, public/board.js, Actions guard, and forbidden/scope rg audit.'
 
   - id: T999
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
-    objective: "Final audit: decide whether Conveyor Board 0 is complete and ready to hand off to the next GoalBuddy board."
+    objective: 'Final audit: decide whether Conveyor Board 0 is complete and ready to hand off to the next GoalBuddy board.'
     inputs:
-      - "All done task receipts"
-      - "Last verification"
-      - "Current dirty diff"
-      - "Goal oracle"
+      - 'All done task receipts'
+      - 'Last verification'
+      - 'Current dirty diff'
+      - 'Goal oracle'
     constraints:
-      - "Do not implement."
-      - "Reject completion if required Worker or Judge tasks are still queued or active."
-      - "Reject completion if the scaffold oracle is not proven with direct evidence."
-      - "Reject completion if the board drifted into later-conveyor functionality."
+      - 'Do not implement.'
+      - 'Reject completion if required Worker or Judge tasks are still queued or active.'
+      - 'Reject completion if the scaffold oracle is not proven with direct evidence.'
+      - 'Reject completion if the board drifted into later-conveyor functionality.'
     expected_output:
-      - "complete | not_complete"
-      - "full_outcome_complete: true | false"
-      - "Evidence for make check"
-      - "Evidence for npm run validate"
-      - "Evidence for npm run build:widget"
-      - "Evidence for public/board.js"
-      - "Evidence for starter CI/knip/commit-hook rules"
-      - "Evidence for no screenshot-specific carryover"
-      - "Next starter command for Conveyor Board 1 if complete"
-    receipt: null
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'Evidence for make check'
+      - 'Evidence for npm run validate'
+      - 'Evidence for npm run build:widget'
+      - 'Evidence for public/board.js'
+      - 'Evidence for starter CI/knip/commit-hook rules'
+      - 'Evidence for no screenshot-specific carryover'
+      - 'Next starter command for Conveyor Board 1 if complete'
+    receipt:
+      result: complete
+      decision: approved
+      full_outcome_complete: true
+      summary: 'Conveyor Board 0 is complete: scaffold quality gates, CI, Worker health route, widget build rails, commit hooks, and forbidden-scope cleanup are all present and verified without later board behavior.'
+      oracle_evidence:
+        make_check: 'Passed after cleanup and formatting; included lint, format:check, typecheck, knip, npm audit --audit-level=critical, and check:actions-node24.'
+        validate: 'Passed after cleanup; Vitest reported 1 test file passed and 1 test passed.'
+        build_widget: 'Passed after cleanup; generated public/board.js.'
+        widget_artifact: 'Direct inspection showed public/board.js is 505 bytes and contains only the minimal bootstrap IIFE mounting data-bugdrop-board-root text.'
+        quality_rails: '.github/workflows/ci.yml, knip.json, commitlint.config.cjs, .husky/pre-commit, and .husky/commit-msg are present; package scripts include lint, format:check, typecheck, knip, audit, Actions guard, validate, and build:widget.'
+        no_forbidden_carryover: 'rg scan across .gitignore, src, scripts, test, package.json, wrangler.toml, CI, knip, and public/board.js returned no matches for screenshot/annotation/picker/html-to-image/D1/upvote/polling/GitHub Issue/Playwright/versioned-bundle drift.'
+        final_ci: 'make ci passed, including check, unit tests, widget build, and TypeScript build.'
+      deferred_next_board:
+        starter_command: '/goal Follow docs/goals/bugdrop-board-data-auth/goal.md.'
+        scope: 'Conveyor Board 1 should add D1 data model and host-signed auth; none of that was implemented in Board 0.'
+
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Remove Board 1 drift from Board 0 scaffold while preserving current rails and public/board.js generation.'
+    allowed_files:
+      - '.gitignore'
+      - 'src/types.ts'
+      - 'test/routes.test.ts'
+      - 'wrangler.toml'
+    verify:
+      - 'make check'
+      - 'npm run validate'
+      - 'npm run build:widget'
+      - 'test -s public/board.js'
+      - 'npm run check:actions-node24'
+      - "rg --hidden -n \"screenshot|annotation|annotator|picker|feedback category|html-to-image|data-bugdrop-mask|D1|migration|board_items|upvote|polling|GitHub Issue|GITHUB_APP_NAME|playwright|board\\.v|versions\\.json\" .gitignore src scripts test package.json wrangler.toml .github/workflows/ci.yml knip.json public/board.js || true"
+    stop_if:
+      - 'Cleanup needs files outside allowed_files.'
+      - 'Any command fails twice for the same unresolved cause.'
+      - 'Removing GitHub env requires adding auth, D1, GitHub, or later-board behavior.'
+    receipt:
+      result: done
+      summary: 'Removed Board 1 drift from .gitignore, src/types.ts, test/routes.test.ts, and wrangler.toml while preserving the Board 0 scaffold rails and public/board.js generation.'
+      commands:
+        - 'make check: passed after T006 formatting.'
+        - 'npm run validate: passed.'
+        - 'npm run build:widget: passed and generated public/board.js.'
+        - 'test -s public/board.js: passed.'
+        - 'npm run check:actions-node24: passed.'
+        - 'forbidden/scope rg scan: returned no matches.'
+      evidence:
+        - 'GITHUB_APP_NAME no longer appears in scaffold env/type/test files.'
+        - '.gitignore no longer contains public/board.v*.js or playwright-report.'
+        - 'No D1, migrations, upvotes, polling, GitHub Issue mirroring, Playwright, or versioned-bundle drift appears in Board 0 source/config/artifact scan.'
+
+  - id: T006
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: low
+    objective: 'Apply mechanical Prettier formatting to docs/control files required by the scaffold quality gate.'
+    allowed_files:
+      - 'AGENTS.md'
+      - 'README.md'
+      - 'docs/goals/bugdrop-board-scaffold/state.yaml'
+      - 'docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md'
+    verify:
+      - 'npm run format:check'
+      - 'make check'
+    stop_if:
+      - 'Formatting changes semantic content beyond Prettier layout.'
+      - 'Need files outside allowed_files.'
+    receipt:
+      result: done
+      summary: 'Applied mechanical Prettier formatting to docs/control files that the scaffold quality gate checks.'
+      files_changed:
+        - 'AGENTS.md'
+        - 'README.md'
+        - 'docs/goals/bugdrop-board-scaffold/state.yaml'
+        - 'docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md'
+      commands:
+        - 'npx prettier --write AGENTS.md README.md docs/goals/bugdrop-board-scaffold/state.yaml docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md'
+        - 'npm run format:check: passed.'
+        - 'make check: passed.'
+      evidence:
+        - 'Formatting changes were layout-only: AGENTS.md table alignment, README spacing, YAML quote/wrap normalization, and Markdown fence/wrap formatting in the implementation plan.'
+        - 'No product source or scaffold behavior was changed by T006.'
 
 checks:
-  dirty_fingerprint: unknown
+  dirty_fingerprint: 'scaffold source/config files plus docs/control receipts; public/board.js generated and ignored'
   last_verification:
-    result: unknown
-    task: null
-    commands: []
+    result: passed
+    task: T999
+    commands:
+      - 'make check'
+      - 'npm run validate'
+      - 'npm run build:widget'
+      - 'test -s public/board.js'
+      - 'npm run check:actions-node24'
+      - 'rg --hidden forbidden/scope scan'
+      - 'make ci'
+    note: 'Run these again after this final state receipt edit before final handoff.'

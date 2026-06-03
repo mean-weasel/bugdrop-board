@@ -54,18 +54,18 @@ leaving the proof as a manual ritual.
 
 Choose verification based on the change's real risk.
 
-| Change category | Realistic failure modes | Expected proof |
-| --- | --- | --- |
-| Standard TypeScript | Type drift, lint regressions, unused code, oversized files/functions, formatting churn | lint, format check, typecheck, knip, focused unit tests |
-| CI/repo rails | GitHub Actions drift to old Node actions, critical dependency advisory, hooks not enforcing commit shape | `make check`, `npm run check:actions-node24`, critical audit, commitlint/lint-staged config inspection |
-| Worker API | Wrong status code, bad validation, unsafe CORS, broken GitHub error path | route tests, mocked GitHub client, negative request cases |
-| Host-signed auth | Expired token accepted, wrong board scope accepted, forged user id trusted | negative auth tests for missing, expired, malformed, and wrong-scope tokens |
-| D1 schema/data | Migration drift, duplicate upvotes, stale counters, cross-board leakage | migration check, D1 integration test, uniqueness and transaction tests |
-| Polling/freshness | Acting user waits for own write, other viewers miss events, cursor skips updates | API cursor tests, two-client Playwright smoke, direct event-log inspection |
-| Widget UI | Loads in test page but fails embedded, host styles leak, mobile layout breaks | Playwright trace, screenshots, console inspection, dummy host app smoke |
-| GitHub integration | Item created without issue, duplicate issue, wrong repo, noisy vote writes | mocked API tests, fixture replay, direct inspection of issue payload |
-| Self-hosting/config | Hosted assumptions leak into self-hosted setup, missing secret/env binding | Wrangler config inspection, docs check, local Worker smoke with explicit env |
-| Security | Secret exposed to browser, injection in rendered item content, auth bypass | direct source inspection, negative tests, dependency/config audit |
+| Change category     | Realistic failure modes                                                                                  | Expected proof                                                                                         |
+| ------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Standard TypeScript | Type drift, lint regressions, unused code, oversized files/functions, formatting churn                   | lint, format check, typecheck, knip, focused unit tests                                                |
+| CI/repo rails       | GitHub Actions drift to old Node actions, critical dependency advisory, hooks not enforcing commit shape | `make check`, `npm run check:actions-node24`, critical audit, commitlint/lint-staged config inspection |
+| Worker API          | Wrong status code, bad validation, unsafe CORS, broken GitHub error path                                 | route tests, mocked GitHub client, negative request cases                                              |
+| Host-signed auth    | Expired token accepted, wrong board scope accepted, forged user id trusted                               | negative auth tests for missing, expired, malformed, and wrong-scope tokens                            |
+| D1 schema/data      | Migration drift, duplicate upvotes, stale counters, cross-board leakage                                  | migration check, D1 integration test, uniqueness and transaction tests                                 |
+| Polling/freshness   | Acting user waits for own write, other viewers miss events, cursor skips updates                         | API cursor tests, two-client Playwright smoke, direct event-log inspection                             |
+| Widget UI           | Loads in test page but fails embedded, host styles leak, mobile layout breaks                            | Playwright trace, screenshots, console inspection, dummy host app smoke                                |
+| GitHub integration  | Item created without issue, duplicate issue, wrong repo, noisy vote writes                               | mocked API tests, fixture replay, direct inspection of issue payload                                   |
+| Self-hosting/config | Hosted assumptions leak into self-hosted setup, missing secret/env binding                               | Wrangler config inspection, docs check, local Worker smoke with explicit env                           |
+| Security            | Secret exposed to browser, injection in rendered item content, auth bypass                               | direct source inspection, negative tests, dependency/config audit                                      |
 
 ## Burden Of Proof
 

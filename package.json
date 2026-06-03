@@ -1,0 +1,67 @@
+{
+  "name": "bugdrop-board",
+  "version": "0.1.0",
+  "description": "Embedded, self-hostable ideas/request board.",
+  "type": "module",
+  "main": "./public/board.js",
+  "exports": {
+    ".": "./public/board.js",
+    "./board": "./public/board.js",
+    "./board.js": "./public/board.js"
+  },
+  "files": [
+    "public/board.js",
+    "src/widget/",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "wrangler dev --port 8788",
+    "build": "tsc",
+    "build:widget": "node scripts/build-widget.js",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit && tsc --project tsconfig.widget.json --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "knip": "knip",
+    "audit": "npm audit --audit-level=critical",
+    "check:actions-node24": "node -e \"const {execSync}=require('node:child_process'); const out=execSync('rg -n \\\\\\\"actions/(checkout|setup-node|cache|upload-artifact)@v4|cloudflare/wrangler-action\\\\\\\" .github/workflows || true',{encoding:'utf8'}); if(out.trim()){ console.error(out); process.exit(1); } console.log('GitHub Actions are Node 24-ready');\"",
+    "validate": "npm run lint && npm run format:check && npm run typecheck && npm run test",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "hono": "^4.12.19"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^22.10.2",
+    "@vitest/coverage-v8": "^4.1.6",
+    "esbuild": "^0.28.0",
+    "eslint": "^9.39.2",
+    "globals": "^16.5.0",
+    "husky": "^9.1.7",
+    "jsdom": "^29.0.1",
+    "knip": "^5.76.1",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.1",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.50.0",
+    "vitest": "^4.1.6",
+    "wrangler": "^4.92.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx,json,md,css,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
+}

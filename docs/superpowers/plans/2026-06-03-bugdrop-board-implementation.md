@@ -1188,7 +1188,10 @@ export class BoardRepository {
   }
 
   async getBoard(boardId: string): Promise<Board | null> {
-    const row = await this.db.prepare('SELECT * FROM boards WHERE id = ?').bind(boardId).first<BoardRow>();
+    const row = await this.db
+      .prepare('SELECT * FROM boards WHERE id = ?')
+      .bind(boardId)
+      .first<BoardRow>();
     return row ? this.mapBoard(row) : null;
   }
 
@@ -1243,7 +1246,9 @@ export class BoardRepository {
 
   async toggleUpvote(boardId: string, itemId: string, externalUserId: string): Promise<ViewerItem> {
     const existing = await this.db
-      .prepare('SELECT id FROM board_votes WHERE board_id = ? AND item_id = ? AND external_user_id = ?')
+      .prepare(
+        'SELECT id FROM board_votes WHERE board_id = ? AND item_id = ? AND external_user_id = ?'
+      )
       .bind(boardId, itemId, externalUserId)
       .first<{ id: string }>();
 
@@ -1493,10 +1498,7 @@ export interface VerifyBoardTokenOptions {
 
 const encoder = new TextEncoder();
 
-export async function createBoardToken(
-  claims: BoardTokenClaims,
-  secret: string
-): Promise<string> {
+export async function createBoardToken(claims: BoardTokenClaims, secret: string): Promise<string> {
   const payload = base64UrlEncode(JSON.stringify(claims));
   const signature = await sign(payload, secret);
   return `${payload}.${signature}`;
@@ -1659,7 +1661,10 @@ describe('createGitHubIssue', () => {
   });
 
   it('throws on GitHub API failure', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('bad credentials', { status: 401 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response('bad credentials', { status: 401 }))
+    );
 
     await expect(
       createGitHubIssue({
@@ -2123,7 +2128,11 @@ export interface BoardDomHandlers {
   onUpvote(itemId: string): void;
 }
 
-export function renderBoard(root: HTMLElement, state: BoardState, handlers: BoardDomHandlers): void {
+export function renderBoard(
+  root: HTMLElement,
+  state: BoardState,
+  handlers: BoardDomHandlers
+): void {
   root.innerHTML = '';
 
   const shell = document.createElement('section');
@@ -2306,12 +2315,15 @@ function mount(config: BoardWidgetConfig): void {
 
   rerender();
 
-  window.setInterval(async () => {
-    if (document.hidden) return;
-    const update = await api.events(state.cursor);
-    state = { ...state, cursor: update.cursor };
-    rerender();
-  }, 3000 + Math.floor(Math.random() * 750));
+  window.setInterval(
+    async () => {
+      if (document.hidden) return;
+      const update = await api.events(state.cursor);
+      state = { ...state, cursor: update.cursor };
+      rerender();
+    },
+    3000 + Math.floor(Math.random() * 750)
+  );
 }
 
 mount(readConfig());
@@ -2496,7 +2508,7 @@ BOARD_TOKEN_SECRET=replace-with-a-long-random-secret
 
 Replace `README.md` with:
 
-```markdown
+````markdown
 # bugdrop-board
 
 Embedded, self-hostable ideas/request board backed by GitHub Issues.
@@ -2550,7 +2562,7 @@ Investigation and early implementation.
 
 Hosted users should only need GitHub and the embed script. Self-hosters operate their own
 Cloudflare Worker, D1 database, optional R2 bucket, and GitHub App credentials.
-```
+````
 
 - [ ] **Step 3: Run docs commands in a clean shell**
 
