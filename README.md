@@ -297,6 +297,96 @@ To check deploy packaging without uploading the Worker, use:
 npm run deploy:check
 ```
 
+## Secret Rotation And Recovery
+
+BugDrop Board has two self-host secrets:
+
+- `BOARD_TOKEN_SECRET`: shared by the host app backend and the Worker to sign and verify
+  short-lived board tokens.
+- `GITHUB_ISSUE_ACCESS_TOKEN`: used by the Worker to create GitHub Issues for new board items.
+
+These nearby settings are not secrets, but they matter during recovery:
+
+- `BOARD_TOKEN_AUDIENCE` and `BOARD_TOKEN_ISSUER` must match the `aud` and `iss` claims the host
+  token endpoint signs.
+- `ALLOWED_ORIGINS` must include the host app origins that embed the widget.
+- The D1 binding must stay `DB`, and `database_id` must point at the database that contains the
+  provisioned board rows.
+
+Rotate `BOARD_TOKEN_SECRET` when the signing secret may be exposed or as part of operator policy:
+
+1. Generate a new long random value.
+2. Update the host app backend so it signs new board tokens with that value.
+3. Replace the deployed Worker secret:
+
+   ```bash
+   npx wrangler secret put BOARD_TOKEN_SECRET
+   ```
+
+4. Restart or redeploy the host app if its runtime requires it.
+5. Ask active users to refresh the host page, or wait for existing short-lived tokens to expire.
+6. Verify the Worker bundle and embedded flow:
+
+   ```bash
+   npm run deploy:check
+   npm run test:e2e
+   ```
+
+   For deployed verification, open a signed-in host page, create a board item, and confirm a second
+   viewer can read/upvote it.
+
+Expected impact: tokens signed with the old secret fail with `Invalid board token` after the Worker
+uses the new secret. That is expected until the host app issues fresh tokens. If all users get token
+errors after the rotation, confirm the host app and Worker use the same secret and that
+`BOARD_TOKEN_AUDIENCE` and `BOARD_TOKEN_ISSUER` still match the host claims.
+
+Rollback: put the previous value back with `npx wrangler secret put BOARD_TOKEN_SECRET`, then
+restore the host app signer to the same previous value.
+
+Rotate `GITHUB_ISSUE_ACCESS_TOKEN` when the GitHub token may be exposed, expires, or repo access
+changes:
+
+1. Create a replacement GitHub token that can create issues in the repo used by the provisioned
+   board. For fine-grained tokens, give the target repo issue-write access.
+2. Replace the deployed Worker secret:
+
+   ```bash
+   npx wrangler secret put GITHUB_ISSUE_ACCESS_TOKEN
+   ```
+
+3. Confirm the board still points at the expected repo:
+
+   ```bash
+   npm run provision:board -- --repo mean-weasel/demo --name "Demo Board" --remote
+   ```
+
+4. Verify the Worker bundle:
+
+   ```bash
+   npm run deploy:check
+   ```
+
+5. For deployed verification, create a test item from the embedded board and confirm the matching
+   GitHub Issue appears in the configured repo.
+
+Expected impact: item creation returns `GitHub issue creator is not configured` when the secret is
+missing, or `Failed to create GitHub issue` when GitHub rejects the token. In both cases, the board
+item is not stored because GitHub Issue creation happens before D1 item persistence.
+
+Rollback: put the previous GitHub token back with
+`npx wrangler secret put GITHUB_ISSUE_ACCESS_TOKEN`, then create a test item to confirm GitHub
+mirroring works again.
+
+Local recovery uses `.dev.vars` instead of deployed Worker secrets. Update `.dev.vars`, restart
+`wrangler dev`, and rerun:
+
+```bash
+npm run test:e2e
+```
+
+The local E2E flow uses a fake GitHub Issue creator, so it proves the board/token/widget path but
+not a live GitHub token. Use a deployed test item to prove real GitHub token recovery.
+
 ## Verification
 
 Run the standard checks before handing off changes:
@@ -315,6 +405,5 @@ make check
 This repository is still an early vertical slice. Before release, the next tranche should decide
 and implement:
 
-- secret rotation and recovery guidance;
 - release automation and environment promotion;
 - package/version publishing flow for the embed script.
