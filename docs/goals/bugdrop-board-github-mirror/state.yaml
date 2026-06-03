@@ -1,0 +1,223 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board GitHub Mirror'
+  slug: 'bugdrop-board-github-mirror'
+  kind: existing_plan
+  tranche: 'Complete Conveyor Board 2: validation, GitHub Issue client/interface, and create-item GitHub mirror flow only.'
+  status: active
+  oracle:
+    signal: 'Creating an item with a valid token persists a D1 item, creates one mocked GitHub Issue payload, stores the issue number/URL, appends an event, fails atomically when GitHub creation fails, make check passes, npm run validate passes, and final audit confirms no widget/polling/host-app/E2E/realtime drift.'
+    cadence: 'after each Worker package and at final audit'
+    final_proof: 'Receipt-backed command output for GitHub client tests, create-item route tests, GitHub failure atomicity tests, make check, and npm run validate; direct inspection of route/client injection and issue metadata persistence; and source scan/audit against widget UI, polling, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, realtime, screenshot, and annotation behavior.'
+  intake:
+    original_request: '$goal-prep Build Conveyor Board 2 from docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md: validation/GitHub client and real GitHub Issue mirroring only, using the completed Board 1 D1/auth foundation and excluding widget UI, polling, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, and realtime.'
+    interpreted_outcome: 'Prepare a GoalBuddy board that executes only the create-item/GitHub mirror tranche from the accepted implementation plan.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board implementation workers and reviewers'
+    authority: requested
+    proof_type: test
+    completion_proof: 'Valid token create flow validates input, creates exactly one mocked GitHub Issue, persists D1 item with issue metadata, appends event, rejects invalid token/input, fails without orphaned D1 item on GitHub failure, and passes make check and npm run validate.'
+    likely_misfire: 'Creating D1 items without GitHub Issues, using fake issue metadata, treating GITHUB_PRIVATE_KEY as an installation token, trusting unsigned browser user ids, or drifting into widget/polling/E2E work.'
+    blind_spots_considered:
+      - 'Board 1 left GitHub issue fields nullable; Board 2 should populate them through the create-item mirror path.'
+      - 'Production GitHub App installation-token generation may need Scout/Judge scoping before Worker code; tests should use injected issue creation or mocked fetch to avoid real credentials.'
+      - 'Atomicity matters: if GitHub issue creation fails, the D1 item should not remain as an orphaned board item.'
+      - 'Polling/event cursor API is later Board 3 even though Board 2 appends events.'
+    existing_plan_facts:
+      - 'Input plan path: docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md'
+      - 'Conveyor Board 2 goal oracle: creating an item with a valid token persists a D1 item, creates one mocked GitHub Issue payload, stores issue URL, appends an event, and fails atomically when GitHub creation fails.'
+      - 'Relevant implementation plan slices: Task 5 Validation and GitHub Issue Client; Task 6 Create Item API Route.'
+      - 'Board 1 D1/auth foundation is complete and should be reused.'
+      - 'This tranche excludes widget UI, polling API, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, and realtime.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: live
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-github-mirror/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-github-mirror'
+
+active_task: T001
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: active
+    reasoning_hint: low
+    objective: 'Validate the exact Board 2 create-item, validation, GitHub Issue client/interface, and atomicity strategy before any writes.'
+    inputs:
+      - 'docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md'
+      - 'docs/superpowers/specs/2026-06-03-bugdrop-board-design.md'
+      - 'AGENTS.md'
+      - 'package.json'
+      - 'wrangler.toml'
+      - 'src/types.ts'
+      - 'src/routes/api.ts'
+      - 'src/lib/board-repository.ts'
+      - 'src/lib/board-token.ts'
+      - 'test/routes.test.ts'
+      - 'test/board-repository.test.ts'
+      - 'test/board-token.test.ts'
+    constraints:
+      - 'Read-only.'
+      - 'Do not edit implementation files.'
+      - 'Inspect only facts needed for Board 2.'
+      - 'Do not design or implement widget UI, polling API, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, realtime, screenshot, or annotation behavior.'
+      - 'Explicitly identify any plan snippets that are stale because Board 1 made GitHub issue fields nullable and Board 2 owns real issue metadata.'
+      - 'Prefer concrete file/package evidence over generic advice.'
+    expected_output:
+      - 'Recommended validation helper scope and tests.'
+      - 'Recommended GitHub Issue client or issue-creator interface and tests, including how to avoid treating GITHUB_PRIVATE_KEY as an installation token.'
+      - 'Recommended create-item route strategy using Board 1 auth/repository, including atomicity and D1 transaction/ordering implications.'
+      - 'Exact candidate Worker package or packages with allowed_files and verification commands.'
+      - 'Forbidden carryover list for widget/polling/E2E/realtime/screenshot behavior.'
+    receipt: null
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: medium
+    objective: 'Review Scout findings and authorize the largest safe Board 2 Worker package.'
+    inputs:
+      - 'T001 receipt'
+      - 'Goal oracle'
+      - 'AGENTS.md proof expectations'
+    constraints:
+      - 'Do not implement.'
+      - 'Keep the package to Conveyor Board 2 only.'
+      - 'Reject any plan that includes widget UI, polling API, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, realtime, screenshot, or annotation behavior.'
+      - 'Reject any plan that treats GITHUB_PRIVATE_KEY as a GitHub installation token in final code.'
+      - 'Pick one coherent Worker slice, or explicitly split GitHub client and route behavior only if production GitHub auth risk makes a combined package unsafe.'
+      - 'Include allowed_files, verify commands, stop_if conditions, and deferred tasks.'
+    expected_output:
+      - 'Decision: proceed | revise | blocked'
+      - 'Exact Worker objective'
+      - 'allowed_files'
+      - 'verify commands'
+      - 'stop_if conditions'
+      - 'Deferred tasks for Conveyor Board 3+'
+    receipt: null
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: medium
+    objective: 'Implement the Judge-authorized Board 2 validation/GitHub mirror package.'
+    allowed_files:
+      - 'src/types.ts'
+      - 'src/routes/api.ts'
+      - 'src/lib/board-repository.ts'
+      - 'src/lib/board-token.ts'
+      - 'src/lib/validation.ts'
+      - 'src/lib/github.ts'
+      - 'test/routes.test.ts'
+      - 'test/github.test.ts'
+      - 'test/validation.test.ts'
+      - 'docs/goals/bugdrop-board-github-mirror/state.yaml'
+    verify:
+      - 'npm run test -- test/github.test.ts'
+      - 'npm run test -- test/validation.test.ts, if validation tests are split out.'
+      - 'npm run test -- test/routes.test.ts'
+      - 'npm run validate'
+      - 'make check'
+      - 'direct source inspection for injected issue creator/client boundary and no GITHUB_PRIVATE_KEY-as-installation-token shortcut'
+      - 'direct route/repository inspection proving GitHub failure does not leave an orphaned D1 item'
+      - 'rg --hidden -n "widget UI|polling|Playwright|playwright|dummy host|comment|downvote|GitHub Projects|WebSocket|screenshot|annotation|html-to-image" src test package.json wrangler.toml || true'
+    stop_if:
+      - 'Need files outside allowed_files.'
+      - 'Need widget UI, polling API, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, realtime, screenshot, or annotation behavior.'
+      - 'Need production GitHub credentials or a real GitHub App installation token.'
+      - 'Final code would treat GITHUB_PRIVATE_KEY as an installation token.'
+      - 'Cannot prove GitHub failure atomicity without changing Board 1 schema/repository beyond approved scope.'
+      - 'Verification fails twice for the same unresolved cause.'
+    receipt: null
+
+  - id: T004
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: 'Review the completed Board 2 Worker package against the GitHub mirror oracle and decide whether cleanup or final audit is required.'
+    inputs:
+      - 'T001 receipt'
+      - 'T002 receipt'
+      - 'T003 receipt'
+      - 'Current diff'
+      - 'Last verification output'
+    constraints:
+      - 'Do not implement unless promoting a tiny PM cleanup task is unavoidable and explicitly recorded.'
+      - 'Reject if GitHub client tests, create-item route tests, GitHub failure atomicity tests, make check, or npm run validate were not run after final edit.'
+      - 'Reject if route/client injection and issue metadata persistence were not directly inspected.'
+      - 'Reject if any widget/polling/E2E/realtime/screenshot behavior was added.'
+    expected_output:
+      - 'approved | rejected'
+      - 'Evidence mapped to each oracle clause'
+      - 'Required cleanup task if rejected'
+      - 'Deferred follow-up tasks for Conveyor Board 3'
+    receipt: null
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: 'Final audit: decide whether Conveyor Board 2 is complete and ready to hand off to the votes/polling board.'
+    inputs:
+      - 'All done task receipts'
+      - 'Last verification'
+      - 'Current dirty diff'
+      - 'Goal oracle'
+    constraints:
+      - 'Do not implement.'
+      - 'Reject completion if required Worker or Judge tasks are still queued or active.'
+      - 'Reject completion if the GitHub mirror oracle is not proven with direct evidence.'
+      - 'Reject completion if the board drifted into later-conveyor functionality.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'Evidence for input validation'
+      - 'Evidence for exactly one mocked GitHub Issue payload'
+      - 'Evidence for D1 item issue metadata persistence'
+      - 'Evidence for event append'
+      - 'Evidence for GitHub failure atomicity'
+      - 'Evidence for make check'
+      - 'Evidence for npm run validate'
+      - 'Evidence for no widget/polling/E2E/realtime drift'
+      - 'Next starter command for Conveyor Board 3 if complete'
+    receipt: null
+
+checks:
+  dirty_fingerprint: unknown
+  last_verification:
+    result: not_run
+    task: none
+    commands: []
