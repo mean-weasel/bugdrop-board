@@ -1,0 +1,358 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Request Throttling'
+  slug: 'bugdrop-board-request-throttling'
+  kind: existing_plan
+  tranche: 'Complete Conveyor Board 8: self-host production hardening for request throttling and misuse controls only, using completed Board 1-7 foundations and excluding hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, release automation, and package publishing.'
+  status: done
+  oracle:
+    signal: 'Existing write APIs enforce focused request throttling or equivalent misuse controls for item creation and upvote toggling, self-hosters can configure/understand the controls without hosted infrastructure, validation gates pass, and final audit confirms no hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, release automation, package publishing, or broad product expansion was added.'
+    cadence: 'after Scout, after Worker, and at final audit'
+    final_proof: 'Receipt-backed tests for allowed and over-limit write traffic, direct inspection of control boundaries and self-host docs/config, npm run validate, make check, npm run build:widget, npm run test:e2e, provisioning command proof, and scope-drift scan.'
+  intake:
+    original_request: '$goal-prep Build Conveyor Board 8: self-host production hardening for request throttling and misuse controls only, using completed Board 1-7 foundations and excluding hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, release automation, and package publishing.'
+    interpreted_outcome: 'Prepare a GoalBuddy board for the next conveyor slice: self-host production hardening limited to request throttling and misuse controls for existing board APIs.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers and self-hosting operators preparing a safer public embedded board'
+    authority: requested
+    proof_type: test
+    completion_proof: 'Tests and docs/config prove bounded misuse controls for existing write paths, while the rest of Board 1-7 behavior still passes and no excluded product or infrastructure work is introduced.'
+    likely_misfire: 'Adding a broad security platform, hosted tenant/control-plane assumptions, or vague hardening notes instead of a narrow, test-backed throttling/misuse-control implementation.'
+    blind_spots_considered:
+      - 'The highest-risk current paths are existing writes: creating items and toggling upvotes.'
+      - 'Controls should preserve legitimate authenticated user traffic and avoid globally blocking unrelated users or boards.'
+      - 'The solution must be self-hostable and should not require a managed hosted service.'
+      - 'Cloudflare-native rate limiting may not be locally testable without account configuration, so Scout/Judge must separate implementation proof from operator-only deployment options.'
+      - 'Production hardening outside request throttling/misuse controls remains a later board.'
+    existing_plan_facts:
+      - 'Completed foundation: Board 1 D1/auth repository/token foundation.'
+      - 'Completed foundation: Board 2 create-item GitHub Issue mirror route.'
+      - 'Completed foundation: Board 3 board reads, upvote toggle, and event cursor polling APIs.'
+      - 'Completed foundation: Board 4 embedded widget, dummy host app, and Playwright E2E.'
+      - 'Completed foundation: Board 5 self-hosting docs/config and production-hardening handoff.'
+      - 'Completed foundation: Board 6 durable board provisioning/config flow with npm run provision:board.'
+      - 'Completed foundation: Board 7 production deploy readiness docs/config and deploy dry-run gate.'
+      - 'User explicitly excludes hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, release automation, and package publishing.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: active
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-request-throttling/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-request-throttling'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: high
+    objective: 'Validate current write-path misuse risks and recommend the smallest safe Board 8 Worker package before any writes.'
+    inputs:
+      - 'docs/goals/bugdrop-board-data-auth/state.yaml'
+      - 'docs/goals/bugdrop-board-github-mirror/state.yaml'
+      - 'docs/goals/bugdrop-board-votes-polling/state.yaml'
+      - 'docs/goals/bugdrop-board-widget-host/state.yaml'
+      - 'docs/goals/bugdrop-board-self-hosting/state.yaml'
+      - 'docs/goals/bugdrop-board-provisioning/state.yaml'
+      - 'docs/goals/bugdrop-board-production-readiness/state.yaml'
+      - 'README.md'
+      - '.dev.vars.example'
+      - 'wrangler.toml'
+      - 'package.json'
+      - 'Makefile'
+      - 'migrations/'
+      - 'src/'
+      - 'test/'
+      - 'e2e/'
+    constraints:
+      - 'Read-only.'
+      - 'Do not edit implementation, docs, scripts, config, or goal state during Scout except for the final receipt.'
+      - 'Inspect only facts needed for Board 8 request throttling and misuse controls.'
+      - 'Do not implement hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, release automation, package publishing, or broad production hardening.'
+      - 'Identify whether the current stack can support locally testable self-host throttling without production Cloudflare credentials.'
+      - 'Prefer concrete repo/config/test evidence over generic hardening advice.'
+    expected_output:
+      - 'Current highest-risk misuse paths.'
+      - 'Actual route/auth/storage facts that affect throttling design.'
+      - 'Recommended smallest Worker package with allowed_files.'
+      - 'Configuration/docs approach for self-hosters.'
+      - 'Verification commands and direct inspection needed.'
+      - 'Stop conditions and forbidden carryover list.'
+    receipt:
+      result: done
+      task_id: T001
+      summary: 'Scout found no existing throttling primitives. The current high-risk write paths are authenticated item creation and upvote toggling. Both already verify host-signed board-scoped tokens, use D1, and have route tests, so the smallest self-hostable package is locally testable D1 fixed-window throttling keyed by board id, signed external user id, and action.'
+      evidence:
+        - 'src/routes/api.ts exposes POST /boards/:boardId/items and POST /boards/:boardId/items/:itemId/upvote; both authorize board tokens before writes.'
+        - 'Item creation calls GitHub before D1 persistence, so throttling must happen before `issueCreator.createIssue` to prevent GitHub abuse.'
+        - 'Upvote toggling writes board_votes, board_items counters, and board_events; throttling can happen after board existence check and before toggleUpvote.'
+        - 'migrations/0001_initial.sql has no request/misuse control table.'
+        - 'test/routes.test.ts already uses Cloudflare D1 test env and can prove allowed traffic, over-limit rejection, and board/user isolation.'
+      facts:
+        - 'Current Env has no throttling configuration fields.'
+        - 'Current README handoff still lists request throttling and misuse controls as future work.'
+        - 'No production Cloudflare rate-limit product is required to prove a D1-backed Worker-side implementation locally.'
+      ambiguity_requiring_judge:
+        - 'Whether to use one shared throttle window with per-action limits or separate per-action window configuration.'
+      commands:
+        - 'rg -n "POST|upvote|items|votes|events|authorize|BOARD_TOKEN|ALLOWED_ORIGINS|ENVIRONMENT|rate|limit|throttl|misuse" src test migrations README.md wrangler.toml .dev.vars.example package.json Makefile'
+        - 'sed -n "1,340p" src/routes/api.ts'
+        - 'sed -n "1,460p" test/routes.test.ts'
+        - 'sed -n "1,120p" migrations/0001_initial.sql'
+      note_needed: false
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Review Scout findings and authorize the largest safe Board 8 Worker package.'
+    inputs:
+      - 'T001 receipt'
+      - 'Goal oracle'
+      - 'Board 1-7 completion receipts'
+      - 'AGENTS.md proof expectations'
+    constraints:
+      - 'Do not implement.'
+      - 'Keep the package to request throttling and misuse controls only.'
+      - 'Reject any plan that requires production Cloudflare or GitHub credentials for proof.'
+      - 'Reject any plan that implements hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, release automation, package publishing, or broad production hardening.'
+      - 'Require tests for allowed traffic, rejected over-limit traffic, and isolation between users or boards.'
+    expected_output:
+      - 'Decision: proceed | revise | blocked'
+      - 'Exact Worker objective'
+      - 'allowed_files'
+      - 'verify commands'
+      - 'stop_if conditions'
+      - 'Deferred tasks for later conveyors'
+    receipt:
+      decision: proceed
+      worker_objective: 'Implement D1-backed fixed-window write throttling for item creation and upvote toggling, with safe defaults, optional self-host configuration, route tests, migration, and docs.'
+      allowed_files:
+        - 'src/'
+        - 'test/'
+        - 'migrations/'
+        - 'README.md'
+        - '.dev.vars.example'
+        - 'wrangler.toml'
+        - 'package.json'
+        - 'Makefile'
+        - 'docs/goals/bugdrop-board-request-throttling/state.yaml'
+      required_behavior:
+        - 'Throttle only authenticated write paths in this tranche: create item and toggle upvote.'
+        - 'Use board id, signed external user id, and action as the isolation key so independent users and boards are not blocked together.'
+        - 'Run item-create throttling before GitHub issue creation.'
+        - 'Return HTTP 429 with Retry-After and a JSON error when over limit.'
+        - 'Provide safe defaults while allowing self-hosters to tune limits with non-secret Worker vars.'
+      verify:
+        - 'Focused route tests for allowed traffic, over-limit item creation, over-limit upvotes, independent users, independent boards, and GitHub not called when item creation is throttled.'
+        - 'npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local'
+        - 'npm run build:widget'
+        - 'npm run deploy:check'
+        - 'npm run test:e2e'
+        - 'npm run validate'
+        - 'make check'
+        - 'direct inspection that docs/config explain request throttling settings for self-hosters'
+        - 'scope scan for hosted control plane/billing/realtime/comments/downvotes/GitHub Projects/release automation/package publishing drift'
+      stop_if:
+        - 'Any proof requires production Cloudflare or GitHub credentials.'
+        - 'Any needed change adds hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, release automation, package publishing, or broader hardening.'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: 'Implement the Judge-authorized request throttling and misuse-controls package.'
+    allowed_files:
+      - 'src/'
+      - 'test/'
+      - 'migrations/'
+      - 'README.md'
+      - '.dev.vars.example'
+      - 'wrangler.toml'
+      - 'package.json'
+      - 'Makefile'
+      - 'docs/goals/bugdrop-board-request-throttling/state.yaml'
+    verify:
+      - 'Run Judge-authorized focused throttling/misuse-control tests.'
+      - 'npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local'
+      - 'npm run build:widget'
+      - 'npm run deploy:check'
+      - 'npm run test:e2e'
+      - 'npm run validate'
+      - 'make check'
+      - 'direct inspection that docs/config explain request throttling and misuse-control settings for self-hosters'
+      - 'scope scan for hosted control plane/billing/realtime/comments/downvotes/GitHub Projects/release automation/package publishing drift'
+    stop_if:
+      - 'Need real production Cloudflare or GitHub credentials for proof.'
+      - 'Need hosted control plane, billing, tenant management, realtime, comments, downvotes, GitHub Projects, release automation, package publishing, or broad production hardening.'
+      - 'Need files outside Judge-authorized allowed_files.'
+      - 'Cannot produce concrete misuse-control tests without inventing unsupported claims.'
+    receipt:
+      result: done
+      task_id: T003
+      changed_files:
+        - 'migrations/0002_request_throttle.sql'
+        - 'src/lib/request-throttle.ts'
+        - 'src/routes/api.ts'
+        - 'src/routes/api-helpers.ts'
+        - 'src/routes/write-throttle.ts'
+        - 'src/types.ts'
+        - 'test/request-throttling.test.ts'
+        - 'README.md'
+        - 'wrangler.toml'
+        - 'docs/goals/bugdrop-board-request-throttling/state.yaml'
+      summary: 'Implemented D1-backed fixed-window write throttling for item creation and upvote toggling. Limits are keyed by action, board id, and signed external user id, return 429 with Retry-After, block item creation before GitHub Issue creation, expose self-host tunables in wrangler.toml, and document the behavior.'
+      commands:
+        - command: 'npx vitest run test/request-throttling.test.ts'
+          result: passed
+          evidence: '4 focused tests passed for item-create throttling, upvote throttling, GitHub call prevention, and user/board isolation.'
+        - command: 'npm run validate'
+          result: passed
+          evidence: 'eslint, Prettier check, TypeScript typecheck, and 47 Vitest tests passed.'
+        - command: 'npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local'
+          result: passed
+          evidence: 'Printed board id `board_mean_weasel_deploy_demo` with binding `DB` and mode `local`.'
+        - command: 'npm run build:widget'
+          result: passed
+          evidence: 'Built BugDrop Board bundle 0.1.0.'
+        - command: 'npm run deploy:check'
+          result: passed
+          evidence: 'Wrangler deploy dry-run reported DB/ASSETS bindings and the new throttle vars: REQUEST_THROTTLE_WINDOW_SECONDS, ITEM_CREATE_RATE_LIMIT, and UPVOTE_RATE_LIMIT.'
+        - command: 'npm run test:e2e'
+          result: passed
+          evidence: '1 Playwright test passed: embedded board creates, upvotes, and syncs through polling.'
+        - command: 'make check'
+          result: passed
+          evidence: 'eslint, format-check, typecheck, knip, critical npm audit, and Actions Node guard passed.'
+        - command: 'rg inspection for throttling docs/config/code terms'
+          result: passed
+          evidence: 'Found request_throttle_windows migration, route enforcement, 429/Retry-After response, self-host vars, and README Request Throttling docs.'
+        - command: 'git diff scope scan for implementation/config drift'
+          result: passed
+          evidence: 'No matches in src/test/migrations/config diffs for hosted control plane, billing, realtime, downvotes, GitHub Projects, release automation, package publishing, or status workflow drift.'
+      remaining_blockers: []
+      verification_attempts: 1
+      stopped_because: null
+
+  - id: T004
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Review the completed Board 8 Worker package against the request throttling oracle.'
+    inputs:
+      - 'T001 receipt'
+      - 'T002 receipt'
+      - 'T003 receipt'
+      - 'Current diff'
+      - 'Last verification output'
+    constraints:
+      - 'Do not implement unless promoting a tiny PM cleanup task is unavoidable and explicitly recorded.'
+      - 'Reject if tests do not prove both allowed traffic and over-limit rejection.'
+      - 'Reject if validation gates were not run after final edit.'
+      - 'Reject if the diff includes hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, release automation, package publishing, or broad production hardening.'
+    expected_output:
+      - 'approved | rejected'
+      - 'Evidence mapped to each oracle clause'
+      - 'Required cleanup task if rejected'
+      - 'Deferred follow-up tasks for later conveyors'
+    receipt:
+      decision: approved
+      evidence:
+        - 'Behavior: create-item and upvote POST routes call `enforceWriteThrottle` after token and board checks and before write side effects.'
+        - 'Isolation: `RequestThrottle` keys counters by action, board id, and signed external user id.'
+        - 'Storage: migration 0002 creates `request_throttle_windows` with indexes for expiration and board/user/action lookup.'
+        - 'Tests: `test/request-throttling.test.ts` proves allowed traffic, over-limit 429, no GitHub call when create-item is throttled, independent users, and independent boards.'
+        - 'Docs/config: README documents safe defaults and tuning; wrangler.toml defines non-secret throttle defaults.'
+        - 'Validation gates passed after final code edits: focused throttling tests, npm run validate, make check, deploy:check, and test:e2e.'
+      deferred_follow_ups:
+        - 'Secret rotation and recovery guidance remain a later operational tranche.'
+        - 'Release automation/environment promotion and package publishing remain later release-engineering work.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Final audit: decide whether Conveyor Board 8 is complete and ready for the next tranche.'
+    inputs:
+      - 'All done task receipts'
+      - 'Last verification'
+      - 'Current dirty diff'
+      - 'Goal oracle'
+    constraints:
+      - 'Do not implement.'
+      - 'Reject completion if required Worker or Judge tasks are still queued or active.'
+      - 'Reject completion if request throttling/misuse controls are not proven by tests and direct inspection.'
+      - 'Reject completion if the board drifted into hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, release automation, package publishing, or broad production hardening.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'Evidence for throttling/misuse-control behavior'
+      - 'Evidence for allowed traffic compatibility'
+      - 'Evidence for user/board isolation'
+      - 'Evidence for self-host docs/config'
+      - 'Evidence for widget build'
+      - 'Evidence for E2E smoke'
+      - 'Evidence for make check'
+      - 'Evidence for npm run validate'
+      - 'Evidence for no out-of-scope implementation drift'
+      - 'Next starter command if complete'
+    receipt:
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'Request throttling behavior is implemented for existing write routes: item creation and upvote toggling.'
+        - 'Allowed traffic compatibility and over-limit rejection are proven by focused route tests and the existing embedded Playwright smoke.'
+        - 'User and board isolation are proven by focused route tests using separate signed users and separate boards.'
+        - 'Self-host docs/config are present in README and wrangler.toml with positive-integer tunables and safe defaults.'
+        - 'Board 1-7 compatibility gates passed: provisioning command, widget build, deploy dry-run, E2E, npm run validate, and make check.'
+        - 'Scope audit found no hosted control plane, billing, realtime, comments/downvotes behavior, GitHub Projects, release automation implementation, package publishing, or broad product expansion in implementation/config diffs.'
+      next_starter_command: '$goal-prep Build the next BugDrop Board tranche after choosing the next remaining release gap.'
+
+checks:
+  dirty_fingerprint: 'README.md wrangler.toml migrations/0002_request_throttle.sql src/lib/request-throttle.ts src/routes/api.ts src/routes/api-helpers.ts src/routes/write-throttle.ts src/types.ts test/request-throttling.test.ts docs/goals/bugdrop-board-request-throttling/state.yaml'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'npx vitest run test/request-throttling.test.ts'
+      - 'npm run validate'
+      - 'npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local'
+      - 'npm run build:widget'
+      - 'npm run deploy:check'
+      - 'npm run test:e2e'
+      - 'make check'
+      - 'rg inspection for throttling docs/config/code terms'
+      - 'git diff scope scan for implementation/config drift'

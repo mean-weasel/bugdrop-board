@@ -13,6 +13,9 @@ ENVIRONMENT = "development"
 ALLOWED_ORIGINS = "*"
 BOARD_TOKEN_AUDIENCE = "bugdrop-board"
 BOARD_TOKEN_ISSUER = "dummy-host"
+REQUEST_THROTTLE_WINDOW_SECONDS = "60"
+ITEM_CREATE_RATE_LIMIT = "5"
+UPVOTE_RATE_LIMIT = "60"
 
 # Set BOARD_TOKEN_SECRET and GITHUB_ISSUE_ACCESS_TOKEN in .dev.vars locally.
 # For deployed environments, use `wrangler secret put`; do not commit secrets.
