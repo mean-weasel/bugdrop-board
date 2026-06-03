@@ -7,6 +7,9 @@ export interface Env {
   BOARD_TOKEN_AUDIENCE?: string;
   BOARD_TOKEN_ISSUER?: string;
   GITHUB_ISSUE_ACCESS_TOKEN?: string;
+  REQUEST_THROTTLE_WINDOW_SECONDS?: string;
+  ITEM_CREATE_RATE_LIMIT?: string;
+  UPVOTE_RATE_LIMIT?: string;
 }
 
 export type BoardStatus = 'open' | 'planned' | 'in_progress' | 'shipped' | 'closed';

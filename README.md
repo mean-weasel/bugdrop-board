@@ -239,6 +239,31 @@ local `.dev.vars`. The token must be able to create issues in the repo represent
 When a board item is created, BugDrop Board creates a GitHub Issue first. If GitHub issue creation
 fails, the D1 board item is not stored.
 
+## Request Throttling
+
+BugDrop Board includes D1-backed write throttling for the embedded board APIs. The default limits
+are per board, per signed host user, per action:
+
+- item creation: `5` requests per window;
+- upvote toggling: `60` requests per window;
+- window size: `60` seconds.
+
+Configure these non-secret Worker vars in `wrangler.toml`:
+
+```toml
+REQUEST_THROTTLE_WINDOW_SECONDS = "60"
+ITEM_CREATE_RATE_LIMIT = "5"
+UPVOTE_RATE_LIMIT = "60"
+```
+
+When a user exceeds a write limit, the API returns `429` with a `Retry-After` header and does not
+run the write side effect. Item creation is throttled before GitHub Issue creation, so over-limit
+requests do not create GitHub Issues.
+
+Use positive integer values. Invalid or missing values fall back to the safe defaults above. Higher
+limits are useful for trusted internal testing; lower limits are useful for public boards that need
+more conservative write protection.
+
 ## Cloudflare Configuration
 
 `wrangler.toml` defines:
@@ -249,6 +274,8 @@ fails, the D1 board item is not stored.
 - Local database name: `bugdrop-board-dev`
 - Worker defaults: `ENVIRONMENT`, `ALLOWED_ORIGINS`, `BOARD_TOKEN_AUDIENCE`, and
   `BOARD_TOKEN_ISSUER`
+- Request throttling defaults: `REQUEST_THROTTLE_WINDOW_SECONDS`, `ITEM_CREATE_RATE_LIMIT`, and
+  `UPVOTE_RATE_LIMIT`
 
 Keep secrets out of `wrangler.toml`. For local development, use `.dev.vars`. For deployed
 environments, set secrets with:
@@ -288,7 +315,6 @@ make check
 This repository is still an early vertical slice. Before release, the next tranche should decide
 and implement:
 
-- request throttling and misuse controls;
 - secret rotation and recovery guidance;
 - release automation and environment promotion;
 - package/version publishing flow for the embed script.
