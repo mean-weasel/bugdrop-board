@@ -1,0 +1,376 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Votes And Polling'
+  slug: 'bugdrop-board-votes-polling'
+  kind: existing_plan
+  tranche: 'Complete Conveyor Board 3: voting, board read, and polling/event read APIs only.'
+  status: done
+  oracle:
+    signal: 'Two simulated authenticated viewers can load board items, toggle an upvote, observe acting-user viewerHasUpvoted/upvoteCount immediately, and poll ordered event deltas after a cursor; cross-board reads/writes stay isolated; make check and npm run validate pass; final audit confirms no widget/host-app/E2E/realtime/GitHub-mirroring drift.'
+    cadence: 'after each Worker package and at final audit'
+    final_proof: 'Receipt-backed command output for route tests covering board read, upvote toggle, event cursor polling, cross-board isolation, make check, and npm run validate; direct inspection of signed-token identity use and repository/event ordering; and source scan/audit against widget UI, dummy host app, Playwright/E2E, realtime, comments, downvotes, GitHub Projects, screenshot, annotation, and new GitHub mirroring behavior.'
+  intake:
+    original_request: '$goal-prep Build Conveyor Board 3 from docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md: voting and polling/event read APIs only, using the completed Board 1 D1/auth foundation and Board 2 create-item GitHub mirror foundation.'
+    interpreted_outcome: 'Prepare a GoalBuddy board that executes only the Board 3 backend read/upvote/polling API tranche from the accepted implementation plan.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board implementation workers and reviewers'
+    authority: requested
+    proof_type: test
+    completion_proof: 'Authenticated route tests prove current board item reads, one-user upvote toggle behavior, viewer-specific upvote state, ordered event polling after a cursor, cross-board isolation, and no later-board scope drift; make check and npm run validate pass.'
+    likely_misfire: 'Returning stale counters, trusting browser-provided user ids, leaking cross-board items/events, skipping events when multiple writes happen quickly, adding widget/E2E/realtime work, or modifying GitHub mirror behavior instead of preserving it.'
+    blind_spots_considered:
+      - 'Board 1 already created D1 tables, repository primitives, host-signed token helpers, and upvote/event repository behavior; Scout must verify exact current API gaps before Worker edits.'
+      - 'Board 2 already created the item creation route and GitHub issue metadata persistence; Board 3 should read that metadata but not create or modify GitHub Issues.'
+      - 'Viewer-specific upvote state may require a repository read helper or route-level vote lookup; Judge should pick the smallest coherent package.'
+      - 'Polling means cursor-based event reads only for this board, not realtime transport.'
+    existing_plan_facts:
+      - 'Input plan path: docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md'
+      - 'Conveyor Board 3 goal oracle from the plan: two simulated viewers can load a board, one viewer creates/upvotes an item, and the other viewer receives the changed item via cursor polling.'
+      - 'Relevant implementation plan slice: Task 7 Upvote and Polling API.'
+      - 'Completed foundation: Board 1 D1/auth repository/token foundation.'
+      - 'Completed foundation: Board 2 create-item route and GitHub Issue metadata mirror.'
+      - 'This tranche excludes widget UI/API client, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, realtime/WebSocket/Durable Object transport, screenshot capture, annotation, html-to-image, and new GitHub mirroring behavior.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: live
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-votes-polling/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-votes-polling'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: low
+    objective: 'Validate the exact Board 3 read/upvote/polling API gap and safest Worker package before any writes.'
+    inputs:
+      - 'docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md'
+      - 'docs/goals/bugdrop-board-data-auth/state.yaml'
+      - 'docs/goals/bugdrop-board-github-mirror/state.yaml'
+      - 'AGENTS.md'
+      - 'package.json'
+      - 'wrangler.toml'
+      - 'src/types.ts'
+      - 'src/routes/api.ts'
+      - 'src/lib/board-repository.ts'
+      - 'src/lib/board-token.ts'
+      - 'test/routes.test.ts'
+      - 'test/board-repository.test.ts'
+      - 'test/board-token.test.ts'
+    constraints:
+      - 'Read-only.'
+      - 'Do not edit implementation files.'
+      - 'Inspect only facts needed for Board 3.'
+      - 'Do not design or implement widget UI/client, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, realtime/WebSocket/Durable Object transport, screenshots, annotations, html-to-image, or new GitHub mirroring behavior.'
+      - 'Do not treat polling as realtime or push transport.'
+      - 'Prefer concrete file/package evidence over generic advice.'
+    expected_output:
+      - 'Current route/repository capability map for board item reads, upvote toggle, and event cursor reads.'
+      - 'Recommended API contract for GET board items, POST upvote toggle, and GET events with since cursor.'
+      - 'Recommended auth and cross-board isolation checks using Board 1 tokens.'
+      - 'Recommended test matrix proving two-viewer behavior, viewerHasUpvoted state, upvote count, ordered cursor events, and invalid/wrong-scope rejection.'
+      - 'Exact candidate Worker package with allowed_files, verify commands, and stop_if conditions.'
+      - 'Forbidden carryover list for widget/host-app/E2E/realtime/GitHub drift.'
+    receipt:
+      result: done
+      summary: 'Mapped the Board 3 API gap. Board 1/2 foundations are present: host-signed tokens, D1 board/items/votes/events schema, repository primitives, and create-item GitHub mirror route. Board 3 needs only signed board item reads, signed upvote toggle route, and signed event cursor route.'
+      evidence:
+        - 'src/routes/api.ts exposes GET /health and POST /boards/:boardId/items only; no board item read, upvote toggle, or events cursor routes exist yet.'
+        - 'src/lib/board-repository.ts already has listItems(boardId), toggleUpvote(boardId, itemId, externalUserId), and listEvents(boardId, since).'
+        - 'toggleUpvote is board-scoped, uses externalUserId, updates upvote_count, and appends upvote_added/upvote_removed events.'
+        - 'listEvents is board-scoped and ordered by id ASC with id > since and LIMIT 100.'
+        - 'migrations/0001_initial.sql has board_votes UNIQUE(board_id, item_id, external_user_id), board_events id INTEGER PRIMARY KEY AUTOINCREMENT, and idx_board_events_board_id(board_id, id).'
+        - 'Board 2 route verifies board tokens using BOARD_TOKEN_SECRET plus audience/issuer and persists created user identity from token claims, not request bodies.'
+      required_worker_shape:
+        - 'Add listItemsForViewer(boardId, externalUserId) or equivalent to return current items with viewerHasUpvoted while preserving status, issue metadata, counts, creator, and timestamps.'
+        - 'Add GET /boards/:boardId/items requiring a valid board-scoped Bearer token, returning { items }.'
+        - 'Add POST /boards/:boardId/items/:itemId/upvote requiring a valid board-scoped Bearer token, using verified claims.externalUserId, returning { item }.'
+        - 'Add GET /boards/:boardId/events?since=<cursor> requiring a valid board-scoped Bearer token, validating since as a nonnegative integer, and returning { cursor, events }.'
+      verifier_warning:
+        - 'The prepared whole-tree forbidden scan included createGitHubIssue and GITHUB_ISSUE_ACCESS_TOKEN, but those symbols are valid completed Board 2 code. Board 3 verification must use a diff-scoped GitHub-drift check or remove those terms from whole-tree scans.'
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: medium
+    objective: 'Review Scout findings and authorize the largest safe Board 3 Worker package.'
+    inputs:
+      - 'T001 receipt'
+      - 'Goal oracle'
+      - 'Board 1 and Board 2 completion receipts'
+      - 'AGENTS.md proof expectations'
+    constraints:
+      - 'Do not implement.'
+      - 'Keep the package to Conveyor Board 3 only.'
+      - 'Reject any plan that includes widget UI/client, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, realtime/WebSocket/Durable Object transport, screenshot, annotation, html-to-image, or new GitHub mirroring behavior.'
+      - 'Reject if route auth trusts browser-provided user ids instead of verified token claims.'
+      - 'Reject if event polling cannot prove ordered cursor semantics and cross-board isolation.'
+    expected_output:
+      - 'Decision: proceed | revise | blocked'
+      - 'Exact Worker objective'
+      - 'allowed_files'
+      - 'verify commands'
+      - 'stop_if conditions'
+      - 'Deferred tasks for Conveyor Board 4+'
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      summary: 'Approved one vertical Board 3 Worker package: repository viewer item reads plus signed board item read, upvote toggle, and event cursor routes with focused route/repository tests.'
+      worker_package:
+        objective: 'Implement Conveyor Board 3 only: GET board items with viewerHasUpvoted, POST upvote toggle using verified token identity, GET events cursor polling, invalid token/scope/input rejection, cross-board isolation, and ordered cursor proof.'
+        allowed_files:
+          - 'src/types.ts'
+          - 'src/routes/api.ts'
+          - 'src/lib/board-repository.ts'
+          - 'test/routes.test.ts'
+          - 'test/board-repository.test.ts'
+          - 'docs/goals/bugdrop-board-votes-polling/state.yaml'
+        verify:
+          - 'npm run test -- test/routes.test.ts'
+          - 'npm run test -- test/board-repository.test.ts'
+          - 'npm run validate'
+          - 'make check'
+          - '! rg -n "playwright|WebSocket|DurableObject|EventSource|screenshot|annotation|html-to-image|downvote|comment|GitHub Projects|projects" src/routes src/lib test'
+          - '! git diff --unified=0 -- src/routes src/lib test package.json wrangler.toml | rg "createGitHubIssue|GITHUB_ISSUE_ACCESS_TOKEN|src/widget/|public/|playwright|e2e|dummy"'
+        stop_if:
+          - 'Need files outside allowed_files.'
+          - 'Need widget UI/client, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, realtime/WebSocket/Durable Object transport, screenshot, annotation, html-to-image, status mutation workflows, or new GitHub mirroring behavior.'
+          - 'Cannot prove viewer-specific upvote state and ordered event cursor behavior with local D1 route tests.'
+      deferred_tasks:
+        - 'Widget UI/client, dummy host app, and Playwright/E2E belong to Conveyor Board 4.'
+        - 'Realtime transport, status mutation workflows, comments, downvotes, and GitHub Projects remain out of scope.'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Implement the Judge-authorized Board 3 read/upvote/polling API package.'
+    allowed_files:
+      - 'src/types.ts'
+      - 'src/routes/api.ts'
+      - 'src/lib/board-repository.ts'
+      - 'test/routes.test.ts'
+      - 'test/board-repository.test.ts'
+      - 'docs/goals/bugdrop-board-votes-polling/state.yaml'
+    verify:
+      - 'npm run test -- test/routes.test.ts'
+      - 'npm run test -- test/board-repository.test.ts if repository behavior changes'
+      - 'npm run validate'
+      - 'make check'
+      - 'direct route/repository inspection proving signed-token identity, cross-board isolation, and ordered event cursor semantics'
+      - '! rg -n "playwright|WebSocket|DurableObject|EventSource|screenshot|annotation|html-to-image|downvote|comment|GitHub Projects|projects" src/routes src/lib test'
+      - '! git diff --unified=0 -- src/routes src/lib test package.json wrangler.toml | rg "createGitHubIssue|GITHUB_ISSUE_ACCESS_TOKEN|src/widget/|public/|playwright|e2e|dummy"'
+    stop_if:
+      - 'Need files outside allowed_files.'
+      - 'Need widget UI/client, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, realtime/WebSocket/Durable Object transport, screenshot, annotation, html-to-image, or new GitHub mirroring behavior.'
+      - 'Need production GitHub credentials or live GitHub API calls.'
+      - 'Need status mutation workflows beyond status projection in board reads.'
+      - 'Cannot prove viewer-specific upvote state and event cursor ordering with local D1 route tests.'
+      - 'Verification fails twice for the same unresolved cause.'
+    receipt:
+      result: done
+      summary: 'Implemented Board 3 read/upvote/events API slice: viewer-specific item reads, signed upvote toggle, signed event cursor route, route tests, repository tests, and corrected diff-scoped GitHub drift verification.'
+      changed_files:
+        - 'src/routes/api.ts'
+        - 'src/lib/board-repository.ts'
+        - 'test/routes.test.ts'
+        - 'test/board-repository.test.ts'
+        - 'docs/goals/bugdrop-board-votes-polling/state.yaml'
+      commands:
+        - command: 'npm run test -- test/routes.test.ts test/board-repository.test.ts'
+          status: pass
+        - command: 'npm run validate'
+          status: pass
+        - command: 'make check'
+          status: pass
+        - command: '! rg -n "playwright|WebSocket|DurableObject|EventSource|screenshot|annotation|html-to-image|downvote|comment|GitHub Projects|projects" src/routes src/lib test'
+          status: pass
+        - command: '! git diff --unified=0 -- src/routes src/lib test package.json wrangler.toml | rg "createGitHubIssue|GITHUB_ISSUE_ACCESS_TOKEN|src/widget/|public/|playwright|e2e|dummy"'
+          status: pass
+      implementation_evidence:
+        - 'src/lib/board-repository.ts adds listItemsForViewer(boardId, externalUserId), left joining board_votes to return viewerHasUpvoted while preserving item fields including status and GitHub issue metadata.'
+        - 'src/routes/api.ts adds GET /boards/:boardId/items with board-scoped token auth and returns { items }.'
+        - 'src/routes/api.ts adds POST /boards/:boardId/items/:itemId/upvote with board-scoped token auth, uses verified claims.externalUserId, and returns { item }.'
+        - 'src/routes/api.ts adds GET /boards/:boardId/events?since=<cursor>, validates since as a nonnegative safe integer, and returns { cursor, events }.'
+        - 'src/routes/api.ts centralizes Bearer token authorization so create, read, upvote, and events all use Board 1 token scope/audience/issuer checks.'
+      verification:
+        - command: 'npm run test -- test/routes.test.ts test/board-repository.test.ts'
+          exit_code: 0
+          output: 'Test Files 2 passed (2); Tests 19 passed (19).'
+        - command: 'npm run validate'
+          exit_code: 0
+          output: 'lint, prettier --check, typecheck, and full vitest passed; Test Files 5 passed (5); Tests 38 passed (38).'
+        - command: 'make check'
+          exit_code: 0
+          output: 'eslint, format:check, typecheck, knip, critical npm audit, and Actions Node 24 check passed; output ended with "✓ All checks passed".'
+        - command: '! rg -n "playwright|WebSocket|DurableObject|EventSource|screenshot|annotation|html-to-image|downvote|comment|GitHub Projects|projects" src/routes src/lib test'
+          exit_code: 0
+          output: 'No matches.'
+        - command: '! git diff --unified=0 -- src/routes src/lib test package.json wrangler.toml | rg "createGitHubIssue|GITHUB_ISSUE_ACCESS_TOKEN|src/widget/|public/|playwright|e2e|dummy"'
+          exit_code: 0
+          output: 'No matches.'
+      strongest_failure_mode_checked:
+        claim: 'An upvote could be attributed to a browser-provided user id or leak across boards.'
+        proof: 'test/routes.test.ts sends externalUserId in the POST body but verifies upvote events use the token claim user_2; wrong-scope board reads/upvotes return 401 and leave the original item counter at 0.'
+
+  - id: T004
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Review the completed Board 3 Worker package against the voting/polling oracle and decide whether cleanup or final audit is required.'
+    inputs:
+      - 'T001 receipt'
+      - 'T002 receipt'
+      - 'T003 receipt'
+      - 'Current diff'
+      - 'Last verification output'
+    constraints:
+      - 'Do not implement unless promoting a tiny PM cleanup task is unavoidable and explicitly recorded.'
+      - 'Reject if board read, upvote toggle, event cursor, cross-board isolation, make check, or npm run validate were not run after final edit.'
+      - 'Reject if signed-token identity use and event ordering were not directly inspected.'
+      - 'Reject if any widget/host-app/E2E/realtime/GitHub-mirroring behavior was added.'
+    expected_output:
+      - 'approved | rejected'
+      - 'Evidence mapped to each oracle clause'
+      - 'Required cleanup task if rejected'
+      - 'Deferred follow-up tasks for Conveyor Board 4+'
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      summary: 'Approved the completed Board 3 Worker package. Evidence maps to board reads, upvote toggle, viewer-specific state, ordered cursor events, cross-board isolation, and no later-board drift. No cleanup Worker is required before final audit.'
+      evidence:
+        - 'Board item read route test proves viewer user_2 sees viewerHasUpvoted true while user_3 sees false for the same item and upvote count.'
+        - 'Upvote route test proves toggling adds then removes one vote, returns immediate viewerHasUpvoted state, appends upvote_added/upvote_removed events, and ignores browser-provided externalUserId.'
+        - 'Events route test proves GET /events?since=<createdCursor> returns only the upvote event and advances cursor beyond the prior event id.'
+        - 'Wrong-scope test proves boardB item read and upvote with boardA token return 401, original item counter remains 0, and boardB item list remains empty.'
+        - 'Repository test proves listItemsForViewer preserves GitHub issue metadata and scopes viewerHasUpvoted by external user.'
+        - 'npm run validate and make check both exited 0 after implementation.'
+        - 'Forbidden-scope scans exited 0, and GitHub drift scan is diff-scoped to avoid rejecting completed Board 2 code.'
+      deferred_follow_ups:
+        - 'Widget UI/client and dummy host app remain Conveyor Board 4.'
+        - 'Playwright/E2E remains Conveyor Board 4.'
+        - 'Realtime transport, comments, downvotes, GitHub Projects, screenshots, and annotations remain out of scope.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Final audit: decide whether Conveyor Board 3 is complete and ready to hand off to the widget/dummy-host board.'
+    inputs:
+      - 'All done task receipts'
+      - 'Last verification'
+      - 'Current dirty diff'
+      - 'Goal oracle'
+    constraints:
+      - 'Do not implement.'
+      - 'Reject completion if required Worker or Judge tasks are still queued or active.'
+      - 'Reject completion if the voting/polling oracle is not proven with direct evidence.'
+      - 'Reject completion if the board drifted into later-conveyor functionality.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'Evidence for board item read route'
+      - 'Evidence for upvote toggle route'
+      - 'Evidence for viewer-specific upvote state'
+      - 'Evidence for event cursor polling'
+      - 'Evidence for cross-board isolation'
+      - 'Evidence for make check'
+      - 'Evidence for npm run validate'
+      - 'Evidence for no widget/host-app/E2E/realtime/GitHub drift'
+      - 'Next starter command for Conveyor Board 4 if complete'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: 'Conveyor Board 3 is complete. Fresh verification proves signed board item reads, signed upvote toggles, viewer-specific upvote state, ordered event cursor reads, cross-board isolation, make check, npm run validate, and no later-board drift.'
+      evidence:
+        board_item_read_route:
+          - 'src/routes/api.ts implements GET /boards/:boardId/items with board-token auth and repo.listItemsForViewer.'
+          - 'test/routes.test.ts proves the response includes status, GitHub issue metadata, upvoteCount, and viewerHasUpvoted.'
+        upvote_toggle_route:
+          - 'src/routes/api.ts implements POST /boards/:boardId/items/:itemId/upvote with board-token auth and repo.toggleUpvote.'
+          - 'test/routes.test.ts proves first toggle returns upvoteCount 1/viewerHasUpvoted true and second returns upvoteCount 0/viewerHasUpvoted false.'
+        viewer_specific_state:
+          - 'src/lib/board-repository.ts listItemsForViewer left joins board_votes for the supplied externalUserId.'
+          - 'test/routes.test.ts and test/board-repository.test.ts prove different viewers see different viewerHasUpvoted values on the same item.'
+        event_cursor_polling:
+          - 'src/routes/api.ts implements GET /boards/:boardId/events?since=<cursor>, validates cursor input, and returns cursor plus ordered events.'
+          - 'test/routes.test.ts proves only events after the item_created cursor are returned and cursor advances.'
+        cross_board_isolation:
+          - 'Board token verification uses expectedBoardId from the route.'
+          - 'test/routes.test.ts proves wrong-scope item read/upvote requests return 401 and do not mutate counters or leak boardB items.'
+        fresh_verification:
+          - command: 'npm run test -- test/routes.test.ts test/board-repository.test.ts'
+            exit_code: 0
+            output: 'Test Files 2 passed (2); Tests 19 passed (19).'
+          - command: 'npm run validate'
+            exit_code: 0
+            output: 'lint, format:check, typecheck, and full test suite passed; Test Files 5 passed (5); Tests 38 passed (38).'
+          - command: 'make check'
+            exit_code: 0
+            output: 'All checks passed, including knip, critical audit, and Actions Node 24 readiness.'
+          - command: '! rg -n "playwright|WebSocket|DurableObject|EventSource|screenshot|annotation|html-to-image|downvote|comment|GitHub Projects|projects" src/routes src/lib test'
+            exit_code: 0
+            output: 'No matches.'
+          - command: '! git diff --unified=0 -- src/routes src/lib test package.json wrangler.toml | rg "createGitHubIssue|GITHUB_ISSUE_ACCESS_TOKEN|src/widget/|public/|playwright|e2e|dummy"'
+            exit_code: 0
+            output: 'No matches.'
+      next_starter_command: '$goal-prep Build Conveyor Board 4 from docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md: embedded widget UI/client and dummy host app only, using the completed Board 1 D1/auth, Board 2 GitHub mirror, and Board 3 voting/polling API foundations.'
+
+checks:
+  dirty_fingerprint: 'pending_commit_after_board3_audit'
+  last_verification:
+    result: pass
+    task: T999
+    commands:
+      - command: 'npm run test -- test/routes.test.ts test/board-repository.test.ts'
+        exit_code: 0
+        output: 'Test Files 2 passed (2); Tests 19 passed (19).'
+      - command: 'npm run validate'
+        exit_code: 0
+        output: 'lint, format:check, typecheck, and full test suite passed; Test Files 5 passed (5); Tests 38 passed (38).'
+      - command: 'make check'
+        exit_code: 0
+        output: 'All checks passed.'
+      - command: '! rg -n "playwright|WebSocket|DurableObject|EventSource|screenshot|annotation|html-to-image|downvote|comment|GitHub Projects|projects" src/routes src/lib test'
+        exit_code: 0
+        output: 'No matches.'
+      - command: '! git diff --unified=0 -- src/routes src/lib test package.json wrangler.toml | rg "createGitHubIssue|GITHUB_ISSUE_ACCESS_TOKEN|src/widget/|public/|playwright|e2e|dummy"'
+        exit_code: 0
+        output: 'No matches.'

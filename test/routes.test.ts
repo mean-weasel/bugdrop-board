@@ -24,12 +24,15 @@ function env(overrides: Partial<Env> = {}): Env {
   };
 }
 
-async function boardToken(boardId: string, overrides: Partial<{ boardId: string }> = {}) {
+async function boardToken(
+  boardId: string,
+  overrides: Partial<{ boardId: string; externalUserId: string; displayName: string }> = {}
+) {
   return createBoardToken(
     {
       boardId: overrides.boardId ?? boardId,
-      externalUserId: 'user_1',
-      displayName: 'Ada',
+      externalUserId: overrides.externalUserId ?? 'user_1',
+      displayName: overrides.displayName ?? 'Ada',
       exp: Math.floor(Date.now() / 1000) + 60,
       aud: TOKEN_AUDIENCE,
       iss: TOKEN_ISSUER,
@@ -213,5 +216,198 @@ describe('api routes', () => {
 
     expect(res.status).toBe(404);
     expect(issueCreator.createIssue).not.toHaveBeenCalled();
+  });
+
+  it('returns board items with viewer-specific upvote state', async () => {
+    const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName });
+    const item = await repo.createItem({
+      boardId: board.id,
+      title: 'Add exports',
+      description: 'CSV export would help admins.',
+      externalUserId: 'user_1',
+      githubIssueNumber: 7,
+      githubIssueUrl: 'https://github.com/mean-weasel/demo/issues/7',
+    });
+    await repo.toggleUpvote(board.id, item.id, 'user_2');
+    const api = createApi();
+
+    const viewerTwo = await api.request(
+      `/boards/${board.id}/items`,
+      {
+        headers: {
+          Authorization: `Bearer ${await boardToken(board.id, { externalUserId: 'user_2' })}`,
+        },
+      },
+      env()
+    );
+    const viewerThree = await api.request(
+      `/boards/${board.id}/items`,
+      {
+        headers: {
+          Authorization: `Bearer ${await boardToken(board.id, { externalUserId: 'user_3' })}`,
+        },
+      },
+      env()
+    );
+
+    expect(viewerTwo.status).toBe(200);
+    await expect(viewerTwo.json()).resolves.toMatchObject({
+      items: [
+        {
+          id: item.id,
+          status: 'open',
+          githubIssueNumber: 7,
+          githubIssueUrl: 'https://github.com/mean-weasel/demo/issues/7',
+          upvoteCount: 1,
+          viewerHasUpvoted: true,
+        },
+      ],
+    });
+    expect(viewerThree.status).toBe(200);
+    await expect(viewerThree.json()).resolves.toMatchObject({
+      items: [{ id: item.id, upvoteCount: 1, viewerHasUpvoted: false }],
+    });
+  });
+
+  it('toggles upvotes for the signed app user', async () => {
+    const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName });
+    const item = await repo.createItem({
+      boardId: board.id,
+      title: 'Add exports',
+      description: 'CSV export would help admins.',
+      externalUserId: 'user_1',
+    });
+    const token = await boardToken(board.id, { externalUserId: 'user_2' });
+    const api = createApi();
+
+    const upvoted = await api.request(
+      `/boards/${board.id}/items/${item.id}/upvote`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ externalUserId: 'browser_supplied_user' }),
+      },
+      env()
+    );
+    const removed = await api.request(
+      `/boards/${board.id}/items/${item.id}/upvote`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ externalUserId: 'browser_supplied_user' }),
+      },
+      env()
+    );
+
+    expect(upvoted.status).toBe(200);
+    await expect(upvoted.json()).resolves.toMatchObject({
+      item: {
+        id: item.id,
+        upvoteCount: 1,
+        viewerHasUpvoted: true,
+      },
+    });
+    expect(removed.status).toBe(200);
+    await expect(removed.json()).resolves.toMatchObject({
+      item: {
+        id: item.id,
+        upvoteCount: 0,
+        viewerHasUpvoted: false,
+      },
+    });
+    await expect(repo.getItem(board.id, item.id)).resolves.toMatchObject({ upvoteCount: 0 });
+    const events = await repo.listEvents(board.id, 0);
+    expect(events.map(event => event.eventType)).toEqual([
+      'item_created',
+      'upvote_added',
+      'upvote_removed',
+    ]);
+    expect(events[1]).toMatchObject({ payload: { itemId: item.id, externalUserId: 'user_2' } });
+  });
+
+  it('returns ordered events after the since cursor', async () => {
+    const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName });
+    const item = await repo.createItem({
+      boardId: board.id,
+      title: 'Add exports',
+      description: 'CSV export would help admins.',
+      externalUserId: 'user_1',
+    });
+    const [created] = await repo.listEvents(board.id, 0);
+    const api = createApi();
+    await api.request(
+      `/boards/${board.id}/items/${item.id}/upvote`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${await boardToken(board.id, { externalUserId: 'user_2' })}`,
+        },
+      },
+      env()
+    );
+
+    const res = await api.request(
+      `/boards/${board.id}/events?since=${created.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${await boardToken(board.id, { externalUserId: 'user_3' })}`,
+        },
+      },
+      env()
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      cursor: number;
+      events: Array<{ id: number; eventType: string; itemId: string }>;
+    };
+    expect(body.cursor).toBeGreaterThan(created.id);
+    expect(body.events).toHaveLength(1);
+    expect(body.events[0]).toMatchObject({
+      eventType: 'upvote_added',
+      itemId: item.id,
+    });
+  });
+
+  it('rejects invalid event cursors', async () => {
+    const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName });
+    const api = createApi();
+
+    const res = await api.request(
+      `/boards/${board.id}/events?since=-1`,
+      { headers: { Authorization: `Bearer ${await boardToken(board.id)}` } },
+      env()
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects wrong-scope board reads and upvotes', async () => {
+    const boardA = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName: `${repoName}_a` });
+    const boardB = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName: `${repoName}_b` });
+    const item = await repo.createItem({
+      boardId: boardA.id,
+      title: 'Add exports',
+      description: 'CSV export would help admins.',
+      externalUserId: 'user_1',
+    });
+    const boardAToken = await boardToken(boardA.id);
+    const api = createApi();
+
+    const read = await api.request(
+      `/boards/${boardB.id}/items`,
+      { headers: { Authorization: `Bearer ${boardAToken}` } },
+      env()
+    );
+    const upvote = await api.request(
+      `/boards/${boardB.id}/items/${item.id}/upvote`,
+      { method: 'POST', headers: { Authorization: `Bearer ${boardAToken}` } },
+      env()
+    );
+
+    expect(read.status).toBe(401);
+    expect(upvote.status).toBe(401);
+    await expect(repo.getItem(boardA.id, item.id)).resolves.toMatchObject({ upvoteCount: 0 });
+    await expect(repo.listItems(boardB.id)).resolves.toHaveLength(0);
   });
 });

@@ -23,6 +23,10 @@ interface ItemRow {
   updated_at: string;
 }
 
+interface ViewerItemRow extends ItemRow {
+  viewer_has_upvoted: number;
+}
+
 interface EventRow {
   id: number;
   board_id: string;
@@ -145,6 +149,27 @@ export class BoardRepository {
       .bind(boardId)
       .all<ItemRow>();
     return result.results.map(row => this.mapItem(row));
+  }
+
+  async listItemsForViewer(boardId: string, externalUserId: string): Promise<ViewerItem[]> {
+    const result = await this.db
+      .prepare(
+        `SELECT board_items.*,
+                CASE WHEN board_votes.id IS NULL THEN 0 ELSE 1 END AS viewer_has_upvoted
+         FROM board_items
+         LEFT JOIN board_votes
+           ON board_votes.board_id = board_items.board_id
+          AND board_votes.item_id = board_items.id
+          AND board_votes.external_user_id = ?
+         WHERE board_items.board_id = ?
+         ORDER BY board_items.created_at DESC`
+      )
+      .bind(externalUserId, boardId)
+      .all<ViewerItemRow>();
+    return result.results.map(row => ({
+      ...this.mapItem(row),
+      viewerHasUpvoted: row.viewer_has_upvoted === 1,
+    }));
   }
 
   async toggleUpvote(boardId: string, itemId: string, externalUserId: string): Promise<ViewerItem> {

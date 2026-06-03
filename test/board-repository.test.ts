@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { BoardRepository } from '../src/lib/board-repository';
 
+let repoSequence = 0;
+
 describe('BoardRepository', () => {
   let repo: BoardRepository;
 
@@ -87,6 +89,46 @@ describe('BoardRepository', () => {
     const removed = await repo.toggleUpvote(board.id, item.id, 'user_2');
     expect(removed.upvoteCount).toBe(0);
     expect(removed.viewerHasUpvoted).toBe(false);
+  });
+
+  it('lists items with viewer-specific upvote state', async () => {
+    repoSequence += 1;
+    const board = await repo.upsertBoard({
+      repoOwner: 'mean-weasel',
+      repoName: `viewer-${repoSequence}`,
+    });
+    const otherBoard = await repo.upsertBoard({
+      repoOwner: 'mean-weasel',
+      repoName: `viewer-other-${repoSequence}`,
+    });
+    const item = await repo.createItem({
+      boardId: board.id,
+      title: 'Add exports',
+      description: 'CSV export would help admins.',
+      externalUserId: 'user_1',
+      githubIssueNumber: 7,
+      githubIssueUrl: 'https://github.com/mean-weasel/demo/issues/7',
+    });
+    await repo.createItem({
+      boardId: otherBoard.id,
+      title: 'Other item',
+      description: 'This belongs elsewhere.',
+      externalUserId: 'user_1',
+    });
+    await repo.toggleUpvote(board.id, item.id, 'user_2');
+
+    await expect(repo.listItemsForViewer(board.id, 'user_2')).resolves.toMatchObject([
+      {
+        id: item.id,
+        githubIssueNumber: 7,
+        githubIssueUrl: 'https://github.com/mean-weasel/demo/issues/7',
+        upvoteCount: 1,
+        viewerHasUpvoted: true,
+      },
+    ]);
+    await expect(repo.listItemsForViewer(board.id, 'user_3')).resolves.toMatchObject([
+      { id: item.id, upvoteCount: 1, viewerHasUpvoted: false },
+    ]);
   });
 
   it('rejects wrong-board item upvotes without leaking counters', async () => {
