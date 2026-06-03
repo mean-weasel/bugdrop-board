@@ -1,0 +1,366 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Widget Host'
+  slug: 'bugdrop-board-widget-host'
+  kind: existing_plan
+  tranche: 'Complete Conveyor Board 4: embedded widget UI/client, dummy host app, and local E2E proof only.'
+  status: done
+  oracle:
+    signal: 'Playwright opens the dummy host app, mounts the embedded widget, creates an item with a host-signed token, toggles an upvote, observes polling-driven update in a second browser context, make check and npm run validate pass, and final audit confirms no realtime/comments/downvotes/GitHub Projects/production-hardening drift.'
+    cadence: 'after each Worker package and at final audit'
+    final_proof: 'Receipt-backed command output for widget build, E2E create/upvote/polling walkthrough, npm run validate, make check; screenshots/traces or direct Playwright output as needed; direct inspection that the widget is embedded in a host app and receives host-signed tokens; source scan/audit against realtime, comments, downvotes, GitHub Projects, and production hardening.'
+  intake:
+    original_request: '$goal-prep Build Conveyor Board 4 from docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md: embedded widget UI/client and dummy host app only, using the completed Board 1 D1/auth, Board 2 GitHub mirror, and Board 3 voting/polling API foundations.'
+    interpreted_outcome: 'Prepare a GoalBuddy board that executes only the Board 4 embedded widget/dummy host/E2E tranche from the accepted implementation plan.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board implementation workers and reviewers'
+    authority: requested
+    proof_type: demo
+    completion_proof: 'A local E2E run opens a dummy host app, proves the widget embeds via host page, creates an item with a host-signed token, toggles an upvote, and observes polling update across viewers; widget build, npm run validate, and make check pass; final audit maps evidence to the oracle.'
+    likely_misfire: 'Building a board that works only as a standalone page, bypassing host-signed tokens, testing only unit-level widget code without embedded E2E proof, depending on live GitHub credentials, or drifting into realtime/comments/downvotes/GitHub Projects/production release work.'
+    blind_spots_considered:
+      - 'Board 4 is the first browser-facing slice, so Scout must validate the existing widget build rails and decide whether plan sample code fits the current TypeScript/esbuild setup.'
+      - 'The dummy host E2E may need a deterministic fake GitHub Issue creator or seeded board path so item creation does not require live GitHub credentials.'
+      - 'Polling proof should stay cursor-based using Board 3 APIs, not realtime transport.'
+      - 'The widget must be embedded inside a host app; a standalone page is not enough.'
+    existing_plan_facts:
+      - 'Input plan path: docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md'
+      - 'Conveyor Board 4 goal oracle from the plan: Playwright opens the dummy host app, mounts the embedded widget, creates an item with a host-signed token, toggles an upvote, and observes the polling update in a second browser context.'
+      - 'Relevant implementation plan slices: Task 8 Widget UI and API Client; Task 9 Dummy Host App and Playwright E2E.'
+      - 'Completed foundation: Board 1 D1/auth repository/token foundation.'
+      - 'Completed foundation: Board 2 create-item GitHub Issue mirror route.'
+      - 'Completed foundation: Board 3 board reads, upvote toggle, and event cursor polling APIs.'
+      - 'This tranche excludes realtime/WebSocket/Durable Object transport, comments, downvotes, GitHub Projects, production hardening, release readiness, billing, and broad packaging polish.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: pending
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-widget-host/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-widget-host'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: low
+    objective: 'Validate the exact Board 4 widget/dummy-host/E2E surface and safest Worker package before any writes.'
+    inputs:
+      - 'docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md'
+      - 'docs/goals/bugdrop-board-data-auth/state.yaml'
+      - 'docs/goals/bugdrop-board-github-mirror/state.yaml'
+      - 'docs/goals/bugdrop-board-votes-polling/state.yaml'
+      - 'AGENTS.md'
+      - 'package.json'
+      - 'scripts/build-widget.js'
+      - 'src/widget/index.ts'
+      - 'src/widget/types.ts'
+      - 'src/routes/api.ts'
+      - 'src/lib/board-token.ts'
+      - 'test/routes.test.ts'
+      - 'wrangler.toml'
+    constraints:
+      - 'Read-only.'
+      - 'Do not edit implementation files.'
+      - 'Inspect only facts needed for Board 4.'
+      - 'Do not implement widget UI/client, dummy host app, Playwright/E2E, realtime, comments, downvotes, GitHub Projects, or production hardening during Scout.'
+      - 'Identify plan snippets that are stale because Board 2/3 already changed the API route shape or because live GitHub credentials are unavailable for E2E.'
+      - 'Prefer concrete file/package evidence over generic advice.'
+    expected_output:
+      - 'Current widget build rails and mount API facts.'
+      - 'Recommended widget config/token callback shape for embedded host usage.'
+      - 'Recommended dummy host app and token endpoint shape.'
+      - 'Recommended local E2E strategy, including how to avoid live GitHub credentials and seed/prepare a board.'
+      - 'Exact candidate Worker package with allowed_files, verify commands, and stop_if conditions.'
+      - 'Forbidden carryover list for realtime/comments/downvotes/GitHub Projects/production hardening.'
+    receipt:
+      result: done
+      summary: 'Validated Board 4 surface. Existing widget is a placeholder mounted from script data attributes; build-widget uses esbuild IIFE output to public/board.js; no Playwright/E2E setup exists yet. Board 4 can be one vertical widget/dummy-host/E2E package if it avoids live GitHub credentials with a test-mode issue creator path.'
+      evidence:
+        - 'src/widget/index.ts currently reads data-board-id/data-repo and appends placeholder text only.'
+        - 'src/widget/types.ts currently exposes only BoardWidgetConfig with apiUrl and boardId.'
+        - 'scripts/build-widget.js bundles src/widget/index.ts with esbuild format iife to public/board.js.'
+        - 'package.json has build:widget but no test:e2e script and no @playwright/test dependency.'
+        - 'No e2e directory or playwright.config.ts exists.'
+        - 'Board 2 create-item route requires an IssueCreator; live GitHub credentials are unavailable and out of scope for E2E.'
+        - 'Board 3 routes already provide GET items, POST upvote, and GET events cursor APIs needed by the widget.'
+      recommended_worker_shape:
+        - 'Implement widget types, API client, DOM renderer, theme, Shadow DOM mount, initial item load, create, upvote, and cursor polling.'
+        - 'Add Playwright dependency/config/script and a dummy host fixture serving public/board.js plus /token.'
+        - 'Add a local E2E Worker path that seeds board_mean_weasel_demo and injects a fake IssueCreator when ENVIRONMENT=e2e, so create-item succeeds without live GitHub credentials.'
+        - 'Run npm run build:widget, npm run test:e2e, npm run validate, make check, and forbidden-scope scan.'
+      stale_plan_notes:
+        - 'Plan sample widget API client omitted Authorization on events, but Board 3 event route requires a signed board token.'
+        - 'Plan sample E2E expects a backend on 127.0.0.1:8788 but does not start/seed it; Playwright config should orchestrate Worker and host servers.'
+        - 'Plan sample does not account for Board 2 GitHub issue creation dependency; E2E needs fake issue creation, not live GitHub.'
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: medium
+    objective: 'Review Scout findings and authorize the largest safe Board 4 Worker package.'
+    inputs:
+      - 'T001 receipt'
+      - 'Goal oracle'
+      - 'Board 1, Board 2, and Board 3 completion receipts'
+      - 'AGENTS.md proof expectations'
+    constraints:
+      - 'Do not implement.'
+      - 'Keep the package to Conveyor Board 4 only.'
+      - 'Reject any plan that works only as a standalone page instead of an embedded host widget.'
+      - 'Reject any plan that requires live GitHub credentials for E2E.'
+      - 'Reject any plan that includes realtime/WebSocket/Durable Object transport, comments, downvotes, GitHub Projects, production hardening, billing, or release readiness.'
+      - 'Reject completion criteria that omit Playwright/E2E proof unless Scout proves Playwright is impossible and proposes an equivalent browser-level fallback.'
+    expected_output:
+      - 'Decision: proceed | revise | blocked'
+      - 'Exact Worker objective'
+      - 'allowed_files'
+      - 'verify commands'
+      - 'stop_if conditions'
+      - 'Deferred tasks for Conveyor Board 5+'
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      summary: 'Approved one vertical Board 4 Worker package covering widget UI/client, dummy host, Playwright E2E, and the minimal local Worker test-mode fake/seed path needed to avoid live GitHub credentials.'
+      worker_package:
+        objective: 'Implement embedded widget and dummy host E2E only: widget script mounts into a host page, fetches host-signed tokens, calls Board 2/3 APIs, renders items, creates an item, toggles an upvote, polls cursor events in a second browser context, and proves the flow with Playwright.'
+        allowed_files:
+          - 'src/widget/types.ts'
+          - 'src/widget/index.ts'
+          - 'src/widget/api.ts'
+          - 'src/widget/dom.ts'
+          - 'src/widget/theme.ts'
+          - 'scripts/build-widget.js'
+          - 'public/board.js'
+          - 'playwright.config.ts'
+          - 'e2e/fixtures/host-app.ts'
+          - 'e2e/board-widget.spec.ts'
+          - 'package.json'
+          - 'package-lock.json'
+          - 'src/routes/api.ts'
+          - 'test/routes.test.ts'
+          - 'docs/goals/bugdrop-board-widget-host/state.yaml'
+        verify:
+          - 'npm run build:widget'
+          - 'npm run test:e2e'
+          - 'npm run validate'
+          - 'make check'
+          - '! rg -n "WebSocket|DurableObject|EventSource|downvote|comment|GitHub Projects|projects" src e2e test package.json wrangler.toml'
+        stop_if:
+          - 'Need realtime/WebSocket/Durable Object transport, comments, downvotes, GitHub Projects, production hardening, billing, or release readiness.'
+          - 'Need live GitHub credentials for E2E.'
+          - 'Cannot prove embedded-host behavior with Playwright.'
+      deferred_tasks:
+        - 'Self-hosting, README, .dev.vars.example, production hardening, and release readiness remain Conveyor Board 5.'
+        - 'Realtime transport, comments, downvotes, and GitHub Projects remain out of scope.'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Implement the Judge-authorized Board 4 embedded widget, dummy host app, and E2E package.'
+    allowed_files:
+      - 'src/widget/types.ts'
+      - 'src/widget/index.ts'
+      - 'src/widget/api.ts'
+      - 'src/widget/dom.ts'
+      - 'src/widget/theme.ts'
+      - 'scripts/build-widget.js'
+      - 'public/board.js'
+      - 'playwright.config.ts'
+      - 'e2e/fixtures/host-app.ts'
+      - 'e2e/board-widget.spec.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'src/routes/api.ts'
+      - 'test/routes.test.ts'
+      - 'docs/goals/bugdrop-board-widget-host/state.yaml'
+    verify:
+      - 'npm run build:widget'
+      - 'npm run test:e2e or the Judge-authorized E2E command'
+      - 'npm run validate'
+      - 'make check'
+      - 'direct inspection proving widget is embedded in a dummy host app and receives host-signed tokens'
+      - 'direct Playwright/browser evidence proving create, upvote, and polling update behavior'
+      - '! rg -n "WebSocket|DurableObject|EventSource|downvote|comment|GitHub Projects|projects" src e2e test package.json wrangler.toml'
+    stop_if:
+      - 'Need files outside allowed_files.'
+      - 'Need realtime/WebSocket/Durable Object transport, comments, downvotes, GitHub Projects, billing, production hardening, or release readiness.'
+      - 'Need live GitHub credentials for E2E instead of a local fake/test-mode path.'
+      - 'Cannot prove embedded-host behavior with browser-level evidence.'
+      - 'Verification fails twice for the same unresolved cause.'
+    receipt:
+      result: done
+      summary: 'Implemented the embedded widget/client and dummy host E2E package. The widget mounts via host script attributes, fetches host-signed tokens, calls Board 2/3 APIs, renders items with issue/upvote state, creates items, toggles upvotes, and polls cursor events. The local E2E Worker path seeds board_mean_weasel_demo and uses an e2e fake IssueCreator, avoiding live GitHub credentials.'
+      changed_files:
+        - 'package-lock.json'
+        - 'package.json'
+        - 'playwright.config.ts'
+        - 'e2e/board-widget.spec.ts'
+        - 'e2e/fixtures/host-app.ts'
+        - 'src/routes/api.ts'
+        - 'src/widget/api.ts'
+        - 'src/widget/dom.ts'
+        - 'src/widget/index.ts'
+        - 'src/widget/theme.ts'
+        - 'src/widget/types.ts'
+      commands:
+        - command: 'npm run build:widget'
+          status: pass
+          evidence: 'Built BugDrop Board bundle 0.1.0.'
+        - command: 'npm run test:e2e'
+          status: pass
+          evidence: '1 Playwright test passed; two browser contexts loaded the dummy host, created Add dark mode, saw Issue #1001, toggled Upvote 0 to Upvoted 1, and the second viewer saw Upvote 1 through polling.'
+        - command: 'npm run validate'
+          status: pass
+          evidence: 'lint, format:check, typecheck, and Vitest passed; 5 test files and 38 tests passed.'
+        - command: 'make check'
+          status: pass
+          evidence: 'eslint, format:check, typecheck, knip, critical audit, and Actions Node 24 guard passed.'
+        - command: 'if rg -n "WebSocket|DurableObject|EventSource|downvote|comment|GitHub Projects|projects" src e2e test package.json wrangler.toml; then exit 1; fi'
+          status: pass
+          evidence: 'No forbidden Board 5/realtime/comments/downvotes/GitHub Projects scope terms found in implementation/test/package files.'
+        - command: 'rg -n "createBoardToken|data-token-endpoint|data-api-url|poll-interval|user_e2e|BOARD_TOKEN" e2e src/widget src/routes/api.ts package.json'
+          status: pass
+          evidence: 'Direct inspection found dummy host createBoardToken use, e2e viewer external user IDs, embedded script data-token-endpoint/data-api-url/data-poll-interval attributes, and Worker token vars.'
+        - command: 'git diff --check'
+          status: pass
+          evidence: 'No whitespace errors in the final diff.'
+      notes:
+        - 'No live GitHub credentials are required for E2E; ENVIRONMENT=e2e returns deterministic issue metadata.'
+        - 'The E2E uses separate origins: host app on 127.0.0.1:5177 and Worker on 127.0.0.1:8788.'
+
+  - id: T004
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Review the completed Board 4 Worker package against the embedded widget/dummy-host oracle and decide whether cleanup or final audit is required.'
+    inputs:
+      - 'T001 receipt'
+      - 'T002 receipt'
+      - 'T003 receipt'
+      - 'Current diff'
+      - 'Last verification output'
+    constraints:
+      - 'Do not implement unless promoting a tiny PM cleanup task is unavoidable and explicitly recorded.'
+      - 'Reject if widget build, E2E create/upvote/polling proof, make check, or npm run validate were not run after final edit.'
+      - 'Reject if embedded host mounting and host-signed token use were not directly inspected.'
+      - 'Reject if realtime/comments/downvotes/GitHub Projects/production-hardening behavior was added.'
+    expected_output:
+      - 'approved | rejected'
+      - 'Evidence mapped to each oracle clause'
+      - 'Required cleanup task if rejected'
+      - 'Deferred follow-up tasks for Conveyor Board 5+'
+    receipt:
+      result: done
+      decision: approved
+      summary: 'Approved the Board 4 Worker package against the oracle. The package is embedded-host based, uses host-signed tokens, proves create/upvote/polling with Playwright, passes widget build, npm run validate, make check, and the forbidden-scope scan.'
+      evidence_map:
+        embedded_mount: 'e2e/fixtures/host-app.ts renders a host page with script src=/board.js and data-board-id/data-api-url/data-token-endpoint/data-poll-interval attributes; Playwright asserts both Dummy App and Feedback headings are visible.'
+        host_signed_tokens: 'e2e/fixtures/host-app.ts /token route calls createBoardToken with board_mean_weasel_demo, user_e2e_a/user_e2e_b, bugdrop-board audience, and dummy-host issuer.'
+        create_item: 'npm run test:e2e passed after filling Idea title/Context and clicking Submit, then asserting Add dark mode and Issue #1001.'
+        upvote: 'npm run test:e2e passed after clicking Upvote 0 and asserting Upvoted 1.'
+        polling: 'npm run test:e2e passed after second browser context asserted Upvote 1 within the polling timeout.'
+        gates: 'npm run build:widget, npm run validate, make check, git diff --check, and forbidden-scope scan all passed.'
+      conclusion: 'No cleanup task required; proceed to final audit.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Final audit: decide whether Conveyor Board 4 is complete and ready to hand off to self-hosting/hardening.'
+    inputs:
+      - 'All done task receipts'
+      - 'Last verification'
+      - 'Current dirty diff'
+      - 'Goal oracle'
+    constraints:
+      - 'Do not implement.'
+      - 'Reject completion if required Worker or Judge tasks are still queued or active.'
+      - 'Reject completion if the embedded widget/dummy-host oracle is not proven with direct evidence.'
+      - 'Reject completion if the board drifted into later-conveyor functionality.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'Evidence for embedded widget mount'
+      - 'Evidence for host-signed token flow'
+      - 'Evidence for create item through widget'
+      - 'Evidence for upvote through widget'
+      - 'Evidence for polling update in second browser context'
+      - 'Evidence for widget build'
+      - 'Evidence for E2E command'
+      - 'Evidence for make check'
+      - 'Evidence for npm run validate'
+      - 'Evidence for no realtime/comments/downvotes/GitHub Projects drift'
+      - 'Next starter command for Conveyor Board 5 if complete'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: 'Conveyor Board 4 is complete and ready to hand off to Conveyor Board 5 self-hosting/hardening. The final state proves embedded widget mount, host-signed token use, create item, upvote toggle, polling update across viewers, widget build, validate, make check, and no forbidden scope drift.'
+      evidence:
+        - 'Embedded widget mount: Playwright loaded the dummy host app and observed the Feedback heading rendered by the widget.'
+        - 'Host-signed token flow: direct inspection found createBoardToken in e2e/fixtures/host-app.ts and widget data-token-endpoint=/token?viewer=... in the embedded script.'
+        - 'Create item through widget: npm run test:e2e passed and asserted Add dark mode plus Issue #1001 after form submission.'
+        - 'Upvote through widget: npm run test:e2e passed and asserted Upvoted 1 after clicking Upvote 0.'
+        - 'Polling update in second browser context: npm run test:e2e passed and asserted viewer B saw Upvote 1 within 10 seconds.'
+        - 'Widget build: npm run build:widget passed.'
+        - 'Validation: npm run validate passed with 5 Vitest files and 38 tests.'
+        - 'Repository checks: make check passed, including eslint, format:check, typecheck, knip, audit, and Actions guard.'
+        - 'Scope audit: forbidden-scope rg scan passed for src, e2e, test, package.json, and wrangler.toml.'
+      next_starter: '$goal-prep Build Conveyor Board 5 from docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md: self-hosting docs/config, README/embed instructions, .dev.vars.example, and production-hardening handoff only.'
+
+checks:
+  dirty_fingerprint: 'package-lock.json package.json docs/goals/bugdrop-board-widget-host/goal.md docs/goals/bugdrop-board-widget-host/state.yaml e2e/board-widget.spec.ts e2e/fixtures/host-app.ts playwright.config.ts src/routes/api.ts src/widget/api.ts src/widget/dom.ts src/widget/index.ts src/widget/theme.ts src/widget/types.ts'
+  last_verification:
+    result: pass
+    task: T999
+    commands:
+      - command: 'npm run build:widget'
+        status: pass
+      - command: 'npm run test:e2e'
+        status: pass
+      - command: 'npm run validate'
+        status: pass
+      - command: 'make check'
+        status: pass
+      - command: 'if rg -n "WebSocket|DurableObject|EventSource|downvote|comment|GitHub Projects|projects" src e2e test package.json wrangler.toml; then exit 1; fi'
+        status: pass
+      - command: 'rg -n "createBoardToken|data-token-endpoint|data-api-url|poll-interval|user_e2e|BOARD_TOKEN" e2e src/widget src/routes/api.ts package.json'
+        status: pass
+      - command: 'git diff --check'
+        status: pass

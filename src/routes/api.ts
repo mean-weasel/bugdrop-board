@@ -16,6 +16,16 @@ interface ApiDependencies {
 
 const defaultDependencies: ApiDependencies = {
   createIssueCreator(env) {
+    if (env.ENVIRONMENT === 'e2e') {
+      return {
+        createIssue(input) {
+          return Promise.resolve({
+            number: 1001,
+            htmlUrl: `https://github.local/mean-weasel/demo/issues/${input.boardItemId}`,
+          });
+        },
+      };
+    }
     if (!env.GITHUB_ISSUE_ACCESS_TOKEN) {
       return null;
     }
@@ -26,6 +36,38 @@ const defaultDependencies: ApiDependencies = {
 export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<ApiEnv> {
   const deps: ApiDependencies = { ...defaultDependencies, ...dependencies };
   const api = new Hono<ApiEnv>();
+
+  api.use('*', async (c, next) => {
+    if (c.req.method === 'OPTIONS') {
+      applyCorsHeaders(c);
+      return c.body(null, 204);
+    }
+
+    await next();
+    applyCorsHeaders(c);
+  });
+
+  api.post('/__e2e/reset', async c => {
+    if (c.env.ENVIRONMENT !== 'e2e') {
+      return c.json({ error: 'Not found' }, 404);
+    }
+
+    const repo = new BoardRepository(c.env.DB);
+    const boardId = 'board_mean_weasel_demo';
+    await c.env.DB.batch([
+      c.env.DB.prepare('DELETE FROM board_votes WHERE board_id = ?').bind(boardId),
+      c.env.DB.prepare('DELETE FROM board_events WHERE board_id = ?').bind(boardId),
+      c.env.DB.prepare('DELETE FROM board_items WHERE board_id = ?').bind(boardId),
+      c.env.DB.prepare('DELETE FROM boards WHERE id = ?').bind(boardId),
+    ]);
+    const board = await repo.upsertBoard({
+      repoOwner: 'mean-weasel',
+      repoName: 'demo',
+      name: 'Demo Board',
+    });
+
+    return c.json({ board });
+  });
 
   api.get('/health', c => {
     return c.json({
@@ -154,6 +196,34 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
   });
 
   return api;
+}
+
+function applyCorsHeaders(c: Context<ApiEnv>): void {
+  const origin = c.req.header('Origin');
+  const allowedOrigin = allowedCorsOrigin(c.env.ALLOWED_ORIGINS, origin);
+  if (!allowedOrigin) {
+    return;
+  }
+
+  c.header('Access-Control-Allow-Origin', allowedOrigin);
+  c.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  c.header('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  c.header('Access-Control-Max-Age', '600');
+}
+
+function allowedCorsOrigin(allowedOrigins: string, origin: string | undefined): string | null {
+  if (!origin) {
+    return null;
+  }
+  if (allowedOrigins === '*') {
+    return '*';
+  }
+
+  const allowed = allowedOrigins
+    .split(',')
+    .map(value => value.trim())
+    .filter(Boolean);
+  return allowed.includes(origin) ? origin : null;
 }
 
 async function authorizeBoardRequest(
