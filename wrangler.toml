@@ -8,15 +8,19 @@ binding = "ASSETS"
 
 [vars]
 ENVIRONMENT = "development"
+# Development default only. For deployed Workers, replace with exact host app
+# origins such as "https://app.example.com,https://admin.example.com".
 ALLOWED_ORIGINS = "*"
 BOARD_TOKEN_AUDIENCE = "bugdrop-board"
 BOARD_TOKEN_ISSUER = "dummy-host"
 
-# Set BOARD_TOKEN_SECRET and GITHUB_ISSUE_ACCESS_TOKEN in .dev.vars locally and
-# with `wrangler secret put` for deployed environments.
+# Set BOARD_TOKEN_SECRET and GITHUB_ISSUE_ACCESS_TOKEN in .dev.vars locally.
+# For deployed environments, use `wrangler secret put`; do not commit secrets.
 
 [[d1_databases]]
 binding = "DB"
+# For production self-hosting, create a remote D1 database and replace these
+# placeholder ids with the ids returned by `wrangler d1 create`.
 database_name = "bugdrop-board-dev"
 database_id = "00000000-0000-0000-0000-000000000000"
 preview_database_id = "00000000-0000-0000-0000-000000000000"
