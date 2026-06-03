@@ -1,0 +1,218 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Data And Auth'
+  slug: 'bugdrop-board-data-auth'
+  kind: existing_plan
+  tranche: 'Complete Conveyor Board 1: D1 data model, repository tests, local D1 harness, and host-signed token verification only.'
+  status: active
+  oracle:
+    signal: 'D1 migrations apply locally, auth negative tests reject missing/expired/wrong-scope tokens, board/item/vote repositories pass uniqueness and cross-board tests, make check passes, npm run validate passes, and final audit confirms no GitHub mirroring/widget/polling/API-route drift.'
+    cadence: 'after each Worker package and at final audit'
+    final_proof: 'Receipt-backed command output for D1 repository tests, token negative tests, make check, and npm run validate; direct inspection of migration constraints; and source scan/audit against GitHub mirroring, widget UI, polling, item route, Playwright, and screenshot-specific copied code.'
+  intake:
+    original_request: '$goal-prep Build Conveyor Board 1 from docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md, preserving the Board 1 D1/auth oracle and excluding GitHub mirroring/widget/polling work.'
+    interpreted_outcome: 'Prepare a GoalBuddy board that executes only the D1 data/auth tranche from the accepted implementation plan.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board implementation workers and reviewers'
+    authority: requested
+    proof_type: test
+    completion_proof: 'D1 migrations apply locally; repository tests prove uniqueness and cross-board isolation; token negative tests reject forged or invalid access; make check and npm run validate pass; final audit maps receipts to Conveyor Board 1 constraints.'
+    likely_misfire: 'Accepting a forged user id, allowing duplicate upvotes, leaking records across boards, or drifting into GitHub mirroring/widget/polling/API-route work.'
+    blind_spots_considered:
+      - 'Board 0 intentionally avoided the Cloudflare D1 test harness; Scout must validate the current package/vitest/wrangler setup before Worker edits.'
+      - 'Token claims need enough scope for later embedded use while keeping this tranche independent from dummy host app work.'
+      - 'Upvotes are in scope only as repository/data behavior; upvote API routes, polling, and widget UI are later boards.'
+      - 'GitHub issue fields may exist as item metadata if required by the schema, but creating/mirroring GitHub Issues is later Board 2 work.'
+    existing_plan_facts:
+      - 'Input plan path: docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md'
+      - 'Conveyor Board 1 goal oracle: D1 migrations apply locally, auth negative tests reject missing/expired/wrong-scope tokens, and board/item/vote repositories pass uniqueness and cross-board tests.'
+      - 'Relevant implementation plan slices: Task 3 D1 Schema and Repository Layer; Task 4 Host-Signed Board Tokens.'
+      - 'This tranche excludes Task 5 validation/GitHub client, Task 6 item API route, widget UI, polling API, dummy host app, Playwright, comments, downvotes, GitHub Projects, and realtime.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: live
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-data-auth/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-data-auth'
+
+active_task: T001
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: active
+    reasoning_hint: low
+    objective: 'Validate the exact Board 1 D1 harness, repository, and host-signed token decisions before any writes.'
+    inputs:
+      - 'docs/superpowers/plans/2026-06-03-bugdrop-board-implementation.md'
+      - 'docs/superpowers/specs/2026-06-03-bugdrop-board-design.md'
+      - 'AGENTS.md'
+      - 'package.json'
+      - 'vitest.config.ts'
+      - 'wrangler.toml'
+      - 'src/types.ts'
+      - 'test/routes.test.ts'
+      - 'Current Cloudflare Workers/Vitest/D1 documentation if local package facts are insufficient'
+    constraints:
+      - 'Read-only.'
+      - 'Do not edit implementation files.'
+      - 'Inspect only facts needed for Board 1.'
+      - 'Do not design or implement GitHub mirroring, item API routes, widget UI, polling, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, or realtime.'
+      - 'Explicitly identify any plan snippets that are stale because Board 0 intentionally omitted D1 harness dependencies.'
+      - 'Prefer concrete package/config/file evidence over generic advice.'
+    expected_output:
+      - 'Recommended D1 local test harness for this repo, including any package/config files that must change.'
+      - 'Recommended migration constraints and repository methods needed to prove board/item/vote uniqueness and cross-board isolation.'
+      - 'Recommended token envelope, required claims, and negative test matrix.'
+      - 'Exact candidate Worker package or packages with allowed_files and verification commands.'
+      - 'Forbidden carryover list for GitHub mirroring/widget/polling/API-route/screenshot behavior.'
+    receipt: null
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: medium
+    objective: 'Review Scout findings and authorize the largest safe Board 1 Worker package.'
+    inputs:
+      - 'T001 receipt'
+      - 'Goal oracle'
+      - 'AGENTS.md proof expectations'
+    constraints:
+      - 'Do not implement.'
+      - 'Keep the package to Conveyor Board 1 only.'
+      - 'Reject any plan that includes GitHub issue mirroring, validation/GitHub clients, item API routes, widget UI, polling API, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, or realtime behavior.'
+      - 'Pick one coherent Worker slice, or explicitly split D1 and token auth only if the harness risk makes a combined package unsafe.'
+      - 'Include allowed_files, verify commands, stop_if conditions, and deferred tasks.'
+    expected_output:
+      - 'Decision: proceed | revise | blocked'
+      - 'Exact Worker objective'
+      - 'allowed_files'
+      - 'verify commands'
+      - 'stop_if conditions'
+      - 'Deferred tasks for Conveyor Board 2+'
+    receipt: null
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: medium
+    objective: 'Implement the Judge-authorized Board 1 D1 data/auth package.'
+    allowed_files:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vitest.config.ts'
+      - 'wrangler.toml'
+      - 'migrations/0001_initial.sql'
+      - 'src/types.ts'
+      - 'src/lib/ids.ts'
+      - 'src/lib/board-repository.ts'
+      - 'src/lib/board-token.ts'
+      - 'test/apply-migrations.ts'
+      - 'test/board-repository.test.ts'
+      - 'test/board-token.test.ts'
+    verify:
+      - 'npm install, only if package.json changes.'
+      - 'npm run test -- test/board-repository.test.ts'
+      - 'npm run test -- test/board-token.test.ts'
+      - 'npm run validate'
+      - 'make check'
+      - 'direct migration inspection for primary keys, foreign keys, CHECK constraints, and UNIQUE(board_id, item_id, external_user_id)'
+      - 'rg --hidden -n "createGitHubIssue|api.github.com|/boards/.*/items|polling|Playwright|playwright|widget UI|dummy host|comment|downvote|GitHub Projects|WebSocket|screenshot|annotation|html-to-image" migrations src test package.json vitest.config.ts wrangler.toml || true'
+    stop_if:
+      - 'Need files outside allowed_files.'
+      - 'Need GitHub issue client, route handlers, widget UI, polling API, dummy host app, Playwright/E2E, comments, downvotes, GitHub Projects, or realtime behavior.'
+      - 'Need production Cloudflare credentials or a remote D1 database.'
+      - 'D1 local harness cannot be made reliable without changing the Board 1 scope.'
+      - 'Token verification would trust an unsigned browser-provided user id.'
+      - 'Verification fails twice for the same unresolved cause.'
+      - 'The implementation would copy screenshot-specific BugDrop behavior.'
+    receipt: null
+
+  - id: T004
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: 'Review the completed Board 1 Worker package against the D1/auth oracle and decide whether cleanup or final audit is required.'
+    inputs:
+      - 'T001 receipt'
+      - 'T002 receipt'
+      - 'T003 receipt'
+      - 'Current diff'
+      - 'Last verification output'
+    constraints:
+      - 'Do not implement unless promoting a tiny PM cleanup task is unavoidable and explicitly recorded.'
+      - 'Reject if D1 repository tests, token negative tests, make check, or npm run validate were not run after final edit.'
+      - 'Reject if migration constraints were not directly inspected.'
+      - 'Reject if any GitHub mirroring/widget/polling/API-route/Playwright/screenshot behavior was added.'
+    expected_output:
+      - 'approved | rejected'
+      - 'Evidence mapped to each oracle clause'
+      - 'Required cleanup task if rejected'
+      - 'Deferred follow-up tasks for Conveyor Board 2'
+    receipt: null
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: 'Final audit: decide whether Conveyor Board 1 is complete and ready to hand off to the GitHub mirror board.'
+    inputs:
+      - 'All done task receipts'
+      - 'Last verification'
+      - 'Current dirty diff'
+      - 'Goal oracle'
+    constraints:
+      - 'Do not implement.'
+      - 'Reject completion if required Worker or Judge tasks are still queued or active.'
+      - 'Reject completion if the D1/auth oracle is not proven with direct evidence.'
+      - 'Reject completion if the board drifted into later-conveyor functionality.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'Evidence for D1 migration application'
+      - 'Evidence for repository uniqueness and cross-board isolation'
+      - 'Evidence for token negative tests'
+      - 'Evidence for make check'
+      - 'Evidence for npm run validate'
+      - 'Evidence for no GitHub/widget/polling/API-route drift'
+      - 'Next starter command for Conveyor Board 2 if complete'
+    receipt: null
+
+checks:
+  dirty_fingerprint: unknown
+  last_verification:
+    result: not_run
+    task: none
+    commands: []
