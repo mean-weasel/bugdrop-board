@@ -9,9 +9,11 @@ binding = "ASSETS"
 [vars]
 ENVIRONMENT = "development"
 ALLOWED_ORIGINS = "*"
-BOARD_TOKEN_SECRET = "replace-with-a-long-random-secret"
 BOARD_TOKEN_AUDIENCE = "bugdrop-board"
 BOARD_TOKEN_ISSUER = "dummy-host"
+
+# Set BOARD_TOKEN_SECRET and GITHUB_ISSUE_ACCESS_TOKEN in .dev.vars locally and
+# with `wrangler secret put` for deployed environments.
 
 [[d1_databases]]
 binding = "DB"
