@@ -35,9 +35,13 @@ and architecture source of truth until it is superseded by a newer accepted spec
 
 Once the scaffold exists, prefer these checks before calling work complete:
 
+- `make check`
 - `npm run lint`
 - `npm run format:check`
 - `npm run typecheck`
+- `npm run knip`
+- `npm run audit`
+- `npm run check:actions-node24`
 - `npm run test`
 - `npm run build:widget`
 - `npm run test:e2e`
@@ -52,7 +56,8 @@ Choose verification based on the change's real risk.
 
 | Change category | Realistic failure modes | Expected proof |
 | --- | --- | --- |
-| Standard TypeScript | Type drift, lint regressions, unused code, formatting churn | lint, format check, typecheck, focused unit tests |
+| Standard TypeScript | Type drift, lint regressions, unused code, oversized files/functions, formatting churn | lint, format check, typecheck, knip, focused unit tests |
+| CI/repo rails | GitHub Actions drift to old Node actions, critical dependency advisory, hooks not enforcing commit shape | `make check`, `npm run check:actions-node24`, critical audit, commitlint/lint-staged config inspection |
 | Worker API | Wrong status code, bad validation, unsafe CORS, broken GitHub error path | route tests, mocked GitHub client, negative request cases |
 | Host-signed auth | Expired token accepted, wrong board scope accepted, forged user id trusted | negative auth tests for missing, expired, malformed, and wrong-scope tokens |
 | D1 schema/data | Migration drift, duplicate upvotes, stale counters, cross-board leakage | migration check, D1 integration test, uniqueness and transaction tests |

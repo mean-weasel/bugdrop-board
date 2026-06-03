@@ -26,8 +26,9 @@ board.
 
 **Starter command after prep:** `/goal Follow docs/goals/bugdrop-board-scaffold/goal.md.`
 
-**Goal oracle:** `npm run validate` passes and `npm run build:widget` creates
-`public/board.js` with no application behavior beyond bootstrapping.
+**Goal oracle:** `make check`, `npm run validate`, and `npm run build:widget` pass;
+`public/board.js` exists; and the starter CI workflow exercises lint, format, typecheck,
+knip, audit, unit tests, and build rails without application behavior beyond bootstrapping.
 
 **Likely misfire:** copying BugDrop too literally and dragging screenshot-specific code into
 the board repo.
@@ -35,8 +36,8 @@ the board repo.
 **Seed board shape:**
 
 - Scout: inspect BugDrop package/config files and list only reusable setup pieces.
-- Worker: scaffold package, TypeScript, lint, format, Vitest, Wrangler, widget build, and
-  minimal Worker health route.
+- Worker: scaffold package, Makefile, CI workflow, TypeScript, lint, format, knip,
+  commit hooks, Vitest, Wrangler, widget build, and minimal Worker health route.
 - Judge: run validation and inspect generated widget bundle path.
 
 ### Conveyor Board 1: D1 Data Model and Host-Signed Auth
@@ -124,13 +125,22 @@ setup docs.
 ```text
 .
   package.json
+  Makefile
   tsconfig.json
   tsconfig.widget.json
   eslint.config.js
-  prettier.config.cjs
+  .prettierrc
+  commitlint.config.cjs
+  knip.json
   vitest.config.ts
   playwright.config.ts
   wrangler.toml
+  .github/
+    workflows/
+      ci.yml
+  .husky/
+    pre-commit
+    commit-msg
   migrations/
     0001_initial.sql
   scripts/
@@ -171,10 +181,16 @@ setup docs.
 **Files:**
 
 - Create: `package.json`
+- Create: `Makefile`
 - Create: `tsconfig.json`
 - Create: `tsconfig.widget.json`
 - Create: `eslint.config.js`
-- Create: `prettier.config.cjs`
+- Create: `.prettierrc`
+- Create: `commitlint.config.cjs`
+- Create: `knip.json`
+- Create: `.husky/pre-commit`
+- Create: `.husky/commit-msg`
+- Create: `.github/workflows/ci.yml`
 - Create: `vitest.config.ts`
 - Create: `test/apply-migrations.ts`
 - Create: `wrangler.toml`
@@ -212,11 +228,17 @@ setup docs.
     "lint:fix": "eslint --fix .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "validate": "npm run lint && npm run format:check && npm run typecheck && npm run test"
+    "knip": "knip",
+    "audit": "npm audit --audit-level=critical",
+    "check:actions-node24": "node -e \"const {execSync}=require('node:child_process'); const out=execSync('rg -n \\\\\\\"actions/(checkout|setup-node|cache|upload-artifact)@v4|cloudflare/wrangler-action\\\\\\\" .github/workflows || true',{encoding:'utf8'}); if(out.trim()){ console.error(out); process.exit(1); } console.log('GitHub Actions are Node 24-ready');\"",
+    "validate": "npm run lint && npm run format:check && npm run typecheck && npm run test",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241127.0",
     "@cloudflare/vitest-pool-workers": "^0.16.12",
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "@eslint/js": "^9.39.2",
     "@playwright/test": "^1.49.0",
     "@types/node": "^22.10.2",
@@ -224,7 +246,10 @@ setup docs.
     "esbuild": "^0.28.0",
     "eslint": "^9.39.2",
     "globals": "^16.5.0",
+    "husky": "^9.1.7",
     "jsdom": "^29.0.1",
+    "knip": "^5.76.1",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.50.0",
@@ -233,6 +258,10 @@ setup docs.
   },
   "dependencies": {
     "hono": "^4.12.19"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
+    "*.{js,jsx,json,md,css,yml,yaml}": ["prettier --write"]
   }
 }
 ```
@@ -247,7 +276,87 @@ npm install
 
 Expected: `package-lock.json` is created and `npm install` exits 0.
 
-- [ ] **Step 3: Add TypeScript configs**
+- [ ] **Step 3: Add BugDrop-style Makefile gates**
+
+Create `Makefile`:
+
+```makefile
+.PHONY: dev build build-widget build-all deploy test test-watch test-e2e test-e2e-ui lint lint-fix format format-check typecheck knip audit check-actions-node24 check ci clean install install-playwright help
+
+dev:
+	npm run dev
+
+build:
+	npm run build
+
+build-widget:
+	npm run build:widget
+
+build-all: build-widget build
+
+deploy: build-all
+	npm run deploy
+
+test:
+	npm run test
+
+test-watch:
+	npm run test:watch
+
+test-e2e:
+	npm run test:e2e
+
+test-e2e-ui:
+	npm run test:e2e:ui
+
+lint:
+	npx eslint .
+
+lint-fix:
+	npx eslint . --fix
+
+format:
+	npm run format
+
+format-check:
+	npm run format:check
+
+typecheck:
+	npm run typecheck
+
+knip:
+	npx knip
+
+audit:
+	npm audit --audit-level=critical
+
+check-actions-node24:
+	npm run check:actions-node24
+
+check: lint format-check typecheck knip audit check-actions-node24
+	@echo "✓ All checks passed"
+
+ci: check test build-all
+	@echo "✓ Scaffold CI passed"
+
+clean:
+	rm -rf dist node_modules/.cache playwright-report test-results .wrangler/tmp public/board*.js public/versions.json
+
+install:
+	npm ci
+
+install-playwright:
+	npx playwright install --with-deps chromium
+
+help:
+	@echo "Available commands:"
+	@echo "  make check       - lint, format-check, typecheck, knip, audit, Actions guard"
+	@echo "  make ci          - check, unit tests, widget build, TypeScript build"
+	@echo "  make build-all   - build widget and TypeScript"
+	@echo "  make clean       - remove local build artifacts"
+```
+
+- [ ] **Step 4: Add TypeScript configs**
 
 Create `tsconfig.json`:
 
@@ -291,7 +400,7 @@ Create `tsconfig.widget.json`:
 }
 ```
 
-- [ ] **Step 4: Add lint and format configs**
+- [ ] **Step 5: Add lint and format configs**
 
 Create `eslint.config.js`:
 
@@ -345,17 +454,120 @@ export default tseslint.config(
 );
 ```
 
-Create `prettier.config.cjs`:
+Create `.prettierrc`:
+
+```json
+{
+  "semi": true,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "useTabs": false,
+  "trailingComma": "es5",
+  "printWidth": 100,
+  "arrowParens": "avoid",
+  "endOfLine": "lf"
+}
+```
+
+- [ ] **Step 6: Add commit, dead-code, and hook configs**
+
+Create `commitlint.config.cjs`:
 
 ```js
 module.exports = {
-  singleQuote: true,
-  trailingComma: 'es5',
-  printWidth: 100,
+  extends: ['@commitlint/config-conventional'],
+  rules: {
+    'type-enum': [
+      2,
+      'always',
+      ['feat', 'fix', 'perf', 'security', 'docs', 'test', 'chore', 'refactor', 'ci', 'style'],
+    ],
+  },
 };
 ```
 
-- [ ] **Step 5: Add Vitest config**
+Create `knip.json`:
+
+```json
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["src/index.ts", "src/widget/index.ts", "scripts/build-widget.js"],
+  "project": ["src/**/*.ts", "scripts/**/*.js"],
+  "ignore": [],
+  "ignoreDependencies": ["@playwright/test"]
+}
+```
+
+Create `.husky/pre-commit`:
+
+```sh
+npx lint-staged
+```
+
+Create `.husky/commit-msg`:
+
+```sh
+npx --no -- commitlint --edit "$1"
+```
+
+- [ ] **Step 7: Add starter GitHub Actions CI**
+
+Create `.github/workflows/ci.yml`:
+
+```yaml
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  merge_group:
+
+jobs:
+  check:
+    name: Lint, Typecheck, Knip, Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: make install
+
+      - name: Run checks
+        run: make check
+
+  test:
+    name: Unit Tests & Build
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: make install
+
+      - name: Run unit tests
+        run: make test
+
+      - name: Build all
+        run: make build-all
+```
+
+E2E, preview deploy, and live-test jobs are added in later conveyor boards after the dummy
+host app, Playwright config, and deployment target exist.
+
+- [ ] **Step 8: Add Vitest config**
 
 Create `vitest.config.ts`:
 
@@ -408,7 +620,7 @@ beforeEach(async () => {
 });
 ```
 
-- [ ] **Step 6: Add Wrangler config**
+- [ ] **Step 9: Add Wrangler config**
 
 Create `wrangler.toml`:
 
@@ -438,7 +650,7 @@ Expected: local development works with Wrangler's local D1 mode. When a real D1 
 created, the Worker implementation commit updates `database_id` with the value printed by
 `npx wrangler d1 create bugdrop-board-dev`.
 
-- [ ] **Step 7: Add base Worker types**
+- [ ] **Step 10: Add base Worker types**
 
 Create `src/types.ts`:
 
@@ -474,7 +686,7 @@ export interface BoardItem {
 }
 ```
 
-- [ ] **Step 8: Add health route test first**
+- [ ] **Step 11: Add health route test first**
 
 Create `test/routes.test.ts`:
 
@@ -505,7 +717,7 @@ describe('api routes', () => {
 });
 ```
 
-- [ ] **Step 9: Run health test and verify it fails**
+- [ ] **Step 12: Run health test and verify it fails**
 
 Run:
 
@@ -515,7 +727,7 @@ npm run test -- test/routes.test.ts
 
 Expected: FAIL because `src/routes/api` does not exist yet.
 
-- [ ] **Step 10: Implement minimal API and Worker entry**
+- [ ] **Step 13: Implement minimal API and Worker entry**
 
 Create `src/routes/api.ts`:
 
@@ -546,20 +758,22 @@ import api from './routes/api';
 export default api;
 ```
 
-- [ ] **Step 11: Run validation for scaffold**
+- [ ] **Step 14: Run validation for scaffold**
 
 Run:
 
 ```bash
 npm run validate
+make check
 ```
 
-Expected: lint, format check, typecheck, and the health test pass.
+Expected: lint, format check, typecheck, knip, critical audit, Actions Node-24 guard, and
+the health test pass.
 
-- [ ] **Step 12: Commit scaffold**
+- [ ] **Step 15: Commit scaffold**
 
 ```bash
-git add package.json package-lock.json tsconfig.json tsconfig.widget.json eslint.config.js prettier.config.cjs vitest.config.ts wrangler.toml src test
+git add package.json package-lock.json Makefile tsconfig.json tsconfig.widget.json eslint.config.js .prettierrc commitlint.config.cjs knip.json .husky .github/workflows/ci.yml vitest.config.ts test/apply-migrations.ts wrangler.toml src test
 git commit -m "chore: scaffold Worker project"
 ```
 
@@ -2343,6 +2557,7 @@ Cloudflare Worker, D1 database, optional R2 bucket, and GitHub App credentials.
 Run:
 
 ```bash
+make check
 npm run validate
 npm run build:widget
 ```

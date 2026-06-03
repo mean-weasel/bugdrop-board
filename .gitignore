@@ -5,6 +5,7 @@
 .dev.vars
 .wrangler/
 .superpowers/
+docs/goals/**/.goalbuddy-board/
 node_modules/
 coverage/
 dist/
