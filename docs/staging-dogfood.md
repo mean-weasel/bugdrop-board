@@ -44,6 +44,46 @@ npx wrangler d1 create bugdrop-board-staging
 Copy the returned `database_id` into the staging environment binding used by the deployment branch.
 Do not commit secrets.
 
+## Wrangler Staging Config
+
+Before running any staging deploy workflow, make the deployment branch contain an explicit
+`[env.staging]` block. Without it, Wrangler can warn that no environment was found and fall back to
+default development values such as `ENVIRONMENT = "development"`, `ALLOWED_ORIGINS = "*"`, the
+dummy issuer, and placeholder D1 ids.
+
+Use exact dogfood host origins for staging. Do not use `ALLOWED_ORIGINS = "*"` outside local
+development. Do not commit secrets. The D1 `database_id` is not a secret, but confirm with the
+operator before committing the Mean Weasel staging id to this public or shared repo.
+
+Sample staging block:
+
+```toml
+[env.staging]
+name = "bugdrop-board-staging"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+ALLOWED_ORIGINS = "https://<dogfood-host-origin>"
+BOARD_TOKEN_AUDIENCE = "bugdrop-board"
+BOARD_TOKEN_ISSUER = "bugdrop-board-dogfood-host"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "bugdrop-board-staging"
+database_id = "<returned staging database_id>"
+migrations_dir = "migrations"
+```
+
+Prove the staging config before deploy:
+
+```bash
+npx wrangler deploy --dry-run --env staging
+```
+
+Expected: Wrangler does not print a `No environment found` warning. The dry-run output must show
+the staging Worker config, including `ENVIRONMENT ("staging")`, an exact `ALLOWED_ORIGINS` value,
+`BOARD_TOKEN_ISSUER ("bugdrop-board-dogfood-host")`, and the real staging D1 database id.
+
 ## GitHub Resources
 
 Create or verify the dogfood repo:
