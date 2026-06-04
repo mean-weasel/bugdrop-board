@@ -122,9 +122,15 @@ export CLOUDFLARE_API_TOKEN
 read -rsp "GitHub Issues token: " GITHUB_ISSUE_ACCESS_TOKEN; echo
 export GITHUB_ISSUE_ACCESS_TOKEN
 
+npm run staging:secrets -- --verify-env
 npm run staging:secrets -- --set-from-env
 npm run staging:secrets -- --status
 ```
+
+`--verify-env` checks secret presence without printing values, confirms `BOARD_TOKEN_SECRET` has a
+strong length, verifies the Cloudflare token is active and can see the staging D1 database, and
+verifies the GitHub token can read the dogfood repo Issues API. The deploy workflow remains the
+authoritative proof that the Cloudflare token has all required Worker/D1 write permissions.
 
 `--set-from-env` refuses to store the current broad `gh auth token` as
 `GITHUB_ISSUE_ACCESS_TOKEN`. Do not set `NPM_TOKEN` for staging dogfood; package dry-run does not

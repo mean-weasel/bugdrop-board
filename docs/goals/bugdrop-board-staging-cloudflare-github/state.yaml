@@ -578,15 +578,64 @@ tasks:
         - 'No Cloudflare API token, GitHub issue token, board signing secret, or npm token values were printed or committed.'
         - 'No deploy or publish workflow was dispatched.'
 
+  - id: T015
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Add a no-echo preflight verifier for operator-provided staging secret inputs before writing them to GitHub Environment secrets.'
+    acceptance_criteria:
+      - 'Adds a helper command that reads required staging secret values from environment variables without printing them.'
+      - 'Fails fast when required env vars are missing.'
+      - 'Rejects weak `BOARD_TOKEN_SECRET` values before any remote checks.'
+      - 'Refuses the current broad `gh auth token` as `GITHUB_ISSUE_ACCESS_TOKEN`.'
+      - 'Checks the GitHub issue token against the dogfood repo and Issues API without printing token values.'
+      - 'Checks the Cloudflare token against token verification and staging D1 visibility without printing token values.'
+      - 'Documents the verifier before the no-echo secret write step.'
+    receipt:
+      result: done
+      summary: 'Added `npm run staging:secrets -- --verify-env` so operator-provided staging tokens can be checked before `gh secret set` writes them.'
+      changed_files:
+        - '/Users/neonwatty/Desktop/bugdrop-board/scripts/staging-secrets.js'
+        - '/Users/neonwatty/Desktop/bugdrop-board/docs/staging-dogfood.md'
+        - '/Users/neonwatty/Desktop/bugdrop-board/docs/goals/bugdrop-board-staging-cloudflare-github/state.yaml'
+      evidence:
+        - '`scripts/staging-secrets.js --verify-env` now reads `CLOUDFLARE_API_TOKEN`, `BOARD_TOKEN_SECRET`, and `GITHUB_ISSUE_ACCESS_TOKEN` from env only.'
+        - '`--verify-env` requires `BOARD_TOKEN_SECRET` length >= 32 before remote checks.'
+        - '`--verify-env` reuses the broad-token hash comparison guard and refuses the current `gh auth token` as `GITHUB_ISSUE_ACCESS_TOKEN`.'
+        - '`--verify-env` checks `GITHUB_ISSUE_ACCESS_TOKEN` using `GH_TOKEN` against `repos/mean-weasel/bugdrop-board-dogfood` and `repos/mean-weasel/bugdrop-board-dogfood/issues?per_page=1`, suppressing stdout.'
+        - '`--verify-env` checks `CLOUDFLARE_API_TOKEN` with Cloudflare `/user/tokens/verify` and `/accounts/{account_id}/d1/database?name=bugdrop-board-staging&per_page=1`.'
+        - '`docs/staging-dogfood.md` now runs `npm run staging:secrets -- --verify-env` before `--set-from-env` and states that the deploy workflow remains the proof of full Worker/D1 write scope.'
+        - '`npm run staging:secrets -- --help`: passed and documents `--verify-env`.'
+        - '`npm run staging:secrets -- --verify-env` without env values: failed safely with `Missing required environment variable: CLOUDFLARE_API_TOKEN`.'
+        - '`CLOUDFLARE_API_TOKEN=<dummy> BOARD_TOKEN_SECRET=<short> GITHUB_ISSUE_ACCESS_TOKEN=<dummy> npm run staging:secrets -- --verify-env`: failed safely with the board secret length error before remote checks.'
+        - '`CLOUDFLARE_API_TOKEN=<dummy> BOARD_TOKEN_SECRET=<strong dummy> GITHUB_ISSUE_ACCESS_TOKEN=<dummy> npm run staging:secrets -- --verify-env`: failed safely with GitHub `Bad credentials` and did not print the token values.'
+        - '`CLOUDFLARE_API_TOKEN=<dummy> BOARD_TOKEN_SECRET=<strong dummy> GITHUB_ISSUE_ACCESS_TOKEN="$(gh auth token)" npm run staging:secrets -- --verify-env`: refused the broad CLI token without printing it.'
+        - '`npm run lint`: passed.'
+        - '`npm run typecheck`: passed.'
+        - '`npm run format:check`: passed.'
+        - 'Secret residue scan of `scripts/staging-secrets.js` and `docs/staging-dogfood.md` found no generated verifier test token persisted.'
+        - '`ruby -e "require ''yaml''; YAML.load_file(''docs/goals/bugdrop-board-staging-cloudflare-github/state.yaml''); puts ''state yaml ok''"`: passed.'
+      no_go_proof:
+        - 'No secret values were printed, committed, or written to GitHub secrets.'
+        - 'No Deploy Worker workflow was dispatched.'
+        - 'No npm publish or production deploy ran.'
+      blocker_remaining:
+        - 'Deploy Worker and browser dogfood still require real operator-provided Cloudflare and GitHub issue tokens plus a preserved `BOARD_TOKEN_SECRET`.'
+
 checks:
   dirty_fingerprint: ''
   last_verification:
     result: passed
-    task: T014
+    task: T015
     commands:
       - 'npm run staging:secrets -- --help'
-      - 'npm run staging:secrets -- --status'
-      - 'npm run staging:secrets -- --set-from-env'
-      - 'npm run staging:secrets -- --generate-board-secret-file /tmp/bugdrop-board-staging.env'
+      - 'npm run staging:secrets -- --verify-env'
+      - 'CLOUDFLARE_API_TOKEN=<dummy> BOARD_TOKEN_SECRET=<short> GITHUB_ISSUE_ACCESS_TOKEN=<dummy> npm run staging:secrets -- --verify-env'
+      - 'CLOUDFLARE_API_TOKEN=<dummy> BOARD_TOKEN_SECRET=<strong dummy> GITHUB_ISSUE_ACCESS_TOKEN=<dummy> npm run staging:secrets -- --verify-env'
+      - 'CLOUDFLARE_API_TOKEN=<dummy> BOARD_TOKEN_SECRET=<strong dummy> GITHUB_ISSUE_ACCESS_TOKEN="$(gh auth token)" npm run staging:secrets -- --verify-env'
       - 'npm run lint'
       - 'npm run typecheck'
+      - 'npm run format:check'
+      - 'node -e "secret residue scan"'
+      - 'ruby -e "YAML.load_file(...)"'
