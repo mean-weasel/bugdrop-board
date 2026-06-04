@@ -17,7 +17,7 @@ const ENV_SECRET_NAMES = [
   'CLOUDFLARE_ACCOUNT_ID',
   'CLOUDFLARE_API_TOKEN',
   'BOARD_TOKEN_SECRET',
-  'GITHUB_ISSUE_ACCESS_TOKEN',
+  'ISSUE_ACCESS_TOKEN',
 ];
 
 function printHelp() {
@@ -36,7 +36,7 @@ Commands:
   --set-from-env
     Set staging secrets from CLOUDFLARE_API_TOKEN, BOARD_TOKEN_SECRET, and
     GITHUB_ISSUE_ACCESS_TOKEN environment variables. Refuses to store the
-    current broad gh auth token as GITHUB_ISSUE_ACCESS_TOKEN.
+    current broad gh auth token as ISSUE_ACCESS_TOKEN.
 
   --verify-env
     Verify required environment variables without printing values. Checks
@@ -86,11 +86,11 @@ function setFromEnv() {
     CLOUDFLARE_ACCOUNT_ID,
     CLOUDFLARE_API_TOKEN: requireEnv('CLOUDFLARE_API_TOKEN'),
     BOARD_TOKEN_SECRET: requireEnv('BOARD_TOKEN_SECRET'),
-    GITHUB_ISSUE_ACCESS_TOKEN: requireEnv('GITHUB_ISSUE_ACCESS_TOKEN'),
+    ISSUE_ACCESS_TOKEN: requireEnv('GITHUB_ISSUE_ACCESS_TOKEN'),
   };
 
   assertBoardSecretLooksStrong(values.BOARD_TOKEN_SECRET);
-  assertIssueTokenIsNotGhAuthToken(values.GITHUB_ISSUE_ACCESS_TOKEN);
+  assertIssueTokenIsNotGhAuthToken(values.ISSUE_ACCESS_TOKEN);
 
   for (const name of ENV_SECRET_NAMES) {
     setSecret(name, values[name]);
@@ -154,11 +154,11 @@ function assertBoardSecretLooksStrong(secret) {
 function assertIssueTokenIsNotGhAuthToken(issueToken) {
   const result = spawnSync('gh', ['auth', 'token'], { encoding: 'utf8' });
   if (result.status !== 0) {
-    throw new Error('Could not compare GITHUB_ISSUE_ACCESS_TOKEN with current gh auth token');
+    throw new Error('Could not compare ISSUE_ACCESS_TOKEN with current gh auth token');
   }
 
   if (hash(issueToken) === hash(result.stdout.trim())) {
-    throw new Error('Refusing to store current broad gh auth token as GITHUB_ISSUE_ACCESS_TOKEN');
+    throw new Error('Refusing to store current broad gh auth token as ISSUE_ACCESS_TOKEN');
   }
 }
 

@@ -623,19 +623,50 @@ tasks:
       blocker_remaining:
         - 'Deploy Worker and browser dogfood still require real operator-provided Cloudflare and GitHub issue tokens plus a preserved `BOARD_TOKEN_SECRET`.'
 
+  - id: T016
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Rename the GitHub Environment issue-token secret to avoid GitHub reserved `GITHUB_*` secret names.'
+    acceptance_criteria:
+      - 'Deploy workflow reads a GitHub Environment secret name that GitHub accepts.'
+      - 'Deploy workflow still exposes `GITHUB_ISSUE_ACCESS_TOKEN` to Wrangler/Worker deployment so product runtime config remains unchanged.'
+      - 'Staging secret helper writes the operator-provided issue token to the accepted GitHub Environment secret name.'
+      - 'Docs explain the accepted GitHub Environment secret name and the runtime env var mapping.'
+      - 'No token values are printed or committed.'
+    receipt:
+      result: done
+      summary: 'Changed the GitHub Environment secret from invalid `GITHUB_ISSUE_ACCESS_TOKEN` to `ISSUE_ACCESS_TOKEN`, mapped back to runtime `GITHUB_ISSUE_ACCESS_TOKEN` inside the deploy workflow.'
+      changed_files:
+        - '/Users/neonwatty/Desktop/bugdrop-board/.github/workflows/deploy.yml'
+        - '/Users/neonwatty/Desktop/bugdrop-board/scripts/staging-secrets.js'
+        - '/Users/neonwatty/Desktop/bugdrop-board/docs/staging-dogfood.md'
+        - '/Users/neonwatty/Desktop/bugdrop-board/README.md'
+        - '/Users/neonwatty/Desktop/bugdrop-board/docs/goals/bugdrop-board-staging-cloudflare-github/state.yaml'
+      evidence:
+        - 'GitHub rejected the old secret name with `Secret names must not start with GITHUB_`.'
+        - '`.github/workflows/deploy.yml` now reads `${{ secrets.ISSUE_ACCESS_TOKEN }}` into env var `GITHUB_ISSUE_ACCESS_TOKEN`.'
+        - 'The required-secret validation still checks the runtime env var but reports missing secret `ISSUE_ACCESS_TOKEN` if absent.'
+        - '`scripts/staging-secrets.js --set-from-env` still reads local env `GITHUB_ISSUE_ACCESS_TOKEN`, then writes GitHub Environment secret `ISSUE_ACCESS_TOKEN`.'
+        - '`docs/staging-dogfood.md` documents the `ISSUE_ACCESS_TOKEN` GitHub secret mapping and includes zsh-safe no-echo read commands.'
+        - '`README.md` lists `ISSUE_ACCESS_TOKEN` for the Deploy Worker GitHub Environment secret.'
+      no_go_proof:
+        - 'No token value was printed or committed.'
+        - 'No deploy or publish workflow was dispatched by this correction.'
+
 checks:
   dirty_fingerprint: ''
   last_verification:
     result: passed
-    task: T015
+    task: T016
     commands:
       - 'npm run staging:secrets -- --help'
-      - 'npm run staging:secrets -- --verify-env'
-      - 'CLOUDFLARE_API_TOKEN=<dummy> BOARD_TOKEN_SECRET=<short> GITHUB_ISSUE_ACCESS_TOKEN=<dummy> npm run staging:secrets -- --verify-env'
-      - 'CLOUDFLARE_API_TOKEN=<dummy> BOARD_TOKEN_SECRET=<strong dummy> GITHUB_ISSUE_ACCESS_TOKEN=<dummy> npm run staging:secrets -- --verify-env'
-      - 'CLOUDFLARE_API_TOKEN=<dummy> BOARD_TOKEN_SECRET=<strong dummy> GITHUB_ISSUE_ACCESS_TOKEN="$(gh auth token)" npm run staging:secrets -- --verify-env'
+      - 'npm run staging:secrets -- --status'
+      - 'npm run staging:secrets -- --set-from-env'
+      - 'rg -n "secrets\\.GITHUB_|gh secret set GITHUB_ISSUE_ACCESS_TOKEN|Environment secrets.*GITHUB_ISSUE_ACCESS_TOKEN|GITHUB Environment secret.*GITHUB_ISSUE_ACCESS_TOKEN" .github scripts docs/staging-dogfood.md README.md'
+      - 'ruby -e "YAML.load_file(...)"'
       - 'npm run lint'
       - 'npm run typecheck'
       - 'npm run format:check'
-      - 'node -e "secret residue scan"'
-      - 'ruby -e "YAML.load_file(...)"'
+      - 'git diff --check'

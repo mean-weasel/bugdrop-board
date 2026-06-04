@@ -118,7 +118,8 @@ read -rsp "Cloudflare API token: " CLOUDFLARE_API_TOKEN; echo
 export CLOUDFLARE_API_TOKEN
 
 # Fine-grained GitHub token scoped only to mean-weasel/bugdrop-board-dogfood
-# with Issues read/write permission.
+# with Issues read/write permission. The helper stores this as the GitHub
+# Environment secret ISSUE_ACCESS_TOKEN because GitHub reserves GITHUB_* names.
 read -rsp "GitHub Issues token: " GITHUB_ISSUE_ACCESS_TOKEN; echo
 export GITHUB_ISSUE_ACCESS_TOKEN
 
@@ -132,9 +133,21 @@ strong length, verifies the Cloudflare token is active and can see the staging D
 verifies the GitHub token can read the dogfood repo Issues API. The deploy workflow remains the
 authoritative proof that the Cloudflare token has all required Worker/D1 write permissions.
 
-`--set-from-env` refuses to store the current broad `gh auth token` as
-`GITHUB_ISSUE_ACCESS_TOKEN`. Do not set `NPM_TOKEN` for staging dogfood; package dry-run does not
-need it and npm publish is out of scope.
+`--set-from-env` refuses to store the current broad `gh auth token` as `ISSUE_ACCESS_TOKEN`. Do not
+set `NPM_TOKEN` for staging dogfood; package dry-run does not need it and npm publish is out of
+scope.
+
+If you are using zsh, use the zsh prompt form instead of `read -rsp`:
+
+```zsh
+read -rs "CLOUDFLARE_API_TOKEN?Cloudflare API token: "
+echo
+export CLOUDFLARE_API_TOKEN
+
+read -rs "GITHUB_ISSUE_ACCESS_TOKEN?GitHub Issues token: "
+echo
+export GITHUB_ISSUE_ACCESS_TOKEN
+```
 
 ## Package Dry-Run
 

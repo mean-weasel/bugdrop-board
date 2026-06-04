@@ -398,7 +398,8 @@ Environment secrets:
 - `CLOUDFLARE_ACCOUNT_ID`
 - `CLOUDFLARE_API_TOKEN`, scoped to deploy the Worker and manage the configured D1 database
 - `BOARD_TOKEN_SECRET`
-- `GITHUB_ISSUE_ACCESS_TOKEN`
+- `ISSUE_ACCESS_TOKEN`, containing the GitHub Issues token. The workflow maps this to the
+  deployed Worker secret `GITHUB_ISSUE_ACCESS_TOKEN`.
 
 Before the first promotion, update `wrangler.toml` for the target environment:
 
@@ -527,7 +528,7 @@ requiring Cloudflare or npm production credentials.
 After the local rehearsal passes, configure credentials in GitHub:
 
 - GitHub Environment secrets for `Deploy Worker`: `CLOUDFLARE_ACCOUNT_ID`,
-  `CLOUDFLARE_API_TOKEN`, `BOARD_TOKEN_SECRET`, and `GITHUB_ISSUE_ACCESS_TOKEN`.
+  `CLOUDFLARE_API_TOKEN`, `BOARD_TOKEN_SECRET`, and `ISSUE_ACCESS_TOKEN`.
 - Repository secret for `Package Widget`: `NPM_TOKEN`.
 
 Then run the GitHub workflows in dry-run or test mode before production:
