@@ -5,7 +5,7 @@ goal:
   slug: 'bugdrop-board-staging-cloudflare-github'
   kind: existing_plan
   tranche: 'Configure/verify Cloudflare and GitHub staging resources, dispatch package/deploy workflows, dogfood the embedded board through a signed-token host app with Codex Chrome Extension, and capture rigorous staging proof.'
-  status: active
+  status: done
   oracle:
     signal: 'A committed staging dogfood receipt proves authenticated Cloudflare/GitHub access, configured staging secrets/resources, package workflow dry-run, staging Worker deployment, HTTP smoke, signed-token host embed, two-viewer browser proof, GitHub Issue mirroring, upvote/polling visibility, rollback notes, and excluded-scope audit.'
     cadence: 'after Scout inventory, after each remote mutation phase, after browser dogfood, and at final audit'
@@ -60,7 +60,7 @@ visual_board:
     url: 'http://goalbuddy.localhost:41737/bugdrop-board-staging-cloudflare-github/'
     command: 'npx goalbuddy board docs/goals/bugdrop-board-staging-cloudflare-github'
 
-active_task: T013
+active_task: null
 
 tasks:
   - id: T001
@@ -277,7 +277,7 @@ tasks:
   - id: T005
     type: worker
     assignee: Worker
-    status: blocked
+    status: done
     reasoning_hint: medium
     objective: 'Run GitHub package dry-run and staging deploy workflows, then capture workflow proof.'
     acceptance_criteria:
@@ -292,8 +292,8 @@ tasks:
       - 'Deploy workflow uses default config or wrong Wrangler environment.'
       - 'Remote migrations/provisioning fail.'
     receipt:
-      result: partial_blocked
-      summary: 'Package Widget dry-run succeeded from `codex/staging-dogfood`; staging Deploy Worker workflow was not dispatched because required GitHub Environment secrets are absent.'
+      result: done
+      summary: 'Package Widget dry-run and staging Deploy Worker workflow both succeeded. Remote D1 migrations applied, board provisioning printed `board_mean_weasel_bugdrop_board_dogfood`, Worker deployed to staging, and HTTP smoke passed.'
       package_workflow:
         run_id: 26959543229
         run_url: 'https://github.com/mean-weasel/bugdrop-board/actions/runs/26959543229'
@@ -309,13 +309,17 @@ tasks:
         - '`gh run view 26959543229 --json ...`: run conclusion `success`, workflow `Package Widget`, event `workflow_dispatch`, head SHA `7e66911f0ec0e658a0f2e3e816ecb17f1c44b4a9`.'
         - 'Package job steps: validation gates succeeded, dry-run package contents succeeded, `Validate npm token` skipped, and `Publish package` skipped.'
         - 'Package log tarball contents included `README.md`, `package.json`, `public/board.js`, and `src/widget/api.ts`, `src/widget/dom.ts`, `src/widget/index.ts`, `src/widget/theme.ts`, `src/widget/types.ts`.'
-        - '`gh secret list --env staging` and `gh secret list`: no secrets listed.'
-        - '`gh run watch 26959540010 --exit-status`: CI for staging Wrangler commit `7e66911f0ec0e658a0f2e3e816ecb17f1c44b4a9` completed with `success`.'
-      blocker:
-        - 'Deploy Worker workflow requires missing GitHub Environment secrets: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `BOARD_TOKEN_SECRET`, and `GITHUB_ISSUE_ACCESS_TOKEN`.'
+        - '`gh workflow run "Deploy Worker" --ref codex/staging-dogfood -f environment=staging -f wrangler_environment=staging -f apply_migrations=true -f provision_repo=mean-weasel/bugdrop-board-dogfood -f provision_name="BugDrop Board Dogfood"`: dispatched run `26968028665`.'
+        - '`gh run watch 26968028665 --exit-status`: job `Promote Worker` succeeded in 46s.'
+        - 'Deploy run `26968028665` succeeded from commit `cb20fea85837eae7eb040cd9c82f519f52bb7320`.'
+        - 'Deploy job steps succeeded: required secret validation, Wrangler environment validation, validation gates, widget build, dry-run deploy package, remote D1 migrations, board provisioning, Worker deploy, and deployment secret file cleanup.'
+        - 'Remote D1 migrations applied against `bugdrop-board-staging` / `e4bfc871-ace5-49b9-b795-1e85ce535b9f`.'
+        - 'Provisioning printed board id `board_mean_weasel_bugdrop_board_dogfood` for `mean-weasel/bugdrop-board-dogfood`.'
+        - 'Worker URL: `https://bugdrop-board-staging.neonwatty.workers.dev`.'
+        - '`curl -fsS https://bugdrop-board-staging.neonwatty.workers.dev/health`: returned `{"status":"ok","environment":"staging","timestamp":"2026-06-04T17:29:20.411Z"}`.'
+        - '`curl -fsSI https://bugdrop-board-staging.neonwatty.workers.dev/board.js`: returned `HTTP/2 200` with `content-type: text/javascript`.'
       no_go_proof:
         - 'No npm publish ran.'
-        - 'No Deploy Worker workflow was dispatched.'
         - 'No production deploy ran.'
         - 'No secret values were printed or committed.'
 
@@ -361,7 +365,7 @@ tasks:
   - id: T007
     type: worker
     assignee: Worker
-    status: blocked
+    status: done
     reasoning_hint: medium
     objective: 'Configure the chosen host app for staging dogfood and perform two-viewer browser proof using Codex Chrome Extension.'
     acceptance_criteria:
@@ -378,23 +382,26 @@ tasks:
       - 'Host app cannot safely sign staging tokens.'
       - 'CORS exact-origin check fails.'
     receipt:
-      result: blocked
-      summary: 'Browser dogfood cannot start until the staging Worker is deployed and a shared staging `BOARD_TOKEN_SECRET` is configured for both Worker verification and host signing.'
-      blockers:
-        - 'Deploy Worker workflow is blocked by missing GitHub Environment secrets.'
-        - 'No staging Worker URL exists yet.'
-        - 'No staging `BOARD_TOKEN_SECRET` exists for host signing.'
-      ready_inputs_from_t006:
-        - 'Host origin: `http://127.0.0.1:5177`.'
-        - 'Board id: `board_mean_weasel_bugdrop_board_dogfood`.'
-        - 'Token audience: `bugdrop-board`.'
-        - 'Token issuer: `bugdrop-board-dogfood-host`.'
-        - 'Two viewer identities: `user_e2e_a` / Ada and `user_e2e_b` / Grace.'
+      result: done
+      summary: 'Staging signed-token host proof passed against the deployed Worker with two viewer sessions, GitHub Issue mirroring, polling, and upvote sync.'
+      evidence:
+        - 'Command used the local host fixture with `BUGDROP_BOARD_SCRIPT_SRC=https://bugdrop-board-staging.neonwatty.workers.dev/board.js`, `BUGDROP_BOARD_WORKER_ORIGIN=https://bugdrop-board-staging.neonwatty.workers.dev`, `BUGDROP_BOARD_TOKEN_ISSUER=bugdrop-board-dogfood-host`, and board id `board_mean_weasel_bugdrop_board_dogfood`.'
+        - '`npx playwright test --config=playwright.staging.config.ts`: passed, `1 passed (7.3s)`.'
+        - 'Viewer A created item `Staging dogfood item 1780594561128`.'
+        - 'GitHub Issue appeared as `https://github.com/mean-weasel/bugdrop-board-dogfood/issues/4`.'
+        - 'Viewer B saw the created item through polling.'
+        - 'Viewer A upvoted and saw `Upvoted 1`; Viewer B saw `Upvote 1` through polling.'
+        - 'Earlier `Failed to create GitHub issue` attempts were diagnosed with Worker tail as GitHub `404 Not Found`; updating the fine-grained token to include the dogfood repo resolved it without code changes.'
+        - 'A later issue-link assertion failure after Issue #2 was created proved the board is durable and no longer empty; `e2e/staging-board-widget.spec.ts` now scopes issue and upvote assertions to the newly-created item article.'
+        - '`playwright.config.ts` ignores the staging-only spec so local `npm run test:e2e` and `npm run release:rehearsal` stay local; staging proof remains explicit through `playwright.staging.config.ts`.'
+      no_go_proof:
+        - 'No secret values were printed or committed.'
+        - 'No comments, downvotes, realtime, GitHub Projects, hosted control plane, or billing behavior were added.'
 
   - id: T008
     type: worker
     assignee: Worker
-    status: queued
+    status: done
     reasoning_hint: medium
     objective: 'Create and commit the staging dogfood result receipt.'
     acceptance_criteria:
@@ -403,12 +410,22 @@ tasks:
       - 'Receipt contains no secret values.'
       - 'Runs `npm run release:rehearsal`, `make check`, and formatting checks after documentation changes.'
       - 'Commits the receipt and opens or updates a PR.'
-    receipt: null
+    receipt:
+      result: done
+      summary: 'Created durable staging dogfood receipt at `docs/staging-dogfood-results/2026-06-04.md`.'
+      changed_files:
+        - '/Users/neonwatty/Desktop/bugdrop-board/docs/staging-dogfood-results/2026-06-04.md'
+      evidence:
+        - 'Receipt records Worker URL, board id, workflow run URLs, GitHub issue URL, HTTP smoke, browser proof command/result, scope audit, and rollback path.'
+        - 'Receipt contains no secret values.'
+        - '`npm run release:rehearsal`: passed after excluding the staging-only spec from default local Playwright collection.'
+        - '`make check`: passed.'
+        - 'Secret prefix scan over touched proof/config files found no GitHub, Slack, or OpenAI token-looking values.'
 
   - id: T009
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
     objective: 'Final audit against the staging dogfood oracle.'
     acceptance_criteria:
@@ -417,7 +434,17 @@ tasks:
       - 'Confirms no hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or product behavior were added.'
       - 'Confirms all secrets stayed out of logs, screenshots, docs, and commits.'
       - 'Approves completion only if staging Worker, workflows, host app, GitHub Issue, upvote, and polling proof are all durable.'
-    receipt: null
+    receipt:
+      result: done
+      decision: approved
+      summary: 'Final audit approved: the staging dogfood oracle is satisfied with workflow, HTTP, browser, GitHub Issue, polling, upvote, no-secret, and excluded-scope proof.'
+      evidence:
+        - 'CI run `26968016777` passed for commit `cb20fea85837eae7eb040cd9c82f519f52bb7320`.'
+        - 'Deploy run `26968028665` passed for commit `cb20fea85837eae7eb040cd9c82f519f52bb7320`.'
+        - 'HTTP smoke passed for `/health` and `/board.js`.'
+        - 'Staging browser proof passed with two viewer sessions and polling/upvote sync.'
+        - 'Dogfood GitHub Issue #4 exists and matches the latest created staging item.'
+        - 'Scope audit confirms no npm publish, production deploy, hosted control plane, billing, realtime, comments, downvotes, or GitHub Projects behavior.'
 
   - id: T010
     type: judge
@@ -516,7 +543,7 @@ tasks:
   - id: T013
     type: worker
     assignee: PM
-    status: blocked
+    status: done
     reasoning_hint: medium
     objective: 'Obtain or approve remaining staging secret inputs required for deploy and browser dogfood.'
     acceptance_criteria:
@@ -525,12 +552,13 @@ tasks:
       - 'Chooses an operator-approved preservation path for the generated/reused `BOARD_TOKEN_SECRET` so the same value can be used for GitHub Environment secret and local host signing.'
       - 'Does not use a broad personal GitHub token unless the operator explicitly approves that tradeoff.'
     receipt:
-      result: blocked
-      summary: 'External secret material is required before Deploy Worker and browser dogfood can proceed.'
-      missing_inputs:
-        - 'Least-privilege Cloudflare API token for GitHub Actions deploy.'
-        - 'Fine-grained GitHub Issues token for the dogfood repo.'
-        - 'Approved preservation path for the board signing secret shared by Worker and local host signer.'
+      result: done
+      summary: 'Required staging secrets were configured in GitHub Environment `staging`; repo-level duplicate issue token was removed.'
+      evidence:
+        - '`gh secret list --env staging -R mean-weasel/bugdrop-board`: listed `BOARD_TOKEN_SECRET`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, and `ISSUE_ACCESS_TOKEN`.'
+        - '`gh secret list -R mean-weasel/bugdrop-board`: listed no repo-level secrets after deleting the duplicate `ISSUE_ACCESS_TOKEN`.'
+        - '`BOARD_TOKEN_SECRET` was generated to ignored local file `.secrets/bugdrop-board-staging.env` and set in the staging Environment without printing the value.'
+        - 'Fine-grained `ISSUE_ACCESS_TOKEN` was updated to include `mean-weasel/bugdrop-board-dogfood` with Issues read/write access; staging proof passed afterward.'
       already_done:
         - '`CLOUDFLARE_ACCOUNT_ID` is configured in GitHub Environment `staging`.'
         - 'Package Widget dry-run succeeded.'

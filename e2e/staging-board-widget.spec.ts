@@ -25,14 +25,21 @@ test('staging board creates a GitHub-backed item, upvotes, and syncs through pol
     await page.getByLabel('Context').fill('Staging dogfood proof from the signed-token host app.');
     await page.getByRole('button', { name: 'Submit' }).click();
 
-    await expect(page.getByText(title)).toBeVisible();
-    await expect(page.getByText(/Issue #\d+/)).toBeVisible();
-    await expect(secondPage.getByText(title)).toBeVisible({ timeout: 15_000 });
+    const item = page.locator('article').filter({
+      has: page.getByRole('heading', { name: title }),
+    });
+    const syncedItem = secondPage.locator('article').filter({
+      has: secondPage.getByRole('heading', { name: title }),
+    });
 
-    await page.getByRole('button', { name: 'Upvote 0' }).click();
+    await expect(item).toBeVisible();
+    await expect(item.getByRole('link', { name: /Issue #\d+/ })).toBeVisible();
+    await expect(syncedItem).toBeVisible({ timeout: 15_000 });
 
-    await expect(page.getByRole('button', { name: 'Upvoted 1' })).toBeVisible();
-    await expect(secondPage.getByRole('button', { name: 'Upvote 1' })).toBeVisible({
+    await item.getByRole('button', { name: 'Upvote 0' }).click();
+
+    await expect(item.getByRole('button', { name: 'Upvoted 1' })).toBeVisible();
+    await expect(syncedItem.getByRole('button', { name: 'Upvote 1' })).toBeVisible({
       timeout: 15_000,
     });
   } finally {
