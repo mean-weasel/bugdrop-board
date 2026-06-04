@@ -98,7 +98,12 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
         description: parsedBody.value.description,
         boardItemId: itemId,
       });
-    } catch {
+    } catch (error) {
+      console.error('GitHub issue creation failed', {
+        boardId,
+        repo: `${board.repoOwner}/${board.repoName}`,
+        message: error instanceof Error ? error.message : String(error),
+      });
       return c.json({ error: 'Failed to create GitHub issue' }, 502);
     }
 
