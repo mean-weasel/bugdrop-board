@@ -56,5 +56,11 @@ describe('provision-board script helpers', () => {
         'Expected --env to contain only letters, numbers, underscores, and hyphens'
       );
     });
+
+    it('rejects wrangler environment names that start with a hyphen', () => {
+      expect(() => parseArgs(['--repo', 'mean-weasel/demo', '--env', '-dash'])).toThrow(
+        'Expected --env to contain only letters, numbers, underscores, and hyphens'
+      );
+    });
   });
 });
