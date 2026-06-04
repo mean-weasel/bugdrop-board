@@ -1,4 +1,5 @@
 const REPO_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.-]*\/[A-Za-z0-9][A-Za-z0-9_.-]*$/;
+const ENV_PATTERN = /^[A-Za-z0-9_-]+$/;
 
 export function parseArgs(argv) {
   const options = { local: true };
@@ -8,6 +9,14 @@ export function parseArgs(argv) {
       options.repo = readValue(argv, (index += 1), '--repo');
     } else if (arg === '--name') {
       options.name = readValue(argv, (index += 1), '--name');
+    } else if (arg === '--env') {
+      const env = readValue(argv, (index += 1), '--env');
+      if (!ENV_PATTERN.test(env)) {
+        throw new Error(
+          'Expected --env to contain only letters, numbers, underscores, and hyphens'
+        );
+      }
+      options.env = env;
     } else if (arg === '--local') {
       options.local = true;
     } else if (arg === '--remote') {

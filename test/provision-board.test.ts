@@ -39,4 +39,20 @@ describe('provision-board script helpers', () => {
       local: true,
     });
   });
+
+  it('parses a wrangler environment', () => {
+    expect(parseArgs(['--repo', 'mean-weasel/demo', '--remote', '--env', 'staging'])).toMatchObject(
+      {
+        repo: 'mean-weasel/demo',
+        local: false,
+        env: 'staging',
+      }
+    );
+  });
+
+  it('rejects invalid wrangler environment names', () => {
+    expect(() => parseArgs(['--repo', 'mean-weasel/demo', '--env', '../prod'])).toThrow(
+      'Expected --env to contain only letters, numbers, underscores, and hyphens'
+    );
+  });
 });
