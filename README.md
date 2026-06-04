@@ -387,6 +387,61 @@ npm run test:e2e
 The local E2E flow uses a fake GitHub Issue creator, so it proves the board/token/widget path but
 not a live GitHub token. Use a deployed test item to prove real GitHub token recovery.
 
+## Environment Promotion
+
+The `Deploy Worker` GitHub Actions workflow provides a manual self-host promotion path. It does not
+publish the embed package or create hosted-control-plane resources.
+
+Create one GitHub Environment for each deployment target, for example `production`. Add these
+Environment secrets:
+
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_API_TOKEN`, scoped to deploy the Worker and manage the configured D1 database
+- `BOARD_TOKEN_SECRET`
+- `GITHUB_ISSUE_ACCESS_TOKEN`
+
+Before the first promotion, update `wrangler.toml` for the target environment:
+
+- `ENVIRONMENT = "production"`
+- `ALLOWED_ORIGINS` lists exact host app origins
+- `BOARD_TOKEN_AUDIENCE` and `BOARD_TOKEN_ISSUER` match the host token endpoint
+- D1 `database_id` points at the remote D1 database
+
+Run the workflow from GitHub Actions:
+
+1. Select **Deploy Worker**.
+2. Choose the GitHub Environment, such as `production`.
+3. Leave **Apply remote D1 migrations** enabled unless migrations were already applied.
+4. Optionally enter `provision_repo` as `owner/name` and `provision_name` to create or update the
+   board row before deployment.
+
+The workflow runs:
+
+```bash
+npm run validate
+npm run build:widget
+npm run deploy:check
+npx wrangler d1 migrations apply DB --remote
+npm run provision:board -- --repo owner/name --remote
+npx wrangler deploy --secrets-file .deploy.secrets
+```
+
+The secrets file is generated inside the workflow runner and removed at the end of the job. Do not
+commit `.deploy.secrets`.
+
+After promotion, verify the deployed Worker:
+
+```bash
+curl https://bugdrop-board.example.workers.dev/health
+curl -I https://bugdrop-board.example.workers.dev/board.js
+```
+
+Then open a signed-in host app page, create a test item, confirm the matching GitHub Issue appears,
+and confirm another viewer can read or upvote the item.
+
+Rollback is operator-controlled: rerun the workflow from the previous known-good commit or restore
+the previous Worker secrets with `wrangler secret put`, then run the deployed smoke checks again.
+
 ## Verification
 
 Run the standard checks before handing off changes:
@@ -405,5 +460,4 @@ make check
 This repository is still an early vertical slice. Before release, the next tranche should decide
 and implement:
 
-- release automation and environment promotion;
 - package/version publishing flow for the embed script.
