@@ -1,0 +1,97 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board First Production Promotion'
+  slug: 'bugdrop-board-first-production-promotion'
+  kind: existing_plan
+  tranche: 'Conveyor Board 13: first production promotion, approval-gated.'
+  status: blocked
+  oracle:
+    signal: 'The first production promotion has an exact approval-gated runbook and cannot execute until the maintainer explicitly approves production mutation.'
+    cadence: 'after readiness import, after runbook preparation, and at approval gate'
+    final_proof: 'docs/release-readiness-results/2026-06-04-first-production-promotion.md with exact preflight/deploy/smoke/rollback plan and blocked approval gate.'
+  intake:
+    original_request: 'Create these boards and run them autonomously if you can.'
+    interpreted_outcome: 'Prepare the first production promotion board while blocking actual production mutation until explicit approval.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainer approving first production deploy'
+    authority: needs_approval_for_production_mutation
+    proof_type: decision
+    completion_proof: 'Committed runbook and GoalBuddy blocked deploy task show the board is ready for approval.'
+    likely_misfire: 'Autonomously deploying production under a broad “run boards” instruction.'
+    blind_spots_considered:
+      - 'Production origin, board repo, and secret values may still be undecided.'
+      - 'Rollback must be known before first deploy.'
+      - 'Smoke proof should include Worker health, board.js, signed host, GitHub issue mirror, and upvote polling.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_production_mutation_without_explicit_approval: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-first-production-promotion/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-first-production-promotion'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Import Board 12 readiness facts and identify any missing approval inputs.'
+    acceptance_criteria:
+      - 'Production deploy prerequisites are listed.'
+      - 'Missing approval inputs are explicit.'
+      - 'No production mutation occurs.'
+    receipt:
+      result: done
+      summary: 'Imported Board 12 readiness facts; production promotion prerequisites are not satisfied yet.'
+      evidence:
+        - 'GitHub Environment `production` does not exist.'
+        - 'Production D1 database does not exist.'
+        - 'Production Worker `bugdrop-board` does not exist.'
+        - 'Production secrets are not configured.'
+        - 'Production board mirror repo and host origin/issuer choices still need approval.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Create the first production promotion runbook receipt.'
+    acceptance_criteria:
+      - 'Runbook includes exact workflow inputs, smoke checks, rollback, and stop conditions.'
+      - 'Actual deploy task remains blocked pending explicit approval.'
+    receipt:
+      result: done
+      summary: 'Prepared the first production promotion runbook and kept the deploy task blocked pending explicit approval.'
+      evidence:
+        - 'Receipt created at `docs/release-readiness-results/2026-06-04-first-production-promotion.md`.'
+        - 'Runbook includes intended workflow inputs, smoke checks, rollback, stop conditions, and approval gate.'
+        - 'Actual deploy task remains blocked.'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: blocked
+    objective: 'Execute first production promotion.'
+    acceptance_criteria:
+      - 'Requires explicit maintainer approval after Board 12 readiness is satisfied.'
+      - 'Runs Deploy Worker against production only after approval.'
+      - 'Runs production smoke and rollback proof after deploy.'
+    blocked_reason: 'Production mutation requires explicit approval and production resource/secret readiness.'
+    receipt:
+      result: blocked
+      summary: 'Actual first production promotion is intentionally blocked until the maintainer explicitly approves production mutation after reviewing Board 12 readiness.'

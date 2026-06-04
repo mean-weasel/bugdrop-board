@@ -1,0 +1,100 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board npm Publishing Readiness'
+  slug: 'bugdrop-board-npm-publishing-readiness'
+  kind: existing_plan
+  tranche: 'Conveyor Board 11: npm/package publishing readiness, dry-run only.'
+  status: done
+  oracle:
+    signal: 'The embed package can be dry-run locally and through GitHub Actions from main, with publish prerequisites documented and actual publish gated.'
+    cadence: 'after package scout, after dry-run workflow proof, and at final audit'
+    final_proof: 'docs/release-readiness-results/2026-06-04-npm-publishing-readiness.md with local pack proof, workflow run id, package contents, token status by name only, and no-publish audit.'
+  intake:
+    original_request: 'Create these boards and run them autonomously if you can.'
+    interpreted_outcome: 'Prove npm publishing readiness without publishing.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainer preparing embed package release'
+    authority: approved_for_dry_runs_only
+    proof_type: artifact
+    completion_proof: 'Committed receipt proves package dry-runs and documents the explicit publish gate.'
+    likely_misfire: 'Accidentally publishing to npm or bumping version before human approval.'
+    blind_spots_considered:
+      - 'Repository secrets may be absent or scoped incorrectly.'
+      - 'Package contents must be inspected, not assumed from workflow success.'
+      - 'The publish command must remain explicit and human gated.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-npm-publishing-readiness/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-npm-publishing-readiness'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Inspect package publishing config, workflow, and secret presence by name only.'
+    acceptance_criteria:
+      - 'Package metadata and files list are inspected.'
+      - 'Package workflow publish gate is inspected.'
+      - 'NPM_TOKEN presence is checked by name only.'
+    receipt:
+      result: done
+      summary: 'Package metadata, workflow publish gate, npm registry state, and repo secret presence were inspected.'
+      evidence:
+        - '`npm pack --dry-run --json`: passed for `bugdrop-board@0.1.0` and listed 8 package entries.'
+        - 'Package workflow is manual and dry-runs by default; `Validate npm token` and `Publish package` run only when `dry_run=false`.'
+        - '`gh secret list --repo mean-weasel/bugdrop-board --json name,updatedAt`: returned an empty list, so repo-level `NPM_TOKEN` is absent.'
+        - '`npm view bugdrop-board version dist-tags --json`: returned `E404`; `bugdrop-board` is not currently published in npm.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Run local and GitHub package dry-runs from main.'
+    acceptance_criteria:
+      - 'Local pack dry-run passes and package contents are captured.'
+      - 'Package Widget workflow dry-run from main succeeds.'
+      - 'Actual npm publish is not run.'
+    receipt:
+      result: done
+      summary: 'Local and GitHub package dry-runs from main succeeded without publishing.'
+      evidence:
+        - '`npm pack --dry-run --json`: rebuilt the widget through `prepack` and produced tarball `bugdrop-board-0.1.0.tgz`.'
+        - 'Package Widget dry-run from `main`: run `26969918392`, conclusion `success`, head SHA `bf188d3da50b47727bbcf0eb8f676e9bc44fb719`.'
+        - 'Workflow publish steps were skipped because `dry_run=true`.'
+        - 'Actual npm publish was not run.'
+
+  - id: T003
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Audit npm publishing readiness and publish gate.'
+    acceptance_criteria:
+      - 'Receipt identifies exact next human approval needed to publish.'
+      - 'No npm publish, version bump, production deploy, or excluded product behavior occurred.'
+    receipt:
+      result: done
+      decision: approved_with_publish_gate
+      summary: 'Board 11 dry-run readiness is complete; actual publish remains gated on package-name/ownership decision, `NPM_TOKEN`, and explicit approval.'
+      evidence:
+        - 'Receipt created at `docs/release-readiness-results/2026-06-04-npm-publishing-readiness.md`.'
+        - 'No npm publish, version bump, git tag, production deploy, or excluded product behavior occurred.'

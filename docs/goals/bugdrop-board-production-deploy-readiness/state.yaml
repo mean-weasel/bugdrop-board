@@ -1,0 +1,101 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Production Deploy Readiness'
+  slug: 'bugdrop-board-production-deploy-readiness'
+  kind: audit
+  tranche: 'Conveyor Board 12: production deploy readiness checks without production mutation.'
+  status: done
+  oracle:
+    signal: 'Production deployment is either proven ready by read-only checks and dry-runs, or the exact remaining production blockers are recorded without mutating production.'
+    cadence: 'after read-only inventory, after local dry-runs, and at final audit'
+    final_proof: 'docs/release-readiness-results/2026-06-04-production-deploy-readiness.md with resource/secret checklist, dry-run proof, blockers, and no-production-mutation audit.'
+  intake:
+    original_request: 'Create these boards and run them autonomously if you can.'
+    interpreted_outcome: 'Determine whether production deploy is ready without deploying production.'
+    input_shape: audit
+    audience: 'BugDrop Board maintainer preparing first production deploy'
+    authority: approved_for_read_only_and_local_dry_runs
+    proof_type: artifact
+    completion_proof: 'Committed receipt records ready/not-ready production state and required approval/materials.'
+    likely_misfire: 'Creating or deploying production resources while calling it readiness.'
+    blind_spots_considered:
+      - 'GitHub Environment production may not exist yet.'
+      - 'Cloudflare production D1/Worker resources may not exist yet.'
+      - 'Production origin and issuer choices are product/operator decisions.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-production-deploy-readiness/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-production-deploy-readiness'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Run read-only GitHub and Cloudflare production readiness inventory.'
+    acceptance_criteria:
+      - 'Production GitHub Environment and secret names are checked without values.'
+      - 'Cloudflare D1/Worker inventory is checked read-only.'
+      - 'No production mutation occurs.'
+    receipt:
+      result: done
+      summary: 'Read-only production inventory found production deployment is not yet provisioned.'
+      evidence:
+        - '`gh api repos/mean-weasel/bugdrop-board/environments/production`: `404 Not Found`.'
+        - '`gh secret list --repo mean-weasel/bugdrop-board --env production`: `404 Not Found`.'
+        - '`npx wrangler d1 list --json`: listed only `bugdrop-board-staging`.'
+        - '`npx wrangler deployments list --name bugdrop-board --json`: Cloudflare code `10007`; production Worker `bugdrop-board` does not exist.'
+        - '`npx wrangler deployments list --name bugdrop-board-staging --json`: listed staging deployments including the mainline staging deploy.'
+        - 'No production mutation occurred.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Run local production-readiness gates and create the production checklist receipt.'
+    acceptance_criteria:
+      - 'Local release gates pass.'
+      - 'Deploy dry-run/package dry-run pass.'
+      - 'Receipt records exact production blockers or ready state.'
+    receipt:
+      result: done
+      summary: 'Local production-readiness gates passed and the remaining production checklist was recorded.'
+      evidence:
+        - '`npm run release:rehearsal`: passed.'
+        - 'Production deploy docs/config already cover exact origins, Worker secrets, remote migrations, remote provisioning, deploy checks, smoke checks, and rollback.'
+        - 'Required before production: create GitHub Environment `production`, create production D1, add explicit production Wrangler config, configure production Environment secrets, choose production mirror repo, and explicitly approve deploy.'
+
+  - id: T003
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Audit production readiness and mutation boundaries.'
+    acceptance_criteria:
+      - 'Final receipt is explicit about whether production can be promoted now.'
+      - 'No production deploy, secret write, resource creation, or npm publish occurred.'
+    receipt:
+      result: done
+      decision: not_ready_for_production_mutation
+      summary: 'Board 12 readiness audit complete: code/gates are release-ready, but production resources and secrets are absent, so production deploy remains blocked.'
+      evidence:
+        - 'Receipt created at `docs/release-readiness-results/2026-06-04-production-deploy-readiness.md`.'
+        - 'No production deploy, production GitHub Environment creation, production secret write, production Cloudflare resource creation, or npm publish occurred.'
