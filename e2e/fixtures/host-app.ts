@@ -6,10 +6,11 @@ import { promisify } from 'node:util';
 import { createBoardToken } from '../../src/lib/board-token';
 
 export const HOST_ORIGIN = 'http://127.0.0.1:5177';
-const WORKER_ORIGIN = 'http://127.0.0.1:8788';
-const TOKEN_SECRET = 'e2e-secret';
-const TOKEN_AUDIENCE = 'bugdrop-board';
-const TOKEN_ISSUER = 'dummy-host';
+const DEFAULT_WORKER_ORIGIN = 'http://127.0.0.1:8788';
+const DEFAULT_TOKEN_SECRET = 'e2e-secret';
+const DEFAULT_TOKEN_AUDIENCE = 'bugdrop-board';
+const DEFAULT_TOKEN_ISSUER = 'dummy-host';
+const DEFAULT_POLL_INTERVAL = '750';
 const execFileAsync = promisify(execFile);
 
 interface ProvisionedBoard {
@@ -25,6 +26,16 @@ interface HostApp {
   close(): Promise<void>;
 }
 
+interface HostConfig {
+  boardId: string;
+  scriptSrc: string;
+  workerOrigin: string;
+  tokenSecret: string;
+  tokenAudience: string;
+  tokenIssuer: string;
+  pollInterval: string;
+}
+
 export async function provisionBoard(): Promise<ProvisionedBoard> {
   const repo = `mean-weasel/demo-${Date.now()}-${process.pid}`;
   const { stdout } = await execFileAsync(
@@ -36,7 +47,8 @@ export async function provisionBoard(): Promise<ProvisionedBoard> {
   return result.board;
 }
 
-export async function startHostApp(boardId: string): Promise<HostApp> {
+export async function startHostApp(boardId?: string): Promise<HostApp> {
+  const config = hostConfig(boardId);
   const server = createServer(async (req, res) => {
     try {
       const url = new URL(req.url ?? '/', HOST_ORIGIN);
@@ -49,13 +61,13 @@ export async function startHostApp(boardId: string): Promise<HostApp> {
       if (url.pathname === '/token') {
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(
-          JSON.stringify({ token: await createToken(boardId, url.searchParams.get('viewer')) })
+          JSON.stringify({ token: await createToken(config, url.searchParams.get('viewer')) })
         );
         return;
       }
       if (url.pathname === '/viewer-a' || url.pathname === '/viewer-b') {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(renderHostPage(boardId, url.pathname.endsWith('a') ? 'a' : 'b'));
+        res.end(renderHostPage(config, url.pathname.endsWith('a') ? 'a' : 'b'));
         return;
       }
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
@@ -81,22 +93,45 @@ export async function startHostApp(boardId: string): Promise<HostApp> {
   };
 }
 
-async function createToken(boardId: string, viewer: string | null): Promise<string> {
+function hostConfig(boardId?: string): HostConfig {
+  const workerOrigin = envValue('BUGDROP_BOARD_WORKER_ORIGIN') ?? DEFAULT_WORKER_ORIGIN;
+  const resolvedBoardId = boardId ?? envValue('BUGDROP_BOARD_ID');
+  if (!resolvedBoardId) {
+    throw new Error('BugDrop Board host requires a board id');
+  }
+
+  return {
+    boardId: resolvedBoardId,
+    scriptSrc: envValue('BUGDROP_BOARD_SCRIPT_SRC') ?? '/board.js',
+    workerOrigin,
+    tokenSecret: envValue('BUGDROP_BOARD_TOKEN_SECRET') ?? DEFAULT_TOKEN_SECRET,
+    tokenAudience: envValue('BUGDROP_BOARD_TOKEN_AUDIENCE') ?? DEFAULT_TOKEN_AUDIENCE,
+    tokenIssuer: envValue('BUGDROP_BOARD_TOKEN_ISSUER') ?? DEFAULT_TOKEN_ISSUER,
+    pollInterval: envValue('BUGDROP_BOARD_POLL_INTERVAL') ?? DEFAULT_POLL_INTERVAL,
+  };
+}
+
+function envValue(name: string): string | undefined {
+  const value = process.env[name]?.trim();
+  return value ? value : undefined;
+}
+
+async function createToken(config: HostConfig, viewer: string | null): Promise<string> {
   const suffix = viewer === 'b' ? 'b' : 'a';
   return createBoardToken(
     {
-      boardId,
+      boardId: config.boardId,
       externalUserId: `user_e2e_${suffix}`,
       displayName: suffix === 'b' ? 'Grace' : 'Ada',
       exp: Math.floor(Date.now() / 1000) + 300,
-      aud: TOKEN_AUDIENCE,
-      iss: TOKEN_ISSUER,
+      aud: config.tokenAudience,
+      iss: config.tokenIssuer,
     },
-    TOKEN_SECRET
+    config.tokenSecret
   );
 }
 
-function renderHostPage(boardId: string, viewer: 'a' | 'b'): string {
+function renderHostPage(config: HostConfig, viewer: 'a' | 'b'): string {
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -127,13 +162,21 @@ function renderHostPage(boardId: string, viewer: 'a' | 'b'): string {
       <h1>Dummy App</h1>
     </main>
     <script
-      src="/board.js"
-      data-board-id="${boardId}"
-      data-api-url="${WORKER_ORIGIN}"
+      src="${escapeAttribute(config.scriptSrc)}"
+      data-board-id="${escapeAttribute(config.boardId)}"
+      data-api-url="${escapeAttribute(config.workerOrigin)}"
       data-token-endpoint="/token?viewer=${viewer}"
-      data-poll-interval="750"
+      data-poll-interval="${escapeAttribute(config.pollInterval)}"
       data-color="#1f883d"
     ></script>
   </body>
 </html>`;
+}
+
+function escapeAttribute(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
 }

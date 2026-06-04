@@ -60,7 +60,7 @@ visual_board:
     url: 'http://goalbuddy.localhost:41737/bugdrop-board-staging-cloudflare-github/'
     command: 'npx goalbuddy board docs/goals/bugdrop-board-staging-cloudflare-github'
 
-active_task: T005
+active_task: T013
 
 tasks:
   - id: T001
@@ -277,7 +277,7 @@ tasks:
   - id: T005
     type: worker
     assignee: Worker
-    status: active
+    status: blocked
     reasoning_hint: medium
     objective: 'Run GitHub package dry-run and staging deploy workflows, then capture workflow proof.'
     acceptance_criteria:
@@ -291,12 +291,38 @@ tasks:
       - 'Package workflow requires missing `NPM_TOKEN` even in dry-run.'
       - 'Deploy workflow uses default config or wrong Wrangler environment.'
       - 'Remote migrations/provisioning fail.'
-    receipt: null
+    receipt:
+      result: partial_blocked
+      summary: 'Package Widget dry-run succeeded from `codex/staging-dogfood`; staging Deploy Worker workflow was not dispatched because required GitHub Environment secrets are absent.'
+      package_workflow:
+        run_id: 26959543229
+        run_url: 'https://github.com/mean-weasel/bugdrop-board/actions/runs/26959543229'
+        job_id: 79545846091
+        job_url: 'https://github.com/mean-weasel/bugdrop-board/actions/runs/26959543229/job/79545846091'
+        head_sha: '7e66911f0ec0e658a0f2e3e816ecb17f1c44b4a9'
+        dry_run: true
+        npm_tag: next
+        conclusion: success
+      evidence:
+        - '`gh workflow run "Package Widget" --ref codex/staging-dogfood -f dry_run=true -f npm_tag=next`: dispatched run `26959543229`.'
+        - '`gh run watch 26959543229 --exit-status`: job `Package Embed Script` succeeded in 36s.'
+        - '`gh run view 26959543229 --json ...`: run conclusion `success`, workflow `Package Widget`, event `workflow_dispatch`, head SHA `7e66911f0ec0e658a0f2e3e816ecb17f1c44b4a9`.'
+        - 'Package job steps: validation gates succeeded, dry-run package contents succeeded, `Validate npm token` skipped, and `Publish package` skipped.'
+        - 'Package log tarball contents included `README.md`, `package.json`, `public/board.js`, and `src/widget/api.ts`, `src/widget/dom.ts`, `src/widget/index.ts`, `src/widget/theme.ts`, `src/widget/types.ts`.'
+        - '`gh secret list --env staging` and `gh secret list`: no secrets listed.'
+        - '`gh run watch 26959540010 --exit-status`: CI for staging Wrangler commit `7e66911f0ec0e658a0f2e3e816ecb17f1c44b4a9` completed with `success`.'
+      blocker:
+        - 'Deploy Worker workflow requires missing GitHub Environment secrets: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `BOARD_TOKEN_SECRET`, and `GITHUB_ISSUE_ACCESS_TOKEN`.'
+      no_go_proof:
+        - 'No npm publish ran.'
+        - 'No Deploy Worker workflow was dispatched.'
+        - 'No production deploy ran.'
+        - 'No secret values were printed or committed.'
 
   - id: T006
     type: scout
     assignee: Scout
-    status: queued
+    status: done
     reasoning_hint: medium
     objective: 'Map signed-token host app integration path and Chrome Extension browser requirements.'
     acceptance_criteria:
@@ -305,12 +331,37 @@ tasks:
       - 'Determines whether the host app can run locally against the staging Worker or must be deployed.'
       - 'Determines exact host origin that must be in staging `ALLOWED_ORIGINS`.'
       - 'Confirms Chrome Extension/browser profile can access the host app as two distinct signed-in users, or records the missing auth setup.'
-    receipt: null
+    receipt:
+      result: done
+      summary: 'Mapped the signed-token host path. The built-in E2E host fixture is the best first dogfood host because it already serves two viewer pages, signs board tokens server-side, embeds the widget, and proves polling/upvote behavior.'
+      host_candidate:
+        path: '/Users/neonwatty/Desktop/bugdrop-board/e2e/fixtures/host-app.ts'
+        origin: 'http://127.0.0.1:5177'
+        viewer_a: '/viewer-a'
+        viewer_b: '/viewer-b'
+        token_endpoint: '/token?viewer=a|b'
+      evidence:
+        - '`e2e/fixtures/host-app.ts`: exports `HOST_ORIGIN = "http://127.0.0.1:5177"` and starts a local HTTP server on port `5177`.'
+        - '`e2e/fixtures/host-app.ts`: `/viewer-a` and `/viewer-b` render the host page and pass different viewer ids to `/token`.'
+        - '`e2e/fixtures/host-app.ts`: token claims use distinct `externalUserId` values `user_e2e_a` and `user_e2e_b`, display names `Ada` and `Grace`, audience `bugdrop-board`, and issuer currently `dummy-host`.'
+        - '`e2e/fixtures/host-app.ts`: embed script passes `data-board-id`, `data-api-url`, `data-token-endpoint`, `data-poll-interval`, and color.'
+        - '`e2e/board-widget.spec.ts`: existing browser proof covers item creation, Issue number visibility, second-viewer polling, upvote, and second-viewer upvote polling.'
+        - '`src/lib/board-token.ts`: host tokens are HMAC payload/signature tokens and verification checks `boardId`, `aud`, `iss`, `exp`, and `externalUserId`.'
+        - 'Codex Chrome Extension handshake from T001 succeeded against Chrome profile `Your Chrome`; no browser setup blocker is known.'
+      staging_configuration_needed:
+        - 'Use board id `board_mean_weasel_bugdrop_board_dogfood`.'
+        - 'Use token issuer `bugdrop-board-dogfood-host` instead of `dummy-host`.'
+        - 'Use the same staging `BOARD_TOKEN_SECRET` as the Worker; this value is still missing and must not be exposed to browser code.'
+        - 'Use staging Worker origin for both `/board.js` and `data-api-url` after the Worker deploy exists.'
+        - 'Keep exact CORS origin `http://127.0.0.1:5177`, already configured in `[env.staging]`.'
+      blockers_for_t007:
+        - 'No deployed staging Worker URL exists yet because Deploy Worker workflow is blocked on missing staging secrets.'
+        - 'No staging `BOARD_TOKEN_SECRET` is configured yet for both Worker and host signing.'
 
   - id: T007
     type: worker
     assignee: Worker
-    status: queued
+    status: blocked
     reasoning_hint: medium
     objective: 'Configure the chosen host app for staging dogfood and perform two-viewer browser proof using Codex Chrome Extension.'
     acceptance_criteria:
@@ -326,7 +377,19 @@ tasks:
       - 'Cannot obtain two authenticated viewer sessions.'
       - 'Host app cannot safely sign staging tokens.'
       - 'CORS exact-origin check fails.'
-    receipt: null
+    receipt:
+      result: blocked
+      summary: 'Browser dogfood cannot start until the staging Worker is deployed and a shared staging `BOARD_TOKEN_SECRET` is configured for both Worker verification and host signing.'
+      blockers:
+        - 'Deploy Worker workflow is blocked by missing GitHub Environment secrets.'
+        - 'No staging Worker URL exists yet.'
+        - 'No staging `BOARD_TOKEN_SECRET` exists for host signing.'
+      ready_inputs_from_t006:
+        - 'Host origin: `http://127.0.0.1:5177`.'
+        - 'Board id: `board_mean_weasel_bugdrop_board_dogfood`.'
+        - 'Token audience: `bugdrop-board`.'
+        - 'Token issuer: `bugdrop-board-dogfood-host`.'
+        - 'Two viewer identities: `user_e2e_a` / Ada and `user_e2e_b` / Grace.'
 
   - id: T008
     type: worker
@@ -356,18 +419,129 @@ tasks:
       - 'Approves completion only if staging Worker, workflows, host app, GitHub Issue, upvote, and polling proof are all durable.'
     receipt: null
 
+  - id: T010
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Gate safe staging secret provisioning without exposing values.'
+    acceptance_criteria:
+      - 'Identifies which required staging secrets can be generated or derived safely without printing values.'
+      - 'Identifies which required secrets require operator-provided values or an external dashboard step.'
+      - 'Defines exact no-echo commands for any approved secret writes.'
+      - 'Rejects any path that stores broad personal tokens in staging without explicit approval.'
+      - 'Keeps npm publish, production deploy, hosted control plane, billing, realtime, comments, downvotes, and GitHub Projects out of scope.'
+    required_secret_names:
+      - 'CLOUDFLARE_ACCOUNT_ID'
+      - 'CLOUDFLARE_API_TOKEN'
+      - 'BOARD_TOKEN_SECRET'
+      - 'GITHUB_ISSUE_ACCESS_TOKEN'
+      - 'NPM_TOKEN'
+    receipt:
+      result: done
+      decision: approved
+      summary: 'Approved narrow secret provisioning only. Account id may be set from known Cloudflare account id; `BOARD_TOKEN_SECRET` may be generated only if preserved safely for host signing; Cloudflare API token and GitHub Issues token require operator-provided least-privilege values.'
+      approved:
+        - 'Set `CLOUDFLARE_ACCOUNT_ID` as a GitHub Environment secret from known non-secret account id `341a3846c29902f6363c151395932f5a`.'
+        - 'Generate or reuse `BOARD_TOKEN_SECRET` and set it as a GitHub Environment secret only if the same value remains available for later local host signing without logging or committing it.'
+        - 'Set `CLOUDFLARE_API_TOKEN` only from an operator-provided least-privilege Cloudflare dashboard API token.'
+        - 'Set `GITHUB_ISSUE_ACCESS_TOKEN` only from an operator-provided fine-grained token limited to `mean-weasel/bugdrop-board-dogfood` Issues read/write.'
+      rejected:
+        - 'Do not pipe `gh auth token` into `GITHUB_ISSUE_ACCESS_TOKEN` without explicit approval.'
+        - 'Do not set `NPM_TOKEN`; package dry-run already succeeded and npm publish remains out of scope.'
+        - 'Do not use `.env` bulk secret import.'
+      stop_conditions:
+        - 'Stop if the Cloudflare API token is absent, a global API key, or not scoped to account `341a3846c29902f6363c151395932f5a` with staging Worker/D1 deploy permissions.'
+        - 'Stop if the GitHub issue token is absent, broad/classic, targets more than `mean-weasel/bugdrop-board-dogfood`, lacks Issues read/write, or equals the current `gh auth token` without explicit approval.'
+        - 'Stop if `BOARD_TOKEN_SECRET` cannot be preserved for later local host signing without writing it to repo, logs, screenshots, shell history with literal value, or an operator-approved secret manager.'
+        - 'Stop if any command would print, commit, stage, screenshot, or persist a secret value outside GitHub secrets or an operator-approved secret manager.'
+      next_task: T011
+
+  - id: T011
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Provision only safe/approved staging secrets by name, then record remaining secret blockers.'
+    acceptance_criteria:
+      - 'Sets `CLOUDFLARE_ACCOUNT_ID` in GitHub Environment `staging` without printing secret values.'
+      - 'Sets `BOARD_TOKEN_SECRET` only if the same generated/reused value can be safely preserved for T007 host signing.'
+      - 'Does not set `CLOUDFLARE_API_TOKEN` or `GITHUB_ISSUE_ACCESS_TOKEN` unless least-privilege operator-provided env values are present.'
+      - 'Does not set `NPM_TOKEN`.'
+      - 'Verifies secret names/presence only with `gh secret list --env staging`.'
+      - 'Records remaining blockers without revealing values.'
+    receipt:
+      result: partial_done
+      summary: 'Set the derivable `CLOUDFLARE_ACCOUNT_ID` staging Environment secret and verified secret names only. Remaining deploy/browser secrets are still absent.'
+      evidence:
+        - '`printf ... | gh secret set CLOUDFLARE_ACCOUNT_ID --env staging -R mean-weasel/bugdrop-board`: exited 0 without printing the value.'
+        - 'Local presence check showed `CLOUDFLARE_API_TOKEN`, `BOARD_TOKEN_SECRET`, `GITHUB_ISSUE_ACCESS_TOKEN`, and `NPM_TOKEN` are still missing from the shell environment.'
+        - '`gh secret list --env staging -R mean-weasel/bugdrop-board`: listed only `CLOUDFLARE_ACCOUNT_ID` with updated timestamp `2026-06-04T14:58:33Z`.'
+        - '`gh secret list -R mean-weasel/bugdrop-board`: listed no repository secrets.'
+      not_set:
+        - '`BOARD_TOKEN_SECRET`: not generated because the same value must be safely preserved for T007 host signing.'
+        - '`CLOUDFLARE_API_TOKEN`: requires operator-provided least-privilege Cloudflare API token.'
+        - '`GITHUB_ISSUE_ACCESS_TOKEN`: requires operator-provided fine-grained GitHub PAT limited to dogfood repo Issues read/write.'
+        - '`NPM_TOKEN`: not needed for package dry-run and publish remains out of scope.'
+      blockers:
+        - 'Deploy Worker remains blocked until `CLOUDFLARE_API_TOKEN`, `BOARD_TOKEN_SECRET`, and `GITHUB_ISSUE_ACCESS_TOKEN` are configured in environment `staging`.'
+        - 'Browser dogfood remains blocked until deployed Worker URL exists and the same `BOARD_TOKEN_SECRET` is available to the host signer.'
+
+  - id: T012
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Make the local signed-token host fixture staging-configurable without committing or printing secrets.'
+    acceptance_criteria:
+      - 'Allows the host fixture to use env-provided Worker origin, token secret, token issuer, board id, and poll interval for staging dogfood.'
+      - 'Keeps current local E2E defaults unchanged when staging env vars are absent.'
+      - 'Does not commit any secret values.'
+      - 'Runs focused E2E or unit verification proving local defaults still work.'
+    receipt:
+      result: done
+      summary: 'Made the local signed-token host fixture staging-configurable while preserving existing local E2E defaults.'
+      changed_files:
+        - '/Users/neonwatty/Desktop/bugdrop-board/e2e/fixtures/host-app.ts'
+      evidence:
+        - '`e2e/fixtures/host-app.ts` now reads optional env values for `BUGDROP_BOARD_ID`, `BUGDROP_BOARD_SCRIPT_SRC`, `BUGDROP_BOARD_WORKER_ORIGIN`, `BUGDROP_BOARD_TOKEN_SECRET`, `BUGDROP_BOARD_TOKEN_AUDIENCE`, `BUGDROP_BOARD_TOKEN_ISSUER`, and `BUGDROP_BOARD_POLL_INTERVAL`.'
+        - 'Local defaults remain unchanged: script `/board.js`, Worker origin `http://127.0.0.1:8788`, token secret `e2e-secret`, audience `bugdrop-board`, issuer `dummy-host`, poll interval `750`.'
+        - 'Rendered script attributes are escaped before insertion into the host page.'
+        - '`npm run typecheck`: passed.'
+        - '`npm run test:e2e -- e2e/board-widget.spec.ts`: passed, proving the default path still creates an item, shows Issue number, polls to a second viewer, and syncs upvote state.'
+      no_go_proof:
+        - 'No secret values were added to the fixture or repository.'
+        - 'No deploy or publish workflow was run by this task.'
+
+  - id: T013
+    type: worker
+    assignee: PM
+    status: blocked
+    reasoning_hint: medium
+    objective: 'Obtain or approve remaining staging secret inputs required for deploy and browser dogfood.'
+    acceptance_criteria:
+      - 'Obtains or explicitly approves a least-privilege `CLOUDFLARE_API_TOKEN` for account `341a3846c29902f6363c151395932f5a` with staging Worker/D1 deploy permissions.'
+      - 'Obtains or explicitly approves a fine-grained `GITHUB_ISSUE_ACCESS_TOKEN` limited to `mean-weasel/bugdrop-board-dogfood` Issues read/write.'
+      - 'Chooses an operator-approved preservation path for the generated/reused `BOARD_TOKEN_SECRET` so the same value can be used for GitHub Environment secret and local host signing.'
+      - 'Does not use a broad personal GitHub token unless the operator explicitly approves that tradeoff.'
+    receipt:
+      result: blocked
+      summary: 'External secret material is required before Deploy Worker and browser dogfood can proceed.'
+      missing_inputs:
+        - 'Least-privilege Cloudflare API token for GitHub Actions deploy.'
+        - 'Fine-grained GitHub Issues token for the dogfood repo.'
+        - 'Approved preservation path for the board signing secret shared by Worker and local host signer.'
+      already_done:
+        - '`CLOUDFLARE_ACCOUNT_ID` is configured in GitHub Environment `staging`.'
+        - 'Package Widget dry-run succeeded.'
+        - 'Staging D1 and Wrangler config are ready.'
+        - 'Host fixture is staging-configurable.'
+
 checks:
   dirty_fingerprint: ''
   last_verification:
     result: passed
-    task: T004
+    task: T012
     commands:
-      - 'npx wrangler d1 list --json'
-      - 'npx wrangler d1 create bugdrop-board-staging'
-      - 'npm run build:widget && npx wrangler deploy --dry-run --env staging'
-      - 'npx wrangler deploy --dry-run --env staging --outdir /tmp/bugdrop-board-staging-dry-run'
-      - 'npx wrangler deploy --dry-run --env staging --log-level debug'
-      - 'npx wrangler deploy --dry-run --env staging 2>&1 | tee /tmp/bugdrop-board-staging-dry-run-success.log'
-      - 'fallback and required-value grep against /tmp/bugdrop-board-staging-dry-run-success.log'
-      - 'rg staging config values in wrangler.toml'
-      - 'gh run list --repo mean-weasel/bugdrop-board --workflow CI --branch codex/staging-dogfood --limit 3 --json databaseId,status,conclusion,headSha,url,createdAt'
+      - 'npm run typecheck'
+      - 'npm run test:e2e -- e2e/board-widget.spec.ts'
