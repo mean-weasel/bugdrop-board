@@ -1,0 +1,238 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Staging Cloudflare/GitHub Dogfood'
+  slug: 'bugdrop-board-staging-cloudflare-github'
+  kind: existing_plan
+  tranche: 'Configure/verify Cloudflare and GitHub staging resources, dispatch package/deploy workflows, dogfood the embedded board through a signed-token host app with Codex Chrome Extension, and capture rigorous staging proof.'
+  status: active
+  oracle:
+    signal: 'A committed staging dogfood receipt proves authenticated Cloudflare/GitHub access, configured staging secrets/resources, package workflow dry-run, staging Worker deployment, HTTP smoke, signed-token host embed, two-viewer browser proof, GitHub Issue mirroring, upvote/polling visibility, rollback notes, and excluded-scope audit.'
+    cadence: 'after Scout inventory, after each remote mutation phase, after browser dogfood, and at final audit'
+    final_proof: 'docs/staging-dogfood-results/<date>.md with real URLs/run ids/issue URL plus command output summaries, GitHub workflow results, browser proof notes/screenshots when useful, and scope audit.'
+  intake:
+    original_request: 'Using Codex Chrome Extension and CLIs, work on the next steps including Cloudflare and GitHub; create detailed GoalBuddy prep with rigorous acceptance criteria.'
+    interpreted_outcome: 'Prepare a GoalBuddy execution board for the credential-backed staging dogfood phase, preserving current staging plan/runbook and adding strict proof gates.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainer/operator executing staging dogfood'
+    authority: requested
+    proof_type: artifact
+    completion_proof: 'A source-controlled staging dogfood receipt plus successful remote workflow/browser/CLI proof demonstrates the board works in staging without publishing or production deploy.'
+    likely_misfire: 'Running remote deploy or browser checks without first proving the selected Wrangler/GitHub environments, accidentally using default development config, exposing secrets, or treating local dry-runs as staging proof.'
+    blind_spots_considered:
+      - 'Wrangler --env can fall back to default config if [env.staging] is missing.'
+      - 'GitHub Environment secrets can be present but scoped to the wrong environment.'
+      - 'A host app can sign tokens with mismatched issuer/audience/boardId.'
+      - 'Package dry-run is required; npm publish remains out of scope.'
+      - 'Browser proof needs two independent signed-in user contexts to prove polling.'
+      - 'Cloudflare/GitHub permissions may be missing; this should block only the remote phase, not corrupt local state.'
+    existing_plan_facts:
+      - 'PR #9 prepares staging dogfood flow and has green CI at creation time.'
+      - 'docs/staging-dogfood.md describes the manual staging sequence and guardrails.'
+      - 'Deploy Worker supports GitHub Environment and Wrangler environment inputs.'
+      - 'provision:board supports --env for Wrangler environment selection.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+  chrome: required_for_browser_proof
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-staging-cloudflare-github/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-staging-cloudflare-github'
+
+active_task: T001
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: active
+    reasoning_hint: high
+    objective: 'Read-only inventory of local branch state, GitHub access, Cloudflare CLI access, Chrome Extension readiness, and available host app options before any remote mutation.'
+    acceptance_criteria:
+      - 'Confirms current branch/PR state for staging dogfood work and whether PR #9 is merged or must be merged first.'
+      - 'Runs read-only GitHub checks such as `gh auth status`, `gh repo view mean-weasel/bugdrop-board`, `gh pr view 9`, `gh workflow list`, and `gh secret list --env staging` without printing secret values.'
+      - 'Runs read-only Cloudflare checks such as `npx wrangler whoami`, account visibility, and D1/Worker listing when permitted; records missing permissions without guessing.'
+      - 'Verifies whether a GitHub Environment named `staging` exists and which required secret names are present, without revealing values.'
+      - 'Verifies whether `mean-weasel/bugdrop-board-dogfood` exists and whether Issues are enabled.'
+      - 'Identifies available signed-token host app candidates, including existing BugDrop dummy apps, and states whether Chrome Extension authenticated browsing is needed.'
+      - 'Records blockers and recommended next mutation task, or recommends stopping if access is insufficient.'
+    allowed_commands:
+      - 'git status --short --branch'
+      - 'gh auth status'
+      - 'gh repo view mean-weasel/bugdrop-board --json nameWithOwner,visibility,viewerPermission'
+      - 'gh pr view 9 --json state,mergeable,statusCheckRollup,url'
+      - 'gh workflow list'
+      - 'gh secret list --env staging'
+      - 'gh repo view mean-weasel/bugdrop-board-dogfood --json nameWithOwner,hasIssuesEnabled,visibility'
+      - 'npx wrangler whoami'
+      - 'npx wrangler d1 list'
+      - 'npx wrangler deployments list --name bugdrop-board-staging'
+      - 'rg -n "bugdrop-board|bugdrop-board-token|BOARD_TOKEN_SECRET|data-board-id" /Users/neonwatty/Desktop --glob "!**/node_modules/**"'
+    receipt: null
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: 'Gate whether remote mutation may proceed and select the smallest safe Worker task.'
+    acceptance_criteria:
+      - 'Approves remote mutation only if GitHub and Cloudflare identities/permissions are explicit enough.'
+      - 'Requires PR #9 to be merged or explicitly chooses to continue from its branch if running workflows from branch is safer.'
+      - 'Defines exact allowed files, allowed remote resources, commands, stop conditions, and proof for the next Worker.'
+      - 'Rejects any path that would publish npm, deploy production, expose secrets, or use default Wrangler config for staging.'
+    receipt: null
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: medium
+    objective: 'Prepare or verify GitHub staging resources and secrets by name only.'
+    acceptance_criteria:
+      - 'Creates or verifies dogfood repo `mean-weasel/bugdrop-board-dogfood` with Issues enabled.'
+      - 'Creates or verifies GitHub Environment `staging` for `mean-weasel/bugdrop-board`.'
+      - 'Configures required GitHub Environment secrets only when values are available in the operator environment; never prints values.'
+      - 'Configures repository-level `NPM_TOKEN` only if a value is available; otherwise records it as missing for package workflow dry-run/publish validation.'
+      - 'Records only secret names/presence, not values.'
+      - 'Commits a receipt only if it contains no secrets.'
+    required_secret_names:
+      - 'CLOUDFLARE_ACCOUNT_ID'
+      - 'CLOUDFLARE_API_TOKEN'
+      - 'BOARD_TOKEN_SECRET'
+      - 'GITHUB_ISSUE_ACCESS_TOKEN'
+      - 'NPM_TOKEN'
+    stop_if:
+      - 'GitHub token lacks admin access to environments/secrets.'
+      - 'Required secret value is unavailable locally.'
+      - 'The dogfood repo cannot be created or Issues cannot be enabled.'
+    receipt: null
+
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: medium
+    objective: 'Prepare or verify Cloudflare staging Worker/D1 config without using production config.'
+    acceptance_criteria:
+      - 'Creates or verifies D1 database `bugdrop-board-staging`.'
+      - 'Confirms or records the staging D1 database id without treating it as a secret.'
+      - 'Ensures the deployment branch has an explicit `[env.staging]` config before any staging workflow deploy.'
+      - 'Runs `npx wrangler deploy --dry-run --env staging` and verifies no `No environment found` warning.'
+      - 'Dry-run output shows staging Worker name, `ENVIRONMENT ("staging")`, exact non-wildcard `ALLOWED_ORIGINS`, issuer `bugdrop-board-dogfood-host`, throttle vars, and the real staging D1 id.'
+      - 'Stops if host origin is unknown and exact `ALLOWED_ORIGINS` cannot be set.'
+    stop_if:
+      - 'Cloudflare token lacks D1/Worker access.'
+      - 'No exact dogfood host origin is available.'
+      - 'Wrangler dry-run reports default development config, wildcard origins, or placeholder D1 id.'
+    receipt: null
+
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: medium
+    objective: 'Run GitHub package dry-run and staging deploy workflows, then capture workflow proof.'
+    acceptance_criteria:
+      - 'Runs `Package Widget` with `dry_run=true` and `npm_tag=next`; job succeeds.'
+      - 'Package workflow log shows tarball contents including `README.md`, `package.json`, `public/board.js`, and `src/widget/`.'
+      - 'Runs `Deploy Worker` with `environment=staging`, `wrangler_environment=staging`, migrations enabled, provision repo `mean-weasel/bugdrop-board-dogfood`, and provision name `BugDrop Board Dogfood`.'
+      - 'Deploy workflow succeeds and logs board id `board_mean_weasel_bugdrop_board_dogfood`.'
+      - 'Captures workflow run ids/URLs and key log excerpts without secrets.'
+      - 'Runs HTTP smoke against staging `/health` and `/board.js` and records status.'
+    stop_if:
+      - 'Package workflow requires missing `NPM_TOKEN` even in dry-run.'
+      - 'Deploy workflow uses default config or wrong Wrangler environment.'
+      - 'Remote migrations/provisioning fail.'
+    receipt: null
+
+  - id: T006
+    type: scout
+    assignee: Scout
+    status: queued
+    reasoning_hint: medium
+    objective: 'Map signed-token host app integration path and Chrome Extension browser requirements.'
+    acceptance_criteria:
+      - 'Identifies the host app repo/path to use for dogfood, preferring existing BugDrop dummy apps.'
+      - 'Finds where to configure `BOARD_TOKEN_SECRET`, audience, issuer, board id, Worker API URL, and embed script URL.'
+      - 'Determines whether the host app can run locally against the staging Worker or must be deployed.'
+      - 'Determines exact host origin that must be in staging `ALLOWED_ORIGINS`.'
+      - 'Confirms Chrome Extension/browser profile can access the host app as two distinct signed-in users, or records the missing auth setup.'
+    receipt: null
+
+  - id: T007
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: medium
+    objective: 'Configure the chosen host app for staging dogfood and perform two-viewer browser proof using Codex Chrome Extension.'
+    acceptance_criteria:
+      - 'Host app signs tokens with staging `BOARD_TOKEN_SECRET`, `aud=bugdrop-board`, `iss=bugdrop-board-dogfood-host`, and `boardId=board_mean_weasel_bugdrop_board_dogfood`.'
+      - 'Host app embeds staging Worker `/board.js` and API URL.'
+      - 'Viewer A and Viewer B use distinct `externalUserId` values.'
+      - 'Viewer A creates `Staging dogfood item`; the UI shows the created item and a GitHub Issue number.'
+      - 'GitHub Issue exists in `mean-weasel/bugdrop-board-dogfood` with matching title.'
+      - 'Viewer B sees the item through polling within the documented window.'
+      - 'Viewer A upvotes; Viewer A sees `Upvoted 1`; Viewer B sees `Upvote 1` through polling.'
+      - 'Captures browser proof notes and screenshots only if useful; no secrets in screenshots.'
+    stop_if:
+      - 'Cannot obtain two authenticated viewer sessions.'
+      - 'Host app cannot safely sign staging tokens.'
+      - 'CORS exact-origin check fails.'
+    receipt: null
+
+  - id: T008
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: medium
+    objective: 'Create and commit the staging dogfood result receipt.'
+    acceptance_criteria:
+      - 'Creates `docs/staging-dogfood-results/<YYYY-MM-DD>.md`.'
+      - 'Receipt includes Worker URL, host app URL, board id, package workflow run URL, deploy workflow run URL, GitHub Issue URL, HTTP smoke results, browser proof results, CORS/origin notes, rollback path, and known follow-ups.'
+      - 'Receipt contains no secret values.'
+      - 'Runs `npm run release:rehearsal`, `make check`, and formatting checks after documentation changes.'
+      - 'Commits the receipt and opens or updates a PR.'
+    receipt: null
+
+  - id: T009
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: 'Final audit against the staging dogfood oracle.'
+    acceptance_criteria:
+      - 'Confirms every oracle bullet has direct evidence.'
+      - 'Confirms no npm publish and no production deploy occurred.'
+      - 'Confirms no hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or product behavior were added.'
+      - 'Confirms all secrets stayed out of logs, screenshots, docs, and commits.'
+      - 'Approves completion only if staging Worker, workflows, host app, GitHub Issue, upvote, and polling proof are all durable.'
+    receipt: null
+
+checks:
+  dirty_fingerprint: ''
+  last_verification:
+    result: queued
+    task: T001
+    commands: []
