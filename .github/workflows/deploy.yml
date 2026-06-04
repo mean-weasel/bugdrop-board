@@ -1,0 +1,93 @@
+name: Deploy Worker
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: GitHub Environment containing deployment secrets.
+        required: true
+        type: environment
+      apply_migrations:
+        description: Apply remote D1 migrations before deploying.
+        required: true
+        default: true
+        type: boolean
+      provision_repo:
+        description: Optional GitHub repo to provision, in owner/name form.
+        required: false
+        type: string
+      provision_name:
+        description: Optional display name for the provisioned board.
+        required: false
+        type: string
+
+jobs:
+  deploy:
+    name: Promote Worker
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      BOARD_TOKEN_SECRET: ${{ secrets.BOARD_TOKEN_SECRET }}
+      GITHUB_ISSUE_ACCESS_TOKEN: ${{ secrets.GITHUB_ISSUE_ACCESS_TOKEN }}
+      PROVISION_REPO: ${{ inputs.provision_repo }}
+      PROVISION_NAME: ${{ inputs.provision_name }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: make install
+
+      - name: Validate required secrets
+        run: |
+          for name in CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_API_TOKEN BOARD_TOKEN_SECRET GITHUB_ISSUE_ACCESS_TOKEN; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing required GitHub Environment secret: ${name}"
+              exit 1
+            fi
+          done
+
+      - name: Run validation gates
+        run: npm run validate
+
+      - name: Build widget
+        run: npm run build:widget
+
+      - name: Dry-run deploy package
+        run: npm run deploy:check
+
+      - name: Apply remote D1 migrations
+        if: ${{ inputs.apply_migrations }}
+        run: npx wrangler d1 migrations apply DB --remote
+
+      - name: Provision board
+        if: ${{ inputs.provision_repo != '' }}
+        run: |
+          args=(--repo "$PROVISION_REPO" --remote)
+          if [ -n "$PROVISION_NAME" ]; then
+            args+=(--name "$PROVISION_NAME")
+          fi
+          npm run provision:board -- "${args[@]}"
+
+      - name: Write deployment secrets file
+        run: |
+          umask 077
+          {
+            printf 'BOARD_TOKEN_SECRET=%s\n' "$BOARD_TOKEN_SECRET"
+            printf 'GITHUB_ISSUE_ACCESS_TOKEN=%s\n' "$GITHUB_ISSUE_ACCESS_TOKEN"
+          } > .deploy.secrets
+
+      - name: Deploy Worker
+        run: npx wrangler deploy --secrets-file .deploy.secrets
+
+      - name: Remove deployment secrets file
+        if: always()
+        run: rm -f .deploy.secrets
