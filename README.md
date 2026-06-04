@@ -498,11 +498,55 @@ npm publish --access public --tag "$NPM_TAG"
 Actual publishing also requires npm ownership or publish rights for the configured package name.
 When in doubt, keep the workflow in dry-run mode and inspect the package file list before publishing.
 
+## Release Rehearsal
+
+Before configuring production credentials, run the local release rehearsal:
+
+```bash
+npm run release:rehearsal
+make release-rehearsal
+```
+
+The rehearsal uses only local/test configuration and runs:
+
+```bash
+npm run provision:board -- --repo mean-weasel/release-rehearsal --name "Release Rehearsal" --local
+npm run pack:check
+npm run deploy:check
+npm run test:e2e
+npm run validate
+npm run knip
+npm run audit
+npm run check:actions-node24
+```
+
+This proves the local D1 provisioning path, package dry-run, Worker deploy dry-run, embedded widget
+smoke, unit/type/lint checks, knip, critical audit, and GitHub Actions version guard without
+requiring Cloudflare or npm production credentials.
+
+After the local rehearsal passes, configure credentials in GitHub:
+
+- GitHub Environment secrets for `Deploy Worker`: `CLOUDFLARE_ACCOUNT_ID`,
+  `CLOUDFLARE_API_TOKEN`, `BOARD_TOKEN_SECRET`, and `GITHUB_ISSUE_ACCESS_TOKEN`.
+- Repository secret for `Package Widget`: `NPM_TOKEN`.
+
+Then run the GitHub workflows in dry-run or test mode before production:
+
+- Run **Package Widget** with dry-run enabled and inspect the package file list.
+- Run **Deploy Worker** against a staging or test Cloudflare environment, with remote migrations and
+  a disposable board repo when possible.
+- Embed the staging Worker in a signed-in host-app page and confirm item creation, GitHub Issue
+  mirroring, upvoting, and polling from a second session.
+
+Do not publish to npm or deploy to production until the version, npm package ownership, Cloudflare
+account, GitHub token scope, host app origins, and token issuer/audience values are final.
+
 ## Verification
 
 Run the standard checks before handing off changes:
 
 ```bash
+npm run release:rehearsal
 npm run provision:board -- --repo mean-weasel/demo --name "Demo Board" --local
 npm run build:widget
 npm run pack:check
@@ -514,6 +558,8 @@ make check
 
 ## Current Handoff Notes
 
-This repository is still an early vertical slice. The remaining release actions are operational:
-merge the conveyor PR stack, configure real Cloudflare/GitHub/npm secrets, and run the documented
-dry-run gates before any production deploy or npm publish.
+This repository is still an early vertical slice. The conveyor PR stack has landed on `main`. The
+remaining release actions are operational: choose the npm package/version identity, configure real
+Cloudflare/GitHub/npm secrets, run the local release rehearsal, run the GitHub workflows against
+staging/test credentials, and dogfood the embedded widget in a real signed-token host app before
+any production deploy or npm publish.
