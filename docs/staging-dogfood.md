@@ -101,20 +101,34 @@ gh repo view mean-weasel/bugdrop-board-dogfood >/dev/null 2>&1 || \
 
 Create or verify the GitHub Environment named `staging` in repository settings.
 
-Set Environment secrets:
+Set Environment secrets without printing values:
 
 ```bash
-gh secret set CLOUDFLARE_ACCOUNT_ID --env staging --body "$CLOUDFLARE_ACCOUNT_ID"
-gh secret set CLOUDFLARE_API_TOKEN --env staging --body "$CLOUDFLARE_API_TOKEN"
-gh secret set BOARD_TOKEN_SECRET --env staging --body "$BOARD_TOKEN_SECRET"
-gh secret set GITHUB_ISSUE_ACCESS_TOKEN --env staging --body "$GITHUB_ISSUE_ACCESS_TOKEN"
+npm run staging:secrets -- --set-account-id
+npm run staging:secrets -- --generate-board-secret-file .secrets/bugdrop-board-staging.env
+set -a; source .secrets/bugdrop-board-staging.env; set +a
 ```
 
-Set the npm secret only for package dry-run/publish workflow validation:
+Then provide the remaining least-privilege tokens in the current shell without echoing them:
 
 ```bash
-gh secret set NPM_TOKEN --body "$NPM_TOKEN"
+# Cloudflare dashboard API token scoped to account 341a3846c29902f6363c151395932f5a
+# with Workers/D1 deploy permissions for staging.
+read -rsp "Cloudflare API token: " CLOUDFLARE_API_TOKEN; echo
+export CLOUDFLARE_API_TOKEN
+
+# Fine-grained GitHub token scoped only to mean-weasel/bugdrop-board-dogfood
+# with Issues read/write permission.
+read -rsp "GitHub Issues token: " GITHUB_ISSUE_ACCESS_TOKEN; echo
+export GITHUB_ISSUE_ACCESS_TOKEN
+
+npm run staging:secrets -- --set-from-env
+npm run staging:secrets -- --status
 ```
+
+`--set-from-env` refuses to store the current broad `gh auth token` as
+`GITHUB_ISSUE_ACCESS_TOKEN`. Do not set `NPM_TOKEN` for staging dogfood; package dry-run does not
+need it and npm publish is out of scope.
 
 ## Package Dry-Run
 

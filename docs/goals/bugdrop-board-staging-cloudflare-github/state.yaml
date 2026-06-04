@@ -537,11 +537,56 @@ tasks:
         - 'Staging D1 and Wrangler config are ready.'
         - 'Host fixture is staging-configurable.'
 
+  - id: T014
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Add a no-echo staging secret helper and operator runbook path for the remaining secret inputs.'
+    acceptance_criteria:
+      - 'Adds a helper that lists staging secret names only.'
+      - 'Adds a helper path to set the known Cloudflare account id without printing it.'
+      - 'Adds a helper path to generate a local ignored board signing secret file with restrictive permissions.'
+      - 'Adds a helper path to set required staging secrets from environment variables via stdin without printing values.'
+      - 'Refuses to store the current broad `gh auth token` as `GITHUB_ISSUE_ACCESS_TOKEN`.'
+      - 'Documents a shell-history-safe operator flow in the staging runbook.'
+    receipt:
+      result: done
+      summary: 'Added `npm run staging:secrets` as a no-echo helper plus runbook instructions for the remaining operator-provided staging secret inputs.'
+      changed_files:
+        - '/Users/neonwatty/Desktop/bugdrop-board/.gitignore'
+        - '/Users/neonwatty/Desktop/bugdrop-board/package.json'
+        - '/Users/neonwatty/Desktop/bugdrop-board/scripts/staging-secrets.js'
+        - '/Users/neonwatty/Desktop/bugdrop-board/docs/staging-dogfood.md'
+      evidence:
+        - '`.gitignore` now excludes `.secrets/` for operator-only local secret files.'
+        - '`package.json` exposes `npm run staging:secrets`.'
+        - '`scripts/staging-secrets.js --status` lists GitHub Environment secret names only.'
+        - '`scripts/staging-secrets.js --set-account-id` sets the known non-sensitive Cloudflare account id.'
+        - '`scripts/staging-secrets.js --generate-board-secret-file <path>` generates `BOARD_TOKEN_SECRET` into a local file with mode `0600` and does not print the value.'
+        - '`scripts/staging-secrets.js --set-from-env` reads `CLOUDFLARE_API_TOKEN`, `BOARD_TOKEN_SECRET`, and `GITHUB_ISSUE_ACCESS_TOKEN` from env and pipes values to `gh secret set` via stdin.'
+        - '`scripts/staging-secrets.js --set-from-env` hashes and compares `GITHUB_ISSUE_ACCESS_TOKEN` against `gh auth token`, refusing to store the current broad CLI token.'
+        - '`docs/staging-dogfood.md` now uses silent `read -rsp` prompts for operator-provided Cloudflare and GitHub token values and explicitly leaves `NPM_TOKEN` out of staging dogfood.'
+        - '`npm run staging:secrets -- --help`: passed.'
+        - '`npm run staging:secrets -- --set-account-id`: passed and printed only the secret name.'
+        - '`npm run staging:secrets -- --status`: passed and listed only `CLOUDFLARE_ACCOUNT_ID`.'
+        - '`npm run staging:secrets -- --set-from-env`: failed safely with `Missing required environment variable: CLOUDFLARE_API_TOKEN` when real values were absent.'
+        - '`npm run staging:secrets -- --generate-board-secret-file /tmp/bugdrop-board-staging.env`: created a temporary file with mode `600`; the file was removed after verification.'
+        - '`npm run lint`: passed.'
+        - '`npm run typecheck`: passed.'
+      no_go_proof:
+        - 'No Cloudflare API token, GitHub issue token, board signing secret, or npm token values were printed or committed.'
+        - 'No deploy or publish workflow was dispatched.'
+
 checks:
   dirty_fingerprint: ''
   last_verification:
     result: passed
-    task: T012
+    task: T014
     commands:
+      - 'npm run staging:secrets -- --help'
+      - 'npm run staging:secrets -- --status'
+      - 'npm run staging:secrets -- --set-from-env'
+      - 'npm run staging:secrets -- --generate-board-secret-file /tmp/bugdrop-board-staging.env'
+      - 'npm run lint'
       - 'npm run typecheck'
-      - 'npm run test:e2e -- e2e/board-widget.spec.ts'

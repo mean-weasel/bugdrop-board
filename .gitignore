@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 .dev.vars
+.secrets/
 .wrangler/
 .superpowers/
 docs/goals/**/.goalbuddy-board/
