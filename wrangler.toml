@@ -46,3 +46,21 @@ binding = "DB"
 database_name = "bugdrop-board-staging"
 database_id = "e4bfc871-ace5-49b9-b795-1e85ce535b9f"
 migrations_dir = "migrations"
+
+[env.production]
+name = "bugdrop-board"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+ALLOWED_ORIGINS = "https://board.bugdrop.dev"
+BOARD_TOKEN_AUDIENCE = "bugdrop-board"
+BOARD_TOKEN_ISSUER = "bugdrop-board-production-host"
+REQUEST_THROTTLE_WINDOW_SECONDS = "60"
+ITEM_CREATE_RATE_LIMIT = "5"
+UPVOTE_RATE_LIMIT = "60"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "bugdrop-board-production"
+database_id = "6f463f05-eb50-4de9-836d-0eed35f7305c"
+migrations_dir = "migrations"
