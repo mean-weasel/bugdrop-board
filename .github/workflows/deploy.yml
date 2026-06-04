@@ -74,7 +74,13 @@ jobs:
         run: npm run build:widget
 
       - name: Dry-run deploy package
-        run: npm run deploy:check
+        run: |
+          npm run build:widget
+          args=(deploy --dry-run)
+          if [ -n "$WRANGLER_ENVIRONMENT" ]; then
+            args+=(--env "$WRANGLER_ENVIRONMENT")
+          fi
+          npx wrangler "${args[@]}"
 
       - name: Apply remote D1 migrations
         if: ${{ inputs.apply_migrations }}

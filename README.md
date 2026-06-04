@@ -420,7 +420,7 @@ The workflow runs:
 ```bash
 npm run validate
 npm run build:widget
-npm run deploy:check
+npx wrangler deploy --dry-run [--env staging]
 npx wrangler d1 migrations apply DB --remote
 npm run provision:board -- --repo owner/name --remote
 npx wrangler deploy --secrets-file .deploy.secrets
