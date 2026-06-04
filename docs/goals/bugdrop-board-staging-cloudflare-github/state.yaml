@@ -60,7 +60,7 @@ visual_board:
     url: 'http://goalbuddy.localhost:41737/bugdrop-board-staging-cloudflare-github/'
     command: 'npx goalbuddy board docs/goals/bugdrop-board-staging-cloudflare-github'
 
-active_task: T004
+active_task: T005
 
 tasks:
   - id: T001
@@ -228,7 +228,7 @@ tasks:
   - id: T004
     type: worker
     assignee: Worker
-    status: active
+    status: done
     reasoning_hint: medium
     objective: 'Prepare or verify Cloudflare staging Worker/D1 config without using production config.'
     acceptance_criteria:
@@ -242,12 +242,42 @@ tasks:
       - 'Cloudflare token lacks D1/Worker access.'
       - 'No exact dogfood host origin is available.'
       - 'Wrangler dry-run reports default development config, wildcard origins, or placeholder D1 id.'
-    receipt: null
+    receipt:
+      result: done
+      summary: 'Created remote Cloudflare D1 database `bugdrop-board-staging`, added explicit Wrangler `[env.staging]` config, and proved staging deploy dry-run does not fall back to development/default config.'
+      changed_files:
+        - '/Users/neonwatty/Desktop/bugdrop-board/wrangler.toml'
+      remote_resources_touched:
+        - 'Created Cloudflare D1 database `bugdrop-board-staging` in WNAM.'
+      staging_config:
+        worker_name: 'bugdrop-board-staging'
+        d1_database_name: 'bugdrop-board-staging'
+        d1_database_id: 'e4bfc871-ace5-49b9-b795-1e85ce535b9f'
+        allowed_origins: 'http://127.0.0.1:5177'
+        token_audience: 'bugdrop-board'
+        token_issuer: 'bugdrop-board-dogfood-host'
+      evidence:
+        - '`npx wrangler d1 list --json`: listed `bugdrop-board-staging` with UUID `e4bfc871-ace5-49b9-b795-1e85ce535b9f`, created `2026-06-04T14:47:12.903Z`, version `production`, `num_tables: 0`.'
+        - '`wrangler.toml`: added `[env.staging]` with Worker name `bugdrop-board-staging`, exact `ALLOWED_ORIGINS = "http://127.0.0.1:5177"`, issuer `bugdrop-board-dogfood-host`, throttle vars, and `[[env.staging.d1_databases]]` binding `DB` to the real D1 database id.'
+        - '`npm run build:widget && npx wrangler deploy --dry-run --env staging`: passed; output showed `env.DB (bugdrop-board-staging)`, `env.ENVIRONMENT ("staging")`, exact `env.ALLOWED_ORIGINS ("http://127.0.0.1:5177")`, `env.BOARD_TOKEN_ISSUER ("bugdrop-board-dogfood-host")`, throttle vars, and `--dry-run: exiting now`.'
+        - 'Fallback audit against `/tmp/bugdrop-board-staging-dry-run-success.log`: no `No environment found`, no development environment, no wildcard origin, no dummy issuer, and no placeholder D1 id.'
+        - 'Wrangler 4.97.0 dry-run output does not echo the D1 UUID; UUID proof comes from `wrangler d1 list --json` plus direct `wrangler.toml` inspection.'
+        - '`npx wrangler deploy --dry-run --env staging --outdir /tmp/bugdrop-board-staging-dry-run`: generated only bundled files, not binding metadata.'
+        - '`npx wrangler deploy --dry-run --env staging --log-level debug`: failed before deploy because this Wrangler version does not support `--log-level` for deploy.'
+        - '`gh run list --workflow CI --branch codex/staging-dogfood`: receipt commit `23dc5c0ac54eb2900916708ae029345defc825c0` had CI conclusion `success` at run `https://github.com/mean-weasel/bugdrop-board/actions/runs/26959248862`.'
+      no_go_proof:
+        - 'No production deploy ran.'
+        - 'No non-dry-run Worker deploy ran.'
+        - 'No GitHub Actions deploy workflow was dispatched.'
+        - 'No secrets were printed, committed, or configured in this task.'
+      blockers_for_later_phases:
+        - 'Deploy workflow still requires GitHub Environment secrets: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `BOARD_TOKEN_SECRET`, and `GITHUB_ISSUE_ACCESS_TOKEN`.'
+        - 'The package workflow dry-run can proceed without `NPM_TOKEN`; publish remains out of scope.'
 
   - id: T005
     type: worker
     assignee: Worker
-    status: queued
+    status: active
     reasoning_hint: medium
     objective: 'Run GitHub package dry-run and staging deploy workflows, then capture workflow proof.'
     acceptance_criteria:
@@ -330,18 +360,14 @@ checks:
   dirty_fingerprint: ''
   last_verification:
     result: passed
-    task: T003
+    task: T004
     commands:
-      - 'git rev-parse HEAD'
-      - 'git status --short --branch'
-      - 'gh pr view 9 --json state,mergeable,headRefName,baseRefName,headRefOid,statusCheckRollup,url'
-      - 'gh auth status'
-      - 'gh api repos/mean-weasel/bugdrop-board/environments'
-      - 'gh api -X PUT repos/mean-weasel/bugdrop-board/environments/staging'
-      - 'gh repo view mean-weasel/bugdrop-board-dogfood --json nameWithOwner,visibility,hasIssuesEnabled'
-      - 'gh repo create mean-weasel/bugdrop-board-dogfood --private'
-      - 'gh api -X PATCH repos/mean-weasel/bugdrop-board-dogfood -f has_issues=true'
-      - 'gh api -X PATCH repos/mean-weasel/bugdrop-board-dogfood -F has_projects=false -f has_issues=true --jq ...'
-      - "gh api repos/mean-weasel/bugdrop-board/environments --jq '.environments[].name'"
-      - 'gh secret list --env staging'
-      - 'gh secret list'
+      - 'npx wrangler d1 list --json'
+      - 'npx wrangler d1 create bugdrop-board-staging'
+      - 'npm run build:widget && npx wrangler deploy --dry-run --env staging'
+      - 'npx wrangler deploy --dry-run --env staging --outdir /tmp/bugdrop-board-staging-dry-run'
+      - 'npx wrangler deploy --dry-run --env staging --log-level debug'
+      - 'npx wrangler deploy --dry-run --env staging 2>&1 | tee /tmp/bugdrop-board-staging-dry-run-success.log'
+      - 'fallback and required-value grep against /tmp/bugdrop-board-staging-dry-run-success.log'
+      - 'rg staging config values in wrangler.toml'
+      - 'gh run list --repo mean-weasel/bugdrop-board --workflow CI --branch codex/staging-dogfood --limit 3 --json databaseId,status,conclusion,headSha,url,createdAt'
