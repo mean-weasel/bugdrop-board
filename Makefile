@@ -1,4 +1,4 @@
-.PHONY: dev build build-widget build-all deploy deploy-check test test-watch lint lint-fix format format-check typecheck knip audit check-actions-node24 check ci clean install help
+.PHONY: dev build build-widget build-all deploy deploy-check pack-check test test-watch lint lint-fix format format-check typecheck knip audit check-actions-node24 check ci clean install help
 
 dev:
 	npm run dev
@@ -16,6 +16,9 @@ deploy: build-all
 
 deploy-check:
 	npm run deploy:check
+
+pack-check:
+	npm run pack:check
 
 test:
 	npm run test
@@ -64,5 +67,6 @@ help:
 	@echo "  make check       - lint, format-check, typecheck, knip, audit, Actions guard"
 	@echo "  make ci          - check, unit tests, widget build, TypeScript build"
 	@echo "  make deploy-check - build widget and run wrangler deploy --dry-run"
+	@echo "  make pack-check   - build widget and dry-run npm package contents"
 	@echo "  make build-all   - build widget and TypeScript"
 	@echo "  make clean       - remove local build artifacts"
