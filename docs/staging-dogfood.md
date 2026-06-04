@@ -55,6 +55,9 @@ Use exact dogfood host origins for staging. Do not use `ALLOWED_ORIGINS = "*"` o
 development. Do not commit secrets. The D1 `database_id` is not a secret, but confirm with the
 operator before committing the Mean Weasel staging id to this public or shared repo.
 
+Wrangler environments do not inherit top-level vars, so staging should repeat every non-secret
+Worker var it needs.
+
 Sample staging block:
 
 ```toml
@@ -66,6 +69,9 @@ ENVIRONMENT = "staging"
 ALLOWED_ORIGINS = "https://<dogfood-host-origin>"
 BOARD_TOKEN_AUDIENCE = "bugdrop-board"
 BOARD_TOKEN_ISSUER = "bugdrop-board-dogfood-host"
+REQUEST_THROTTLE_WINDOW_SECONDS = "60"
+ITEM_CREATE_RATE_LIMIT = "5"
+UPVOTE_RATE_LIMIT = "60"
 
 [[env.staging.d1_databases]]
 binding = "DB"
