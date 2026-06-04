@@ -1,0 +1,109 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Mainline Release Rehearsal'
+  slug: 'bugdrop-board-mainline-release-rehearsal'
+  kind: existing_plan
+  tranche: 'Conveyor Board 10: post-merge mainline release readiness and staging promotion rehearsal.'
+  status: done
+  oracle:
+    signal: 'Merged main proves release readiness through local gates, package dry-run workflow, staging deploy workflow, HTTP smoke, and signed-token two-viewer dogfood proof.'
+    cadence: 'after mainline scout, after workflow/browser proof, and at final audit'
+    final_proof: 'docs/release-readiness-results/2026-06-04-mainline-release-rehearsal.md with run ids, issue URL, commands, and scope audit.'
+  intake:
+    original_request: 'Create these boards and run them autonomously if you can.'
+    interpreted_outcome: 'Prove merged main can rehearse the release path without publishing npm or deploying production.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainer preparing release promotion'
+    authority: approved_for_staging_and_dry_runs
+    proof_type: artifact
+    completion_proof: 'Committed receipt plus GoalBuddy state show mainline package dry-run, staging deploy, HTTP smoke, dogfood polling/upvote proof, and no excluded scope.'
+    likely_misfire: 'Treating the previously green PR branch as enough instead of proving merged main.'
+    blind_spots_considered:
+      - 'GitHub workflows may behave differently from main than from the PR branch.'
+      - 'Staging board is durable, so browser proof must target the newly-created item.'
+      - 'Production deploy and npm publish remain gated.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-mainline-release-rehearsal/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-mainline-release-rehearsal'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Verify the local checkout and remote mainline state before workflow dispatch.'
+    acceptance_criteria:
+      - 'Local branch is clean and based on merged main.'
+      - 'PR #9 is merged.'
+      - 'Required staging secrets are present by name only.'
+      - 'No production deploy or npm publish is attempted.'
+    receipt:
+      result: done
+      summary: 'Merged main and staging secret/resource state were verified before dispatch.'
+      evidence:
+        - 'PR #9 merged into `main` at `bf188d3da50b47727bbcf0eb8f676e9bc44fb719`.'
+        - 'Local checkout was clean before this conveyor branch was created.'
+        - 'GitHub Environment `staging` has required secrets by name: `BOARD_TOKEN_SECRET`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, and `ISSUE_ACCESS_TOKEN`.'
+        - 'No production deploy or npm publish was attempted.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Run mainline release rehearsal proof.'
+    acceptance_criteria:
+      - 'Local release gates pass.'
+      - 'Package Widget workflow dry-run succeeds from main.'
+      - 'Deploy Worker workflow succeeds from main to staging.'
+      - 'Staging /health and /board.js smoke checks pass.'
+      - 'Signed-token two-viewer staging browser proof passes and creates a GitHub issue.'
+    receipt:
+      result: done
+      summary: 'Mainline release rehearsal passed: local gates, package dry-run workflow, staging deploy workflow, HTTP smoke, and browser dogfood proof all succeeded.'
+      evidence:
+        - '`npm run release:rehearsal`: passed.'
+        - 'Package Widget dry-run from `main`: run `26969918392`, conclusion `success`, head SHA `bf188d3da50b47727bbcf0eb8f676e9bc44fb719`; npm token validation and publish steps skipped.'
+        - 'Deploy Worker to staging from `main`: run `26969967283`, conclusion `success`, head SHA `bf188d3da50b47727bbcf0eb8f676e9bc44fb719`; validation, build, dry-run deploy package, remote migrations, provisioning, and deploy steps succeeded.'
+        - '`curl -fsS https://bugdrop-board-staging.neonwatty.workers.dev/health`: returned staging `ok`.'
+        - '`curl -fsSI https://bugdrop-board-staging.neonwatty.workers.dev/board.js`: returned `HTTP/2 200` with `content-type: text/javascript`.'
+        - '`npx playwright test --config=playwright.staging.config.ts`: passed, `1 passed (7.9s)`.'
+        - 'Dogfood proof created `https://github.com/mean-weasel/bugdrop-board-dogfood/issues/5`.'
+
+  - id: T003
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Audit Board 10 against the oracle and excluded scope.'
+    acceptance_criteria:
+      - 'Receipt contains run ids, issue URL, command proof, rollback notes, and no secret values.'
+      - 'No npm publish or production deploy ran.'
+      - 'No hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or new product behavior was added.'
+    receipt:
+      result: done
+      decision: approved
+      summary: 'Board 10 oracle satisfied; durable receipt created at `docs/release-readiness-results/2026-06-04-mainline-release-rehearsal.md`.'
+      evidence:
+        - 'Receipt contains run ids, issue URL, commands, rollback/scope notes, and no secret values.'
+        - 'No npm publish ran.'
+        - 'No production deploy, production secret write, or production Cloudflare resource creation ran.'
+        - 'No hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or new product behavior was added.'
