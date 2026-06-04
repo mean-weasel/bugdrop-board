@@ -398,7 +398,8 @@ Environment secrets:
 - `CLOUDFLARE_ACCOUNT_ID`
 - `CLOUDFLARE_API_TOKEN`, scoped to deploy the Worker and manage the configured D1 database
 - `BOARD_TOKEN_SECRET`
-- `GITHUB_ISSUE_ACCESS_TOKEN`
+- `ISSUE_ACCESS_TOKEN`, containing the GitHub Issues token. The workflow maps this to the
+  deployed Worker secret `GITHUB_ISSUE_ACCESS_TOKEN`.
 
 Before the first promotion, update `wrangler.toml` for the target environment:
 
@@ -420,7 +421,7 @@ The workflow runs:
 ```bash
 npm run validate
 npm run build:widget
-npm run deploy:check
+npx wrangler deploy --dry-run [--env staging]
 npx wrangler d1 migrations apply DB --remote
 npm run provision:board -- --repo owner/name --remote
 npx wrangler deploy --secrets-file .deploy.secrets
@@ -527,7 +528,7 @@ requiring Cloudflare or npm production credentials.
 After the local rehearsal passes, configure credentials in GitHub:
 
 - GitHub Environment secrets for `Deploy Worker`: `CLOUDFLARE_ACCOUNT_ID`,
-  `CLOUDFLARE_API_TOKEN`, `BOARD_TOKEN_SECRET`, and `GITHUB_ISSUE_ACCESS_TOKEN`.
+  `CLOUDFLARE_API_TOKEN`, `BOARD_TOKEN_SECRET`, and `ISSUE_ACCESS_TOKEN`.
 - Repository secret for `Package Widget`: `NPM_TOKEN`.
 
 Then run the GitHub workflows in dry-run or test mode before production:
@@ -537,6 +538,8 @@ Then run the GitHub workflows in dry-run or test mode before production:
   a disposable board repo when possible.
 - Embed the staging Worker in a signed-in host-app page and confirm item creation, GitHub Issue
   mirroring, upvoting, and polling from a second session.
+
+For the full staging sequence, use [Staging Dogfood](docs/staging-dogfood.md).
 
 Do not publish to npm or deploy to production until the version, npm package ownership, Cloudflare
 account, GitHub token scope, host app origins, and token issuer/audience values are final.

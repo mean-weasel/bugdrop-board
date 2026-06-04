@@ -28,3 +28,21 @@ database_name = "bugdrop-board-dev"
 database_id = "00000000-0000-0000-0000-000000000000"
 preview_database_id = "00000000-0000-0000-0000-000000000000"
 migrations_dir = "migrations"
+
+[env.staging]
+name = "bugdrop-board-staging"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+ALLOWED_ORIGINS = "http://127.0.0.1:5177"
+BOARD_TOKEN_AUDIENCE = "bugdrop-board"
+BOARD_TOKEN_ISSUER = "bugdrop-board-dogfood-host"
+REQUEST_THROTTLE_WINDOW_SECONDS = "60"
+ITEM_CREATE_RATE_LIMIT = "5"
+UPVOTE_RATE_LIMIT = "60"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "bugdrop-board-staging"
+database_id = "e4bfc871-ace5-49b9-b795-1e85ce535b9f"
+migrations_dir = "migrations"
