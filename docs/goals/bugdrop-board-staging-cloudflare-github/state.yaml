@@ -60,13 +60,13 @@ visual_board:
     url: 'http://goalbuddy.localhost:41737/bugdrop-board-staging-cloudflare-github/'
     command: 'npx goalbuddy board docs/goals/bugdrop-board-staging-cloudflare-github'
 
-active_task: T001
+active_task: T004
 
 tasks:
   - id: T001
     type: scout
     assignee: Scout
-    status: active
+    status: done
     reasoning_hint: high
     objective: 'Read-only inventory of local branch state, GitHub access, Cloudflare CLI access, Chrome Extension readiness, and available host app options before any remote mutation.'
     acceptance_criteria:
@@ -89,12 +89,36 @@ tasks:
       - 'npx wrangler d1 list'
       - 'npx wrangler deployments list --name bugdrop-board-staging'
       - 'rg -n "bugdrop-board|bugdrop-board-token|BOARD_TOKEN_SECRET|data-board-id" /Users/neonwatty/Desktop --glob "!**/node_modules/**"'
-    receipt: null
+    receipt:
+      summary: 'Read-only inventory complete. GitHub and Cloudflare identities are usable for staging work, but no staging GitHub Environment, dogfood repo, staging D1 database, staging Worker deployment, or local secret env vars are currently present. Browser proof can use the Codex Chrome Extension, and the built-in E2E host fixture is the strongest initial signed-token host candidate.'
+      evidence:
+        - '`git status --short --branch`: clean `codex/staging-dogfood...origin/codex/staging-dogfood` worktree.'
+        - '`gh auth status`: authenticated to github.com as `neonwatty`; token scopes include `repo` and `read:org`.'
+        - '`gh repo view mean-weasel/bugdrop-board --json nameWithOwner,visibility,viewerPermission`: private repo with `ADMIN` viewer permission.'
+        - '`gh pr view 9 --json state,mergeable,statusCheckRollup,url,headRefName,baseRefName,headRefOid`: PR #9 is `OPEN`, `MERGEABLE`, base `main`, head `codex/staging-dogfood`, head OID `74b970888ea3fe591fbd545a13a47306152de786`, with CI checks successful.'
+        - '`gh workflow list`: `CI`, `Deploy Worker`, and `Package Widget` are active.'
+        - "`gh api repos/mean-weasel/bugdrop-board/environments --jq '.total_count'`: `0`; no GitHub Environments currently exist."
+        - '`gh secret list --env staging`: GitHub API returned 404 for environment secrets, consistent with missing `staging` environment.'
+        - '`gh repo view mean-weasel/bugdrop-board-dogfood --json nameWithOwner,hasIssuesEnabled,visibility`: repository not found.'
+        - '`npx wrangler whoami`: logged in to Cloudflare account `341a3846c29902f6363c151395932f5a` with Workers and D1 write permissions.'
+        - '`npx wrangler d1 list`: command succeeded and listed no visible D1 database rows.'
+        - '`npx wrangler deployments list --name bugdrop-board-staging`: Cloudflare API error 10007; Worker `bugdrop-board-staging` does not exist.'
+        - 'Secret presence check printed only names/status: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `BOARD_TOKEN_SECRET`, `GITHUB_ISSUE_ACCESS_TOKEN`, and `NPM_TOKEN` are all `MISSING` in the local shell environment.'
+        - 'Desktop host search found `/Users/neonwatty/Desktop/bugdrop-board/e2e/fixtures/host-app.ts` with two viewer paths, signed token generation, `data-board-id`, `data-api-url`, and `data-token-endpoint`; it is local-only today and uses issuer `dummy-host` plus secret `e2e-secret`.'
+        - 'Existing BugDrop app repos are present at `/Users/neonwatty/Desktop/bugdrop`, `/Users/neonwatty/Desktop/bugdrop-personal`, and `/Users/neonwatty/Desktop/bugdrop-web`; search shows they target the original screenshot widget rather than BugDrop Board signed-token embed.'
+        - 'Codex Chrome Extension handshake via Chrome plugin succeeded: Chrome profile `Your Chrome` reported 14 open tabs and no tabs were claimed or mutated.'
+      blockers:
+        - 'Remote mutations need a Judge-approved sequence because PR #9 is not merged to `main` yet.'
+        - 'GitHub Environment `staging` and dogfood repo are absent.'
+        - 'Cloudflare staging D1 database and Worker deployment are absent.'
+        - 'Required secret values are not available as local env vars; later secret configuration must either generate safe staging-only values where appropriate or obtain values without printing them.'
+      recommendation:
+        - 'Authorize a narrow gate decision next. The safest path is to merge or explicitly continue from PR #9, then create/verify GitHub staging resources before Cloudflare deploy resources.'
 
   - id: T002
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
     objective: 'Gate whether remote mutation may proceed and select the smallest safe Worker task.'
     acceptance_criteria:
@@ -102,14 +126,41 @@ tasks:
       - 'Requires PR #9 to be merged or explicitly chooses to continue from its branch if running workflows from branch is safer.'
       - 'Defines exact allowed files, allowed remote resources, commands, stop conditions, and proof for the next Worker.'
       - 'Rejects any path that would publish npm, deploy production, expose secrets, or use default Wrangler config for staging.'
-    receipt: null
+    receipt:
+      decision: approved
+      summary: 'Remote mutation may proceed only for reversible GitHub staging setup. Continue from pinned PR #9 branch/OID instead of merging first; dogfood evidence should precede merge.'
+      rationale:
+        - 'GitHub identity has repo admin access and Cloudflare identity has Workers/D1 write access.'
+        - 'The missing resources are staging-specific and reversible: GitHub Environment `staging` and private dogfood repo.'
+        - 'Local secret values are missing, so secret configuration must be names/presence only unless values become available without printing.'
+        - 'Cloudflare resource creation, workflow dispatch, npm publish, production deploy, browser dogfood, and excluded product behavior remain unauthorized for this next slice.'
+      next_task: T003
+      allowed_remote_resources:
+        - 'GitHub repo `mean-weasel/bugdrop-board`: environment named `staging` only.'
+        - 'GitHub repo `mean-weasel/bugdrop-board`: environment secrets named `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `BOARD_TOKEN_SECRET`, `GITHUB_ISSUE_ACCESS_TOKEN` only if values are available without printing.'
+        - 'GitHub repo `mean-weasel/bugdrop-board`: repository secret `NPM_TOKEN` only if value is available without printing.'
+        - 'GitHub repo `mean-weasel/bugdrop-board-dogfood`: create if absent, private visibility, Issues enabled.'
+      allowed_files:
+        - '/Users/neonwatty/Desktop/bugdrop-board/docs/goals/bugdrop-board-staging-cloudflare-github/state.yaml'
+      stop_if:
+        - 'Current branch is not `codex/staging-dogfood` or HEAD no longer equals PR #9 head OID `74b970888ea3fe591fbd545a13a47306152de786` without a PM/Judge recheck.'
+        - 'GitHub token lacks admin permission for environments, secrets, or repo creation.'
+        - 'Any command would print, log, commit, or screenshot a secret value.'
+        - 'Creating the dogfood repo would require changing owner/org, private visibility, or enabling excluded GitHub Projects behavior.'
+        - 'A command path would deploy Cloudflare, publish npm, merge PR #9, create production resources, or introduce hosted control plane, billing, realtime, comments, downvotes, or GitHub Projects.'
+      required_proof:
+        - 'PR #9 ref/OID revalidated immediately before mutation.'
+        - 'Environment `staging` exists after T003.'
+        - 'Dogfood repo exists, is private, and has Issues enabled.'
+        - 'Secret proof is names/presence only with no values in output, docs, state, shell history excerpts, screenshots, or commits.'
+        - 'Receipt records commands run, remote resources touched, and any missing secret values as blockers for later phases.'
 
   - id: T003
     type: worker
     assignee: Worker
-    status: queued
+    status: done
     reasoning_hint: medium
-    objective: 'Prepare or verify GitHub staging resources and secrets by name only.'
+    objective: 'First pass: create or verify only GitHub staging resources by name, using the T002 Judge contract.'
     acceptance_criteria:
       - 'Creates or verifies dogfood repo `mean-weasel/bugdrop-board-dogfood` with Issues enabled.'
       - 'Creates or verifies GitHub Environment `staging` for `mean-weasel/bugdrop-board`.'
@@ -117,6 +168,20 @@ tasks:
       - 'Configures repository-level `NPM_TOKEN` only if a value is available; otherwise records it as missing for package workflow dry-run/publish validation.'
       - 'Records only secret names/presence, not values.'
       - 'Commits a receipt only if it contains no secrets.'
+    judge_contract:
+      branch: 'codex/staging-dogfood'
+      pinned_head_oid: '74b970888ea3fe591fbd545a13a47306152de786'
+      first_pass_only:
+        - 'Create or verify GitHub Environment `staging` on `mean-weasel/bugdrop-board`.'
+        - 'Create or verify private repo `mean-weasel/bugdrop-board-dogfood` with Issues enabled.'
+        - 'List required secret names/presence only; configure no secret whose value is unavailable.'
+      exclusions:
+        - 'No PR merge.'
+        - 'No Cloudflare mutation.'
+        - 'No GitHub Actions workflow dispatch.'
+        - 'No npm publish.'
+        - 'No production deploy.'
+        - 'No hosted control plane, billing, realtime, comments, downvotes, or GitHub Projects.'
     required_secret_names:
       - 'CLOUDFLARE_ACCOUNT_ID'
       - 'CLOUDFLARE_API_TOKEN'
@@ -127,12 +192,43 @@ tasks:
       - 'GitHub token lacks admin access to environments/secrets.'
       - 'Required secret value is unavailable locally.'
       - 'The dogfood repo cannot be created or Issues cannot be enabled.'
-    receipt: null
+    receipt:
+      result: done
+      summary: 'Created and verified the GitHub staging Environment plus private dogfood repo. No secret values were available locally, so no secrets were configured; secret proof remains names/presence only.'
+      remote_resources_touched:
+        - 'Created GitHub Environment `staging` on `mean-weasel/bugdrop-board`.'
+        - 'Created private repo `mean-weasel/bugdrop-board-dogfood`.'
+        - 'Enabled Issues on `mean-weasel/bugdrop-board-dogfood`.'
+        - 'Corrected GitHub default repo setting by disabling Projects on `mean-weasel/bugdrop-board-dogfood` to preserve the excluded-scope audit.'
+      evidence:
+        - '`git rev-parse HEAD`: `74b970888ea3fe591fbd545a13a47306152de786`.'
+        - '`git status --short --branch`: `## codex/staging-dogfood...origin/codex/staging-dogfood` with only this state file modified.'
+        - '`gh pr view 9 --json state,mergeable,headRefName,baseRefName,headRefOid,statusCheckRollup,url`: PR #9 remained `OPEN`, `MERGEABLE`, branch `codex/staging-dogfood`, head OID `74b970888ea3fe591fbd545a13a47306152de786`, CI successful.'
+        - '`gh api repos/mean-weasel/bugdrop-board/environments` before mutation: `total_count: 0`.'
+        - '`gh api -X PUT repos/mean-weasel/bugdrop-board/environments/staging`: created environment `staging` at `2026-06-04T14:43:55Z`.'
+        - "`gh api repos/mean-weasel/bugdrop-board/environments --jq '.environments[].name'`: `staging`."
+        - '`gh repo view mean-weasel/bugdrop-board-dogfood --json ...` before mutation: repository not found.'
+        - '`gh repo create mean-weasel/bugdrop-board-dogfood --private`: returned `https://github.com/mean-weasel/bugdrop-board-dogfood`.'
+        - '`gh api -X PATCH repos/mean-weasel/bugdrop-board-dogfood -f has_issues=true`: verified private repo with Issues on; initial GitHub default also had Projects on.'
+        - '`gh api -X PATCH repos/mean-weasel/bugdrop-board-dogfood -F has_projects=false -f has_issues=true --jq ...`: `private: true`, `visibility: private`, `has_issues: true`, `has_projects: false`.'
+        - '`gh repo view mean-weasel/bugdrop-board-dogfood --json nameWithOwner,visibility,hasIssuesEnabled`: `PRIVATE`, `hasIssuesEnabled: true`.'
+        - '`gh secret list --env staging`: no environment secrets listed.'
+        - '`gh secret list`: no repository secrets listed.'
+      secret_presence:
+        CLOUDFLARE_ACCOUNT_ID: missing
+        CLOUDFLARE_API_TOKEN: missing
+        BOARD_TOKEN_SECRET: missing
+        GITHUB_ISSUE_ACCESS_TOKEN: missing
+        NPM_TOKEN: missing
+      blockers_for_later_phases:
+        - 'Staging deploy workflow cannot run until GitHub Environment secrets are configured.'
+        - 'Package workflow publish path cannot use `NPM_TOKEN` until a repository secret is configured; dry-run may still be possible depending on workflow behavior.'
+        - 'Cloudflare D1/Worker resources are still absent and must be handled by T004.'
 
   - id: T004
     type: worker
     assignee: Worker
-    status: queued
+    status: active
     reasoning_hint: medium
     objective: 'Prepare or verify Cloudflare staging Worker/D1 config without using production config.'
     acceptance_criteria:
@@ -233,6 +329,19 @@ tasks:
 checks:
   dirty_fingerprint: ''
   last_verification:
-    result: queued
-    task: T001
-    commands: []
+    result: passed
+    task: T003
+    commands:
+      - 'git rev-parse HEAD'
+      - 'git status --short --branch'
+      - 'gh pr view 9 --json state,mergeable,headRefName,baseRefName,headRefOid,statusCheckRollup,url'
+      - 'gh auth status'
+      - 'gh api repos/mean-weasel/bugdrop-board/environments'
+      - 'gh api -X PUT repos/mean-weasel/bugdrop-board/environments/staging'
+      - 'gh repo view mean-weasel/bugdrop-board-dogfood --json nameWithOwner,visibility,hasIssuesEnabled'
+      - 'gh repo create mean-weasel/bugdrop-board-dogfood --private'
+      - 'gh api -X PATCH repos/mean-weasel/bugdrop-board-dogfood -f has_issues=true'
+      - 'gh api -X PATCH repos/mean-weasel/bugdrop-board-dogfood -F has_projects=false -f has_issues=true --jq ...'
+      - "gh api repos/mean-weasel/bugdrop-board/environments --jq '.environments[].name'"
+      - 'gh secret list --env staging'
+      - 'gh secret list'
