@@ -1,0 +1,227 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Package Publishing'
+  slug: 'bugdrop-board-package-publishing'
+  kind: existing_plan
+  tranche: 'Complete Conveyor Board 11: package/version publishing flow for the embed script only, using completed Board 1-10 foundations and excluding hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, and new product behavior.'
+  status: done
+  oracle:
+    signal: 'A maintainer can version and dry-run the embed-script package locally, then manually dispatch a GitHub Actions workflow that validates, dry-runs package contents by default, and only publishes with dry_run=false plus NPM_TOKEN.'
+    cadence: 'after Scout, after Worker, and at final audit'
+    final_proof: 'Receipt-backed package scripts/workflow/docs inspection, npm pack dry-run output, Node-24 Actions guard, npm run validate, make check, deploy dry-run, E2E smoke, and scope-drift scan.'
+  intake:
+    original_request: 'Continue overnight wrap-up using a conveyor of GoalBuddy boards; remaining gap is package/version publishing for the embed script.'
+    interpreted_outcome: 'Implement the next release-readiness board: local package dry-run/versioning and a manual npm package workflow for the embed script only.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers and self-hosting operators consuming the embed script'
+    authority: requested
+    proof_type: artifact
+    completion_proof: 'Scripts, workflow, docs, and pack dry-run prove the embed package can be versioned and published intentionally without adding hosted product behavior.'
+    likely_misfire: 'Adding hosted CDN/control-plane release behavior or automatic publishing instead of a bounded manual embed package flow.'
+    blind_spots_considered:
+      - 'The package already exports public/board.js but lacked a pack-check gate and publish workflow.'
+      - 'The widget build default version was duplicated instead of reading package.json.'
+      - 'npm publish cannot be proven without a real NPM_TOKEN, so local proof must use npm pack --dry-run.'
+      - 'Conveyor PR merge hygiene remains separate from package implementation.'
+    existing_plan_facts:
+      - 'Completed foundations: Boards 1-10.'
+      - 'Open PR stack exists for Boards 5-10.'
+      - 'README current handoff listed package/version publishing flow as the remaining release-readiness tranche.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-package-publishing/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-package-publishing'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: high
+    objective: 'Validate current package publishing gap and recommend the smallest safe Board 11 package.'
+    receipt:
+      result: done
+      task_id: T001
+      summary: 'Scout found package exports for public/board.js and files metadata, but no pack-check script, no package workflow, and README handoff still listing package/version publishing. The widget build used a duplicated default version, creating drift risk after package.json version bumps.'
+      evidence:
+        - 'package.json exports ., ./board, and ./board.js to public/board.js.'
+        - 'scripts/build-widget.js defined __BUGDROP_BOARD_VERSION__ from VERSION or a hardcoded 0.1.0 fallback.'
+        - 'README Current Handoff Notes listed package/version publishing flow for the embed script.'
+        - '.github/workflows had CI and Deploy Worker workflows but no package workflow.'
+      commands:
+        - 'sed -n "1,220p" scripts/build-widget.js'
+        - 'sed -n "1,220p" package.json'
+        - 'find .github/workflows -maxdepth 1 -type f -print -exec sed -n "1,220p" {} ;'
+        - 'tail -40 README.md'
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Authorize the Board 11 package/version publishing package.'
+    receipt:
+      decision: proceed
+      worker_objective: 'Add package lifecycle and Makefile pack-check commands, make widget default version read package.json, add a manual dry-run-by-default package workflow with optional npm publish, and document the package/version flow in README.'
+      allowed_files:
+        - '.github/workflows/package.yml'
+        - 'Makefile'
+        - 'README.md'
+        - 'package.json'
+        - 'scripts/build-widget.js'
+        - 'docs/goals/bugdrop-board-package-publishing/goal.md'
+        - 'docs/goals/bugdrop-board-package-publishing/state.yaml'
+      verify:
+        - 'npx prettier --check .github/workflows/package.yml README.md package.json scripts/build-widget.js docs/goals/bugdrop-board-package-publishing/goal.md docs/goals/bugdrop-board-package-publishing/state.yaml'
+        - 'npm run check:actions-node24'
+        - 'npm run pack:check'
+        - 'npm run deploy:check'
+        - 'npm run test:e2e'
+        - 'npm run validate'
+        - 'make check'
+        - 'scope scan for hosted control plane/billing/realtime/comments/downvotes/GitHub Projects/new product behavior drift'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Implement the authorized package/version publishing flow.'
+    allowed_files:
+      - '.github/workflows/package.yml'
+      - 'Makefile'
+      - 'README.md'
+      - 'package.json'
+      - 'scripts/build-widget.js'
+      - 'docs/goals/bugdrop-board-package-publishing/state.yaml'
+    verify:
+      - 'npx prettier --check .github/workflows/package.yml README.md package.json scripts/build-widget.js docs/goals/bugdrop-board-package-publishing/goal.md docs/goals/bugdrop-board-package-publishing/state.yaml'
+      - 'npm run check:actions-node24'
+      - 'npm run pack:check'
+      - 'npm run deploy:check'
+      - 'npm run test:e2e'
+      - 'npm run validate'
+      - 'make check'
+      - 'scope scan for hosted control plane/billing/realtime/comments/downvotes/GitHub Projects/new product behavior drift'
+    stop_if:
+      - 'Need a real NPM_TOKEN or npm registry ownership to prove actual publish.'
+      - 'Need hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or new product behavior.'
+    receipt:
+      result: done
+      task_id: T003
+      changed_files:
+        - '.github/workflows/package.yml'
+        - 'Makefile'
+        - 'README.md'
+        - 'package.json'
+        - 'scripts/build-widget.js'
+        - 'docs/goals/bugdrop-board-package-publishing/goal.md'
+        - 'docs/goals/bugdrop-board-package-publishing/state.yaml'
+      summary: 'Implemented the authorized package/version publishing package. Added package and Makefile dry-run commands, wired prepack to rebuild the widget, made the widget build read package.json for the default runtime version, added a manual Package Widget workflow that dry-runs by default and publishes only with dry_run=false plus NPM_TOKEN, and documented the package flow in README.'
+      commands:
+        - command: 'npx prettier --check .github/workflows/package.yml README.md package.json scripts/build-widget.js docs/goals/bugdrop-board-package-publishing/goal.md docs/goals/bugdrop-board-package-publishing/state.yaml'
+          result: passed
+          evidence: 'All selected workflow, script, package, README, and GoalBuddy files use Prettier style.'
+        - command: 'npm run check:actions-node24'
+          result: passed
+          evidence: 'GitHub Actions are Node 24-ready; workflow uses checkout@v5 and setup-node@v5.'
+        - command: 'npm run pack:check'
+          result: passed
+          evidence: 'prepack rebuilt BugDrop Board bundle 0.1.0; npm dry-run package contains README.md, package.json, public/board.js, and five src/widget files.'
+        - command: 'npm run provision:board -- --repo mean-weasel/package-demo --name "Package Demo" --local'
+          result: passed
+          evidence: 'Printed board id board_mean_weasel_package_demo with binding DB and mode local.'
+        - command: 'npm run deploy:check'
+          result: passed
+          evidence: 'Wrangler deploy dry-run read public assets, reported D1/ASSETS/env bindings, and exited before upload.'
+        - command: 'npm run test:e2e'
+          result: passed
+          evidence: '1 Playwright test passed: embedded board creates, upvotes, and syncs through polling.'
+        - command: 'npm run validate'
+          result: passed
+          evidence: 'eslint, Prettier check, TypeScript typecheck, and 47 Vitest tests passed.'
+        - command: 'make check'
+          result: passed
+          evidence: 'eslint, format-check, typecheck, knip, critical npm audit, and Actions Node guard passed.'
+        - command: 'scope scan for hosted control plane/billing/realtime/comments/downvotes/GitHub Projects/new product behavior drift'
+          result: passed
+          evidence: 'Diff scan found only expected npm publish references in package workflow/docs and no excluded product-area changes.'
+      remaining_blockers: []
+      verification_attempts: 1
+      stopped_because: null
+
+  - id: T004
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Review the completed Board 11 package against the package publishing oracle.'
+    receipt:
+      decision: approved
+      evidence:
+        - 'scripts/build-widget.js reads package.json version by default while preserving VERSION override.'
+        - 'package.json exposes pack:check and prepack, and Makefile exposes pack-check.'
+        - '.github/workflows/package.yml is manual, dry-runs by default, validates before packing, and publishes only when dry_run is false.'
+        - 'Package workflow requires NPM_TOKEN only for publish mode and uses Node-24-ready core actions.'
+        - 'README documents package contents, local versioning, dry-run proof, workflow inputs, NPM_TOKEN, and self-host boundaries.'
+        - 'Local proof gates passed without production npm or Cloudflare credentials.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Final audit: decide whether Conveyor Board 11 is complete and ready for PR/merge hygiene.'
+    receipt:
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'Embed package versioning now follows package.json by default.'
+        - 'Local npm package dry-run is available through npm run pack:check and make pack-check.'
+        - 'Manual Package Widget workflow validates and dry-runs by default, with explicit npm publish gated on dry_run=false and NPM_TOKEN.'
+        - 'README package publishing docs and verification checklist are updated.'
+        - 'Existing behavior gates passed: provisioning, deploy dry-run, E2E, npm run validate, and make check.'
+        - 'Scope audit found no hosted control plane, billing, realtime, comments/downvotes behavior, GitHub Projects, or new product behavior.'
+      next_starter_command: '$goal-prep Build Conveyor Board 12: PR/merge hygiene for the completed conveyor stack only, using completed Board 1-11 foundations and excluding hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, and new product behavior.'
+
+checks:
+  dirty_fingerprint: '.github/workflows/package.yml Makefile README.md package.json scripts/build-widget.js docs/goals/bugdrop-board-package-publishing/goal.md docs/goals/bugdrop-board-package-publishing/state.yaml'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'npx prettier --check .github/workflows/package.yml README.md package.json scripts/build-widget.js docs/goals/bugdrop-board-package-publishing/goal.md docs/goals/bugdrop-board-package-publishing/state.yaml'
+      - 'npm run check:actions-node24'
+      - 'npm run pack:check'
+      - 'npm run provision:board -- --repo mean-weasel/package-demo --name "Package Demo" --local'
+      - 'npm run deploy:check'
+      - 'npm run test:e2e'
+      - 'npm run validate'
+      - 'make check'
+      - 'scope scan for hosted control plane/billing/realtime/comments/downvotes/GitHub Projects/new product behavior drift'
