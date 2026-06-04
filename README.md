@@ -442,6 +442,62 @@ and confirm another viewer can read or upvote the item.
 Rollback is operator-controlled: rerun the workflow from the previous known-good commit or restore
 the previous Worker secrets with `wrangler secret put`, then run the deployed smoke checks again.
 
+## Embed Package Publishing
+
+The npm package publishes the versioned embed script and source needed to inspect or rebuild it. It
+does not deploy a Worker, create a CDN release, provision D1, or replace the self-host deployment
+flow above.
+
+The package entrypoints are:
+
+- `bugdrop-board`
+- `bugdrop-board/board`
+- `bugdrop-board/board.js`
+
+All entrypoints resolve to `public/board.js`. The npm package includes:
+
+- `public/board.js`
+- `src/widget/`
+- `README.md`
+- package metadata
+
+Before publishing, bump `package.json` in a normal PR. The widget build reads that package version
+by default and embeds it as the runtime `__BUGDROP_BOARD_VERSION__` value. For one-off local builds,
+override it with:
+
+```bash
+VERSION=0.1.0 npm run build:widget
+```
+
+Verify the package contents locally:
+
+```bash
+npm run pack:check
+make pack-check
+```
+
+`npm run pack:check` runs `npm pack --dry-run`. The `prepack` lifecycle rebuilds
+`public/board.js` first, so the tarball preview proves the package would contain the current embed
+bundle for the package version.
+
+The `Package Widget` GitHub Actions workflow is manually dispatched and dry-runs by default:
+
+1. Select **Package Widget**.
+2. Leave **Build and verify the npm package without publishing** enabled for a package preview.
+3. Choose `latest` or `next` as the npm dist-tag.
+4. To publish, rerun with dry-run disabled after the version PR has merged.
+
+Publishing requires a repository secret named `NPM_TOKEN`. The workflow runs:
+
+```bash
+npm run validate
+npm run pack:check
+npm publish --access public --tag "$NPM_TAG"
+```
+
+Actual publishing also requires npm ownership or publish rights for the configured package name.
+When in doubt, keep the workflow in dry-run mode and inspect the package file list before publishing.
+
 ## Verification
 
 Run the standard checks before handing off changes:
@@ -449,6 +505,7 @@ Run the standard checks before handing off changes:
 ```bash
 npm run provision:board -- --repo mean-weasel/demo --name "Demo Board" --local
 npm run build:widget
+npm run pack:check
 npm run deploy:check
 npm run test:e2e
 npm run validate
@@ -457,7 +514,6 @@ make check
 
 ## Current Handoff Notes
 
-This repository is still an early vertical slice. Before release, the next tranche should decide
-and implement:
-
-- package/version publishing flow for the embed script.
+This repository is still an early vertical slice. The remaining release actions are operational:
+merge the conveyor PR stack, configure real Cloudflare/GitHub/npm secrets, and run the documented
+dry-run gates before any production deploy or npm publish.

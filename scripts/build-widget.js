@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 
 import { build } from 'esbuild';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const publicDir = join(rootDir, 'public');
-const version = process.env.VERSION ?? '0.1.0';
+const packageJson = JSON.parse(await readFile(join(rootDir, 'package.json'), 'utf8'));
+const version = process.env.VERSION ?? packageJson.version;
 
 await mkdir(publicDir, { recursive: true });
 
