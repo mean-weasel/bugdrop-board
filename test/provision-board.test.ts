@@ -30,29 +30,31 @@ describe('provision-board script helpers', () => {
     expect(sql).toContain('ON CONFLICT(repo_owner, repo_name) DO UPDATE');
   });
 
-  it('parses local and remote modes', () => {
-    expect(parseArgs(['--repo', 'mean-weasel/demo', '--remote'])).toMatchObject({
-      repo: 'mean-weasel/demo',
-      local: false,
+  describe('parseArgs', () => {
+    it('parses local and remote modes', () => {
+      expect(parseArgs(['--repo', 'mean-weasel/demo', '--remote'])).toMatchObject({
+        repo: 'mean-weasel/demo',
+        local: false,
+      });
+      expect(parseArgs(['--repo', 'mean-weasel/demo', '--local'])).toMatchObject({
+        local: true,
+      });
     });
-    expect(parseArgs(['--repo', 'mean-weasel/demo', '--local'])).toMatchObject({
-      local: true,
-    });
-  });
 
-  it('parses a wrangler environment', () => {
-    expect(parseArgs(['--repo', 'mean-weasel/demo', '--remote', '--env', 'staging'])).toMatchObject(
-      {
+    it('parses a wrangler environment', () => {
+      expect(
+        parseArgs(['--repo', 'mean-weasel/demo', '--remote', '--env', 'staging'])
+      ).toMatchObject({
         repo: 'mean-weasel/demo',
         local: false,
         env: 'staging',
-      }
-    );
-  });
+      });
+    });
 
-  it('rejects invalid wrangler environment names', () => {
-    expect(() => parseArgs(['--repo', 'mean-weasel/demo', '--env', '../prod'])).toThrow(
-      'Expected --env to contain only letters, numbers, underscores, and hyphens'
-    );
+    it('rejects invalid wrangler environment names', () => {
+      expect(() => parseArgs(['--repo', 'mean-weasel/demo', '--env', '../prod'])).toThrow(
+        'Expected --env to contain only letters, numbers, underscores, and hyphens'
+      );
+    });
   });
 });
