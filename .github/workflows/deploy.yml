@@ -62,7 +62,7 @@ jobs:
 
       - name: Validate Wrangler environment
         run: |
-          if [ -n "$WRANGLER_ENVIRONMENT" ] && ! printf '%s' "$WRANGLER_ENVIRONMENT" | grep -Eq '^[A-Za-z0-9_][A-Za-z0-9_-]*$'; then
+          if [[ -n "$WRANGLER_ENVIRONMENT" && ! "$WRANGLER_ENVIRONMENT" =~ ^[A-Za-z0-9_][A-Za-z0-9_-]*$ ]]; then
             echo "::error::Wrangler environment must contain only letters, numbers, underscores, and hyphens"
             exit 1
           fi
