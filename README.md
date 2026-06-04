@@ -538,6 +538,8 @@ Then run the GitHub workflows in dry-run or test mode before production:
 - Embed the staging Worker in a signed-in host-app page and confirm item creation, GitHub Issue
   mirroring, upvoting, and polling from a second session.
 
+For the full staging sequence, use [Staging Dogfood](docs/staging-dogfood.md).
+
 Do not publish to npm or deploy to production until the version, npm package ownership, Cloudflare
 account, GitHub token scope, host app origins, and token issuer/audience values are final.
 
