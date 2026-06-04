@@ -1,0 +1,227 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Release Promotion'
+  slug: 'bugdrop-board-release-promotion'
+  kind: existing_plan
+  tranche: 'Complete Conveyor Board 10: self-host release automation and environment promotion only, using completed Board 1-9 foundations and excluding hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, package publishing, and new product behavior.'
+  status: done
+  oracle:
+    signal: 'A self-hoster can use a manually dispatched GitHub Actions workflow to promote the Worker with current checks, optional remote D1 migrations/provisioning, Wrangler deployment with GitHub Environment secrets, and documented verification/rollback boundaries; final audit confirms no package publishing, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or new product behavior was added.'
+    cadence: 'after Scout, after Worker, and at final audit'
+    final_proof: 'Receipt-backed workflow/docs inspection, Node-24 Actions guard, npm run validate, make check, npm run deploy:check, npm run test:e2e, provisioning command proof, and scope-drift scan.'
+  intake:
+    original_request: 'Begin overnight wrap-up using a conveyor of GoalBuddy boards; next remaining gap is release automation and environment promotion.'
+    interpreted_outcome: 'Implement the next release-readiness board: self-host manual environment promotion automation and docs, excluding package publishing and product behavior.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers and self-hosting operators promoting a Worker deployment'
+    authority: requested
+    proof_type: artifact
+    completion_proof: 'Workflow and docs/config prove a self-hoster has a manual promotion path using current commands and secrets, while existing behavior still passes and no excluded product/infrastructure work is introduced.'
+    likely_misfire: 'Implementing package publishing or hosted release orchestration instead of a bounded self-host GitHub Actions promotion workflow.'
+    blind_spots_considered:
+      - 'The repo already has CI but no manual deployment workflow.'
+      - 'Cloudflare deployment proof can run only as dry-run locally without production credentials.'
+      - 'Wrangler deploy can receive secrets through a generated secrets file in CI; secrets must not be committed.'
+      - 'Package/version publishing remains a separate Board 11.'
+    existing_plan_facts:
+      - 'Completed foundations: Boards 1-9.'
+      - 'Open PR stack exists for Boards 5-9.'
+      - 'README current handoff still lists release automation/environment promotion and package publishing.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: active
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-release-promotion/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-release-promotion'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: high
+    objective: 'Validate current CI/release automation gaps and recommend the smallest safe Board 10 package.'
+    receipt:
+      result: done
+      task_id: T001
+      summary: 'Scout found the repo has CI for checks/unit build using checkout@v5/setup-node@v5, package scripts for deploy/deploy:check/provisioning, and README deploy readiness docs, but no manual environment-promotion workflow. The remaining README handoff lists release automation/environment promotion and package publishing; Board 10 should implement only the former.'
+      evidence:
+        - '.github/workflows/ci.yml runs make check, unit tests, and make build-all with Node 22 and Node-24-ready core actions.'
+        - 'package.json exposes deploy, deploy:check, provision:board, test:e2e, validate.'
+        - 'README documents production deploy readiness, remote migrations, provisioning, secret rotation, and standard verification.'
+        - 'README still lists release automation/environment promotion and package/version publishing flow as remaining handoff items.'
+      commands:
+        - 'find .github -maxdepth 3 -type f -print -exec sed -n "1,220p" {} ;'
+        - 'cat package.json && sed -n "1,120p" Makefile && tail -80 README.md'
+        - 'rg -n "release|environment|promotion|deploy|wrangler|workflow|ci|publish|package|version|artifact|secret|production|preview|staging" README.md package.json Makefile .github wrangler.toml docs/goals'
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Authorize the Board 10 release promotion package.'
+    receipt:
+      decision: proceed
+      worker_objective: 'Add a manual GitHub Actions deployment workflow and README environment-promotion runbook using current commands, GitHub Environment secrets, optional remote migrations/provisioning, and Wrangler deploy without package publishing.'
+      allowed_files:
+        - '.github/workflows/deploy.yml'
+        - 'README.md'
+        - 'docs/goals/bugdrop-board-release-promotion/state.yaml'
+      verify:
+        - 'npx prettier --check .github/workflows/deploy.yml README.md docs/goals/bugdrop-board-release-promotion/state.yaml'
+        - 'npm run check:actions-node24'
+        - 'npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local'
+        - 'npm run build:widget'
+        - 'npm run deploy:check'
+        - 'npm run test:e2e'
+        - 'npm run validate'
+        - 'make check'
+        - 'scope scan for package publishing/hosted control plane/billing/realtime/comments/downvotes/GitHub Projects/new product behavior drift'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Implement the authorized release promotion workflow/docs package.'
+    allowed_files:
+      - '.github/workflows/deploy.yml'
+      - 'README.md'
+      - 'docs/goals/bugdrop-board-release-promotion/state.yaml'
+    verify:
+      - 'npx prettier --check .github/workflows/deploy.yml README.md docs/goals/bugdrop-board-release-promotion/state.yaml'
+      - 'npm run check:actions-node24'
+      - 'npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local'
+      - 'npm run build:widget'
+      - 'npm run deploy:check'
+      - 'npm run test:e2e'
+      - 'npm run validate'
+      - 'make check'
+      - 'scope scan for package publishing/hosted control plane/billing/realtime/comments/downvotes/GitHub Projects/new product behavior drift'
+    stop_if:
+      - 'Need production Cloudflare credentials for proof.'
+      - 'Need package publishing, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or new product behavior.'
+    receipt:
+      result: done
+      task_id: T003
+      changed_files:
+        - '.github/workflows/deploy.yml'
+        - 'README.md'
+        - 'docs/goals/bugdrop-board-release-promotion/state.yaml'
+      summary: 'Implemented the authorized release promotion package. Added a manual Deploy Worker workflow with GitHub Environment selection, required secret validation, validation/build/dry-run gates, optional remote D1 migrations, optional board provisioning, Wrangler deployment with a generated secrets file, and cleanup. README now documents environment setup, promotion inputs, verification, and rollback boundaries.'
+      commands:
+        - command: 'npx prettier --check .github/workflows/deploy.yml README.md docs/goals/bugdrop-board-release-promotion/goal.md docs/goals/bugdrop-board-release-promotion/state.yaml'
+          result: passed
+          evidence: 'All selected workflow/docs files use Prettier style.'
+        - command: 'npm run check:actions-node24'
+          result: passed
+          evidence: 'GitHub Actions are Node 24-ready; no forbidden checkout/setup-node/cache/upload-artifact@v4 or cloudflare/wrangler-action usage.'
+        - command: 'npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local'
+          result: passed
+          evidence: 'Printed board id `board_mean_weasel_deploy_demo` with binding `DB` and mode `local`.'
+        - command: 'npm run build:widget'
+          result: passed
+          evidence: 'Built BugDrop Board bundle 0.1.0.'
+        - command: 'npm run deploy:check'
+          result: passed
+          evidence: 'Wrangler deploy dry-run reported current Worker bindings and exited before upload.'
+        - command: 'npm run test:e2e'
+          result: passed
+          evidence: '1 Playwright test passed: embedded board creates, upvotes, and syncs through polling.'
+        - command: 'npm run validate'
+          result: passed
+          evidence: 'eslint, Prettier check, TypeScript typecheck, and 47 Vitest tests passed.'
+        - command: 'make check'
+          result: passed
+          evidence: 'eslint, format-check, typecheck, knip, critical npm audit, and Actions Node guard passed.'
+        - command: 'rg inspection for workflow/docs promotion terms'
+          result: passed
+          evidence: 'Found manual workflow_dispatch, environment input, Cloudflare/BugDrop secrets, validate/build/deploy-check gates, optional migrations/provisioning, secrets-file deploy, cleanup, and README Environment Promotion docs.'
+        - command: 'scope scan for package publishing and product drift'
+          result: passed
+          evidence: 'No workflow/docs diff matches for npm publish, publish config, artifact upload, release automation packages, hosted control plane, billing, realtime, comments/downvotes behavior, GitHub Projects, or new product behavior.'
+      remaining_blockers: []
+      verification_attempts: 1
+      stopped_because: null
+
+  - id: T004
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Review the completed Board 10 package against the release promotion oracle.'
+    receipt:
+      decision: approved
+      evidence:
+        - 'Workflow exists at .github/workflows/deploy.yml and is manually dispatched with a GitHub Environment input.'
+        - 'Workflow uses actions/checkout@v5 and actions/setup-node@v5 with Node 22, satisfying the repo Actions guard.'
+        - 'Workflow runs npm run validate, npm run build:widget, and npm run deploy:check before deployment.'
+        - 'Workflow optionally applies remote D1 migrations and provisions a board using existing commands.'
+        - 'Workflow validates required GitHub Environment secrets and passes Worker secrets through a generated .deploy.secrets file removed at job end.'
+        - 'README documents environment setup, workflow inputs, promotion commands, deployed smoke checks, and rollback boundaries.'
+        - 'The package does not add package publishing or product behavior.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Final audit: decide whether Conveyor Board 10 is complete and ready for package publishing planning.'
+    receipt:
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'Manual environment promotion workflow is implemented and documented.'
+        - 'Current validation/build/deploy-readiness gates are in the workflow and passed locally.'
+        - 'Optional remote D1 migration and board provisioning steps use existing current commands.'
+        - 'GitHub Environment secrets are documented and validated by the workflow without committing secrets.'
+        - 'Existing behavior gates passed: provisioning, build:widget, deploy:check, test:e2e, npm run validate, and make check.'
+        - 'Scope audit found no package publishing, hosted control plane, billing, realtime, comments/downvotes behavior, GitHub Projects, or new product behavior.'
+      next_starter_command: '$goal-prep Build Conveyor Board 11: package/version publishing flow for the embed script only, using completed Board 1-10 foundations and excluding hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, and new product behavior.'
+
+checks:
+  dirty_fingerprint: '.github/workflows/deploy.yml README.md docs/goals/bugdrop-board-release-promotion/state.yaml'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'npx prettier --check .github/workflows/deploy.yml README.md docs/goals/bugdrop-board-release-promotion/goal.md docs/goals/bugdrop-board-release-promotion/state.yaml'
+      - 'npm run check:actions-node24'
+      - 'npm run provision:board -- --repo mean-weasel/deploy-demo --name "Deploy Demo" --local'
+      - 'npm run build:widget'
+      - 'npm run deploy:check'
+      - 'npm run test:e2e'
+      - 'npm run validate'
+      - 'make check'
+      - 'rg inspection for workflow/docs promotion terms'
+      - 'scope scan for package publishing and product drift'
