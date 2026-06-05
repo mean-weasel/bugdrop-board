@@ -1,5 +1,6 @@
 import { BoardApi } from './api';
 import { renderBoard } from './dom';
+import { appendWidgetHost } from './mount';
 import { injectTheme } from './theme';
 import type { BoardItemView, BoardState, BoardWidgetConfig } from './types';
 
@@ -25,6 +26,7 @@ function readConfig(): BoardWidgetConfig {
     boardId,
     tokenEndpoint,
     accentColor: script.dataset.color || '#2563eb',
+    mountSelector: script.dataset.mountSelector,
     pollIntervalMs: parsePollInterval(script.dataset.pollInterval),
   };
 }
@@ -70,13 +72,17 @@ function replaceItems(items: BoardItemView[], nextItems: BoardItemView[]): Board
 }
 
 function mount(config: BoardWidgetConfig): void {
+  if (!script) {
+    throw new Error('BugDrop Board script tag could not be identified');
+  }
+
   const host = document.createElement('div');
   host.setAttribute('data-bugdrop-board-root', '');
   const shadow = host.attachShadow({ mode: 'open' });
   const root = document.createElement('div');
   injectTheme(shadow, config.accentColor);
   shadow.append(root);
-  document.body.append(host);
+  appendWidgetHost(host, { document, script, mountSelector: config.mountSelector });
 
   const api = new BoardApi(config.apiUrl, config.boardId, () => getToken(config));
   let state: BoardState = { items: [], cursor: 0, loading: true };

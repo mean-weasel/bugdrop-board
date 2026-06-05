@@ -45,3 +45,25 @@ test('embedded board creates, upvotes, and syncs through polling', async ({ brow
     await host.close();
   }
 });
+
+test('embedded board can mount inside a host-provided inline container', async ({ page }) => {
+  const board = await provisionBoard();
+  const host = await startHostApp(board.id, { inlineMount: true });
+
+  try {
+    await page.goto(`${host.url}/viewer-a`);
+
+    const inlineSlot = page.getByTestId('inline-feedback-slot');
+    await expect(inlineSlot.locator('[data-bugdrop-board-root]')).toHaveCount(1);
+    await expect(page.getByRole('heading', { name: 'Feedback' })).toBeVisible();
+
+    await page.getByLabel('Idea title').fill('Inline board placement');
+    await page.getByLabel('Context').fill('Installers can place the board inside page content.');
+    await page.getByRole('button', { name: 'Submit' }).click();
+
+    await expect(page.getByText('Inline board placement')).toBeVisible();
+    await expect(page.getByRole('link', { name: /Issue #\d+/ })).toBeVisible();
+  } finally {
+    await host.close();
+  }
+});
