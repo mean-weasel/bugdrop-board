@@ -1,0 +1,123 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Package Files Hygiene'
+  slug: 'bugdrop-board-package-files-hygiene'
+  kind: existing_plan
+  tranche: 'Package metadata hygiene after deploy-smoke automation.'
+  status: done
+  oracle:
+    signal: 'The future npm tarball includes all script files referenced by package.json commands.'
+    cadence: 'after Worker edit and final audit'
+    final_proof: 'npm pack dry-run output includes scripts/verify-deployed-worker.js and scripts/verify-package-install.js, plus validation gates.'
+  intake:
+    original_request: 'Continue the BugDrop Board release-readiness conveyor while the user is away.'
+    interpreted_outcome: 'Close the package-files gap introduced by the deploy-smoke command before any future npm publish.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers publishing future package versions'
+    authority: approved_for_safe_local_and_pr_work
+    proof_type: artifact
+    completion_proof: 'Package dry-run proves both verifier scripts are included.'
+    likely_misfire: 'Publishing a new version or changing runtime behavior instead of correcting package metadata.'
+    blind_spots_considered:
+      - 'package.json scripts are visible in the tarball, so referenced script files should either be included or not referenced.'
+      - 'The previous release-smoke tranche already included verify-package-install.js; deploy smoke needs the same treatment.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-package-files-hygiene/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-package-files-hygiene'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Identify package file metadata drift after deploy smoke automation.'
+    receipt:
+      result: done
+      summary: 'Scout found package.json exposes deploy:smoke but the npm files list included only scripts/verify-package-install.js, so a future tarball would omit scripts/verify-deployed-worker.js.'
+      evidence:
+        - 'package.json scripts.deploy:smoke references scripts/verify-deployed-worker.js.'
+        - 'package.json files listed scripts/verify-package-install.js but not scripts/verify-deployed-worker.js.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Include deployed-worker verifier in future package tarballs and docs.'
+    allowed_files:
+      - 'package.json'
+      - 'README.md'
+      - 'docs/goals/bugdrop-board-package-files-hygiene/goal.md'
+      - 'docs/goals/bugdrop-board-package-files-hygiene/state.yaml'
+    verify:
+      - 'npm run pack:check'
+      - 'npm run validate'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-package-files-hygiene/state.yaml'
+      - 'scope scan for forbidden product, publish, deploy, or credential changes'
+    stop_if:
+      - 'Need runtime/product behavior changes.'
+      - 'Need a new npm publish, production deploy, secret rotation, or credential change.'
+    receipt:
+      result: done
+      task_id: T002
+      changed_files:
+        - 'package.json'
+        - 'README.md'
+        - 'docs/goals/bugdrop-board-package-files-hygiene/goal.md'
+        - 'docs/goals/bugdrop-board-package-files-hygiene/state.yaml'
+      summary: 'Added scripts/verify-deployed-worker.js to the package files list and README package contents.'
+      commands:
+        - command: 'npm run pack:check'
+          status: pass
+          evidence: 'Tarball dry-run includes scripts/verify-deployed-worker.js, scripts/verify-package-install.js, public/board.js, README.md, package.json, and src/widget files.'
+        - command: 'npm run validate'
+          status: pass
+          evidence: 'eslint, Prettier, TypeScript, and 50 Vitest tests passed.'
+        - command: 'scope scan for forbidden product, publish, deploy, or credential changes'
+          status: pass
+          evidence: 'Diff-scoped scan only matched the intended verify-deployed-worker package/docs additions.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether package files hygiene satisfies the oracle.'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'package.json files includes scripts/verify-deployed-worker.js.'
+        - 'README package contents includes scripts/verify-deployed-worker.js.'
+        - 'No runtime product behavior, new npm publish, production deploy, secret rotation, hosted control plane, billing, realtime, comments, downvotes, or GitHub Projects change was introduced.'
+
+checks:
+  dirty_fingerprint: 'package.json README.md docs/goals/bugdrop-board-package-files-hygiene/goal.md docs/goals/bugdrop-board-package-files-hygiene/state.yaml'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'npm run pack:check'
+      - 'npm run validate'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-package-files-hygiene/state.yaml'
+      - 'scope scan for forbidden product, publish, deploy, or credential changes'
