@@ -5,7 +5,7 @@ goal:
   slug: 'bugdrop-board-chrome-dogfood-audit'
   kind: audit
   tranche: 'Chrome Extension manual production dogfood and self-check only.'
-  status: blocked
+  status: done
   oracle:
     signal: 'A dated production dogfood receipt proves two-viewer Chrome UI creation, polling, upvote, refresh durability, GitHub Issue mirroring, API agreement, and defect triage.'
     cadence: 'after Chrome setup, after item creation, after polling/upvote, after refresh, after API/GitHub corroboration, and at final audit'
@@ -45,7 +45,7 @@ agents:
 visual_board:
   selected: local
   local:
-    status: running
+    status: done
     url: 'http://goalbuddy.localhost:41737/bugdrop-board-chrome-dogfood-audit/'
     command: 'npx goalbuddy board docs/goals/bugdrop-board-chrome-dogfood-audit'
 
@@ -81,11 +81,26 @@ tasks:
   - id: T002
     type: worker
     assignee: Worker
-    status: blocked
+    status: done
     receipt:
-      result: blocked
-      note: notes/T002-worker-blocked.md
-      summary: 'Both Chrome viewer tabs rendered the embedded board but showed Failed to fetch before mutation; CORS probes showed the production Worker omits Access-Control-Allow-Origin for https://bugdrop.dev.'
+      result: done
+      note: notes/T002-worker.md
+      changed_files:
+        - docs/goals/bugdrop-board-chrome-dogfood-audit/notes/T002-worker.md
+      commands:
+        - cmd: 'Codex Chrome Extension: Viewer A create item through visible embedded UI'
+          status: pass
+        - cmd: 'Codex Chrome Extension: Viewer B polling check without manual reload'
+          status: pass
+        - cmd: 'Codex Chrome Extension: Viewer B upvote through visible embedded UI'
+          status: pass
+        - cmd: 'Codex Chrome Extension: Viewer A polling check observes one upvote'
+          status: pass
+        - cmd: 'Codex Chrome Extension: refresh both viewer tabs and verify persisted item, GitHub link, and viewer-specific upvote state'
+          status: pass
+        - cmd: 'Codex Chrome Extension: collect warning/error logs at each critical state'
+          status: pass
+      summary: 'After production redeploy fixed CORS, Viewer A created the Chrome dogfood item through the visible UI, Viewer B saw it through polling, Viewer B upvoted it, Viewer A observed one upvote, and both tabs preserved state after refresh.'
     objective: 'Run two-viewer Chrome dogfood through the visible embedded UI.'
     acceptance_criteria:
       - 'Open or claim two Chrome tabs: Viewer A at `https://bugdrop.dev/board-dogfood?viewer=a` and Viewer B at `https://bugdrop.dev/board-dogfood?viewer=b`.'
@@ -113,11 +128,11 @@ tasks:
   - id: T003
     type: scout
     assignee: Scout
-    status: blocked
+    status: done
     receipt:
-      result: blocked
-      note: notes/T003-scout-blocked.md
-      summary: 'Skipped Chrome-created item cross-checks because T002 could not create an item through the browser-visible UI.'
+      result: done
+      note: notes/T003-scout.md
+      summary: 'GitHub issue #2, Viewer A/B board API readbacks, and event stream entries agree with the Chrome-created item and upvote.'
     objective: 'Cross-check Chrome observations against GitHub, Board API, and event API.'
     acceptance_criteria:
       - '`gh issue view` or `gh issue list` proves a matching issue exists in `mean-weasel/bugdrop-board-production-dogfood`.'
@@ -141,9 +156,10 @@ tasks:
     status: done
     receipt:
       result: done
-      decision: 'issue-filed'
+      decision: 'complete'
       note: notes/T004-judge.md
-      summary: 'Classified the Chrome-visible CORS failure as a blocker and filed issue #24.'
+      full_outcome_complete: true
+      summary: 'Classified issue #24 as a valid blocker, then verified it was fixed and closed after production redeploy and Chrome rerun proof.'
     objective: 'Decide which observed issues require GitHub follow-up issues.'
     acceptance_criteria:
       - 'Review Chrome screenshots/DOM excerpts, console logs, API evidence, and operator notes.'
@@ -170,13 +186,13 @@ tasks:
         - docs/goals/bugdrop-board-chrome-dogfood-audit/state.yaml
         - docs/goals/bugdrop-board-chrome-dogfood-audit/notes/T005-worker.md
       commands:
-        - cmd: 'npx prettier --check docs/production-dogfood-results/2026-06-05-chrome-audit.md docs/goals/bugdrop-board-chrome-dogfood-audit/state.yaml docs/goals/bugdrop-board-chrome-dogfood-audit/notes/T001-scout.md docs/goals/bugdrop-board-chrome-dogfood-audit/notes/T002-worker-blocked.md docs/goals/bugdrop-board-chrome-dogfood-audit/notes/T003-scout-blocked.md docs/goals/bugdrop-board-chrome-dogfood-audit/notes/T004-judge.md'
+        - cmd: 'npx prettier --check docs/production-dogfood-results/2026-06-05-chrome-audit.md docs/goals/bugdrop-board-chrome-dogfood-audit/state.yaml docs/goals/bugdrop-board-chrome-dogfood-audit/notes/*.md'
           status: pass
         - cmd: 'token-shaped secret scan over docs/production-dogfood-results/2026-06-05-chrome-audit.md and docs/goals/bugdrop-board-chrome-dogfood-audit'
           status: pass
         - cmd: 'make check'
           status: pass
-      summary: 'Wrote the blocked Chrome dogfood audit receipt and verified formatting, token-shaped secret scan, make check, and GoalBuddy state.'
+      summary: 'Updated the Chrome dogfood audit receipt with production redeploy proof, successful two-viewer Chrome proof, GitHub/API/event proof, issue #24 closure, and scope audit.'
     objective: 'Write and verify the durable Chrome dogfood receipt.'
     acceptance_criteria:
       - 'Create `docs/production-dogfood-results/<date>-chrome-audit.md`.'
@@ -197,13 +213,13 @@ tasks:
   - id: T006
     type: judge
     assignee: Judge
-    status: blocked
+    status: done
     receipt:
-      result: blocked
-      decision: 'not-complete'
+      result: done
+      decision: 'complete'
       note: notes/T006-judge-final.md
-      full_outcome_complete: false
-      rationale: 'Chrome dogfood proved the embedded board renders but is blocked by missing browser CORS allow-origin headers for https://bugdrop.dev; issue #24 tracks the defect.'
+      full_outcome_complete: true
+      rationale: 'All Chrome dogfood oracle bullets are proven after production redeploy run 27021970255 and the successful two-viewer rerun.'
     objective: 'Final audit against the Chrome dogfood oracle.'
     acceptance_criteria:
       - 'Every oracle bullet in `goal.md` is mapped to proof in the receipt or a declared blocker.'

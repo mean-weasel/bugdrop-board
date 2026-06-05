@@ -1,37 +1,38 @@
 # T006 Final Judge Receipt
 
-Timestamp: `2026-06-05T14:46:00Z`
+Timestamp: `2026-06-05T14:58:00Z`
 
 ## Decision
 
-Result: blocked, not complete.
+Result: complete.
 
-The Chrome dogfood audit produced strong evidence and a follow-up issue, but the full oracle is not
-achieved because browser-visible item creation, polling, upvote, GitHub mirroring, and refresh
-durability could not run through the embedded UI.
+The full Chrome dogfood oracle is satisfied after resolving issue #24 with production deploy run
+`27021970255` and rerunning the two-viewer browser proof.
 
 ## Oracle Audit
 
 - Codex Chrome Extension could open or claim Chrome tabs for Viewer A and Viewer B: proven.
-- Viewer A and Viewer B loaded their dogfood URLs: proven.
-- Both tabs rendered the embedded board from `https://board.bugdrop.dev/board.js`: partially
-  proven; the board rendered but showed `Failed to fetch`.
-- Viewer A created a uniquely titled item from visible UI: blocked.
-- Corresponding GitHub Issue exists for the uniquely titled item: blocked.
-- Viewer B saw the new item through polling without reload: blocked.
-- A different viewer upvoted the item and both viewers showed one upvote: blocked.
-- Refreshing both tabs preserved item, GitHub link, and upvote state: blocked.
-- API/CLI cross-checks agree with browser observations: proven for the failure mode. API token
-  minting, D1 reads, and event reads are healthy, while browser-origin CORS headers are missing.
-- Defect found has a clear follow-up issue: proven with
-  `https://github.com/mean-weasel/bugdrop-board/issues/24`.
+- Viewer A loaded `https://bugdrop.dev/board-dogfood?viewer=a`: proven.
+- Viewer B loaded `https://bugdrop.dev/board-dogfood?viewer=b`: proven.
+- Both tabs rendered the embedded board from `https://board.bugdrop.dev/board.js` without blocking
+  console errors: proven after redeploy.
+- Viewer A created a uniquely titled item from the visible UI: proven with
+  `Chrome dogfood item 20260605T145224Z`.
+- The corresponding GitHub Issue exists in `mean-weasel/bugdrop-board-production-dogfood`: proven
+  with issue #2.
+- Viewer B saw the new item through polling without a manual full-page reload: proven.
+- Viewer B upvoted the item through visible UI and both viewers showed one upvote: proven.
+- Refreshing both tabs preserved the item, GitHub link, and viewer-specific upvote state: proven.
+- API/CLI cross-checks agree with browser observations: proven.
+- Defect found has a clear follow-up issue: proven; issue #24 was filed, fixed, commented, and
+  closed.
 
-## Current Verification
+## Verification
 
-- GoalBuddy state checker passed while `T005` was active after the receipt was written.
-- `npx prettier --check` passed for the receipt and GoalBuddy notes/state files.
-- Token-shaped secret scan passed.
-- `make check` passed.
+- `node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-chrome-dogfood-audit/state.yaml`
+- `npx prettier --check docs/production-dogfood-results/2026-06-05-chrome-audit.md docs/goals/bugdrop-board-chrome-dogfood-audit/state.yaml docs/goals/bugdrop-board-chrome-dogfood-audit/notes/*.md`
+- Token-shaped secret scan over receipt and GoalBuddy board directory.
+- `make check`
 
 ## Scope Audit
 
@@ -43,11 +44,5 @@ durability could not run through the embedded UI.
 - No downvotes.
 - No GitHub Projects.
 - No production credential rotation.
-- No destructive cleanup.
-- No production item or upvote created during this Chrome pass.
-
-## Next Required Work
-
-Resolve issue #24, redeploy the production Board Worker/configuration as needed, then rerun this
-GoalBuddy board from `T001` or a refreshed successor board to complete the full Chrome UI
-create/poll/upvote/refresh oracle.
+- Production mutation was limited to redeploying the Worker with existing secrets, creating one
+  dogfood item, creating mirrored issue #2, adding one Viewer B upvote, and closing issue #24.

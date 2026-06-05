@@ -1,24 +1,23 @@
 # T005 Worker Receipt
 
-Timestamp: `2026-06-05T14:45:00Z`
+Timestamp: `2026-06-05T14:57:00Z`
 
 ## Result
 
-Wrote blocked Chrome dogfood receipt:
+Updated final Chrome dogfood receipt:
 
 - `docs/production-dogfood-results/2026-06-05-chrome-audit.md`
 
-## Verification
+## Verification Captured In Receipt
 
-- `npx prettier --check docs/production-dogfood-results/2026-06-05-chrome-audit.md docs/goals/bugdrop-board-chrome-dogfood-audit/state.yaml docs/goals/bugdrop-board-chrome-dogfood-audit/notes/T001-scout.md docs/goals/bugdrop-board-chrome-dogfood-audit/notes/T002-worker-blocked.md docs/goals/bugdrop-board-chrome-dogfood-audit/notes/T003-scout-blocked.md docs/goals/bugdrop-board-chrome-dogfood-audit/notes/T004-judge.md`:
-  passed.
-- Token-shaped secret scan over the receipt and GoalBuddy board directory: passed.
-- `make check`: passed.
-- GoalBuddy state checker: passed while `T005` was active.
+- Production deploy dry-run: passed.
+- Production deploy workflow `27021970255`: passed.
+- CORS preflight/read checks after deploy: passed.
+- Two-viewer Chrome dogfood rerun: passed.
+- GitHub Issue #2 mirror check: passed.
+- Board API Viewer A and Viewer B readbacks: passed.
+- Event API readback: passed.
 
-## Summary
-
-The receipt includes the target URLs, intended unique item title, Chrome tab proof, embedded-board
-DOM excerpt, console-log summary, API/CORS cross-checks, issue #24 follow-up, scope audit, and
-rollback notes. It does not claim successful create, polling, upvote, GitHub mirroring, or refresh
-durability because the browser-visible board is blocked by production CORS behavior.
+The receipt includes target URLs, unique item title, Chrome tab proof, DOM excerpts, console-log
+summary, GitHub Issue URL, Board API readbacks, event API readback, refresh persistence, issue #24
+resolution, scope audit, and rollback notes.
