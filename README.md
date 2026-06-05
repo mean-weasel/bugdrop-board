@@ -534,7 +534,8 @@ make release-smoke
 
 The smoke command resolves all public package entrypoints, verifies they point at the installed
 `public/board.js` bundle, and checks the bundle has the expected widget and fetch code. The package
-workflow runs this smoke automatically after a non-dry-run publish.
+workflow runs this smoke automatically after a non-dry-run publish with a longer retry window to
+allow npm registry propagation.
 
 The `Package Widget` GitHub Actions workflow is manually dispatched and dry-runs by default:
 
@@ -551,7 +552,7 @@ workflow runs:
 npm run validate
 npm run pack:check
 npm publish --access public --tag "$NPM_TAG"
-npm run release:smoke
+npm run release:smoke -- --retries 12 --retry-delay-ms 10000
 ```
 
 The first public package is published as `@mean-weasel/bugdrop-board@0.1.0`. Actual publishing of
