@@ -415,6 +415,8 @@ Run the workflow from GitHub Actions:
 3. Leave **Apply remote D1 migrations** enabled unless migrations were already applied.
 4. Optionally enter `provision_repo` as `owner/name` and `provision_name` to create or update the
    board row before deployment.
+5. Optionally enter `smoke_url`, such as `https://bugdrop-board.example.workers.dev`, to verify the
+   deployed `/health` and `/board.js` endpoints after deployment.
 
 The workflow runs:
 
@@ -425,6 +427,7 @@ npx wrangler deploy --dry-run [--env staging]
 npx wrangler d1 migrations apply DB --remote
 npm run provision:board -- --repo owner/name --remote
 npx wrangler deploy --secrets-file .deploy.secrets
+npm run deploy:smoke -- --url https://bugdrop-board.example.workers.dev --expect-environment production
 ```
 
 The secrets file is generated inside the workflow runner and removed at the end of the job. Do not
@@ -435,6 +438,7 @@ After promotion, verify the deployed Worker:
 ```bash
 curl https://bugdrop-board.example.workers.dev/health
 curl -I https://bugdrop-board.example.workers.dev/board.js
+npm run deploy:smoke -- --url https://bugdrop-board.example.workers.dev --expect-environment production
 ```
 
 Then open a signed-in host app page, create a test item, confirm the matching GitHub Issue appears,
@@ -572,6 +576,7 @@ npm run provision:board -- --repo mean-weasel/demo --name "Demo Board" --local
 npm run build:widget
 npm run pack:check
 npm run deploy:check
+npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production
 npm run test:e2e
 npm run validate
 make check

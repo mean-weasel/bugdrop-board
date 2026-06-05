@@ -1,0 +1,179 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Deploy Smoke Automation'
+  slug: 'bugdrop-board-deploy-smoke-automation'
+  kind: existing_plan
+  tranche: 'Post-v0.1.0 deploy proof hardening: reusable deployed Worker smoke and optional workflow smoke input.'
+  status: done
+  oracle:
+    signal: 'A deployed Worker URL can be verified with npm run deploy:smoke, and Deploy Worker can run the same check after a real deploy when smoke_url is provided.'
+    cadence: 'after Worker implementation and final audit'
+    final_proof: 'Local smoke against https://board.bugdrop.dev, workflow/docs diff inspection, validation gates, and scope scan.'
+  intake:
+    original_request: 'Continue the BugDrop Board release-readiness conveyor while the user is away.'
+    interpreted_outcome: 'Add the next safe release-readiness proof automation slice without mutating production or publishing.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers and self-hosters promoting Worker deployments'
+    authority: approved_for_safe_local_and_pr_work
+    proof_type: artifact
+    completion_proof: 'A command and optional workflow step verify deployed Worker health/assets from an explicit URL.'
+    likely_misfire: 'Accidentally deploying production, changing secrets, or adding runtime product behavior while improving deploy proof.'
+    blind_spots_considered:
+      - 'Current deploy docs use manual curl commands but do not provide a reusable smoke command.'
+      - 'Deploy workflow cannot infer every self-host URL, so the smoke URL must be explicit and optional.'
+      - 'The smoke should verify only safe public endpoints.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-deploy-smoke-automation/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-deploy-smoke-automation'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Identify the smallest safe deploy proof automation slice.'
+    receipt:
+      result: done
+      summary: 'Scout found deploy docs and workflow rely on manual curl smoke checks; adding a reusable public-endpoint smoke command plus optional workflow input is the safest next hardening slice.'
+      evidence:
+        - 'README Environment Promotion uses curl /health and curl -I /board.js as manual deploy checks.'
+        - '.github/workflows/deploy.yml deploys and cleans secrets but has no optional post-deploy URL smoke.'
+        - 'Production Worker https://board.bugdrop.dev is live and can be used for non-mutating local proof.'
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Authorize deploy smoke automation Worker slice.'
+    receipt:
+      result: done
+      decision: proceed
+      worker_objective: 'Add a deployed Worker smoke script, expose npm/Make commands, add optional Deploy Worker smoke_url input and post-deploy smoke step, document it, and verify against board.bugdrop.dev without deploying.'
+      allowed_files:
+        - '.github/workflows/deploy.yml'
+        - 'Makefile'
+        - 'README.md'
+        - 'package.json'
+        - 'scripts/verify-deployed-worker.js'
+        - 'docs/goals/bugdrop-board-deploy-smoke-automation/goal.md'
+        - 'docs/goals/bugdrop-board-deploy-smoke-automation/state.yaml'
+      verify:
+        - 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production'
+        - 'npm run validate'
+        - 'make check'
+        - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-deploy-smoke-automation/state.yaml'
+        - 'scope scan for forbidden product, publish, deploy, or credential changes'
+      stop_if:
+        - 'Need to run a deployment.'
+        - 'Need to publish a new npm version.'
+        - 'Need to rotate or inspect secret values.'
+        - 'Need runtime product behavior changes.'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Implement and verify the deploy smoke automation Worker slice.'
+    allowed_files:
+      - '.github/workflows/deploy.yml'
+      - 'Makefile'
+      - 'README.md'
+      - 'package.json'
+      - 'scripts/verify-deployed-worker.js'
+      - 'docs/goals/bugdrop-board-deploy-smoke-automation/goal.md'
+      - 'docs/goals/bugdrop-board-deploy-smoke-automation/state.yaml'
+    verify:
+      - 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production'
+      - 'npm run validate'
+      - 'make check'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-deploy-smoke-automation/state.yaml'
+      - 'scope scan for forbidden product, publish, deploy, or credential changes'
+    stop_if:
+      - 'Need files outside allowed_files.'
+      - 'Need to run a deployment.'
+      - 'Need to publish a new npm version.'
+      - 'Need to rotate or inspect secret values.'
+      - 'Verification fails twice.'
+    receipt:
+      result: done
+      task_id: T003
+      changed_files:
+        - '.github/workflows/deploy.yml'
+        - 'Makefile'
+        - 'README.md'
+        - 'package.json'
+        - 'scripts/verify-deployed-worker.js'
+        - 'docs/goals/bugdrop-board-deploy-smoke-automation/goal.md'
+        - 'docs/goals/bugdrop-board-deploy-smoke-automation/state.yaml'
+      summary: 'Added a reusable deployed Worker smoke command, exposed npm and Makefile commands, wired an optional Deploy Worker smoke_url input and post-deploy verification step, and documented the workflow/input/manual command.'
+      commands:
+        - command: 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production'
+          status: pass
+          evidence: 'Returned production health ok and HEAD /board.js 200 with content-type text/javascript.'
+        - command: 'npm run validate'
+          status: pass
+          evidence: 'eslint, Prettier, TypeScript, and 50 Vitest tests passed.'
+        - command: 'make check'
+          status: pass
+          evidence: 'eslint, format-check, typecheck, knip, critical npm audit, and Actions Node guard passed.'
+        - command: 'scope scan for forbidden product, publish, deploy, or credential changes'
+          status: pass
+          evidence: 'Diff scan only matched the intended optional smoke_url/deploy:smoke additions and existing deploy command context; no publish, secret rotation, production credential, or runtime product behavior change was introduced.'
+      remaining_blockers: []
+      verification_attempts: 1
+      stopped_because: null
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether deploy smoke automation satisfies the oracle.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'missing evidence'
+      - 'next task if not complete'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'Local deploy smoke is available through npm run deploy:smoke and make deploy-smoke.'
+        - 'The smoke verifies only public /health and /board.js endpoints.'
+        - 'The Deploy Worker workflow runs deploy:smoke only when smoke_url is explicitly provided.'
+        - 'README documents the smoke_url workflow input and local deploy:smoke command.'
+        - 'Verification passed against the already-live production Worker without deploying.'
+        - 'Final scope scan found no forbidden product, publish, deploy, or credential changes.'
+      next_starter_command: '$goal-prep Build the next BugDrop Board release-readiness tranche after deploy smoke automation, preserving standing exclusions.'
+
+checks:
+  dirty_fingerprint: '.github/workflows/deploy.yml Makefile README.md package.json scripts/verify-deployed-worker.js docs/goals/bugdrop-board-deploy-smoke-automation/goal.md docs/goals/bugdrop-board-deploy-smoke-automation/state.yaml'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production'
+      - 'npm run validate'
+      - 'make check'
+      - 'scope scan for forbidden product, publish, deploy, or credential changes'

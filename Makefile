@@ -1,4 +1,4 @@
-.PHONY: dev build build-widget build-all deploy deploy-check pack-check release-smoke release-rehearsal test test-watch lint lint-fix format format-check typecheck knip audit check-actions-node24 check ci clean install help
+.PHONY: dev build build-widget build-all deploy deploy-check deploy-smoke pack-check release-smoke release-rehearsal test test-watch lint lint-fix format format-check typecheck knip audit check-actions-node24 check ci clean install help
 
 dev:
 	npm run dev
@@ -16,6 +16,9 @@ deploy: build-all
 
 deploy-check:
 	npm run deploy:check
+
+deploy-smoke:
+	npm run deploy:smoke -- --url "$(URL)"
 
 pack-check:
 	npm run pack:check
@@ -73,6 +76,7 @@ help:
 	@echo "  make check       - lint, format-check, typecheck, knip, audit, Actions guard"
 	@echo "  make ci          - check, unit tests, widget build, TypeScript build"
 	@echo "  make deploy-check - build widget and run wrangler deploy --dry-run"
+	@echo "  make deploy-smoke URL=https://worker.example.com - verify /health and /board.js"
 	@echo "  make pack-check   - build widget and dry-run npm package contents"
 	@echo "  make release-smoke - install the published package in a temp project"
 	@echo "  make release-rehearsal - run local release-readiness dry-run gates"

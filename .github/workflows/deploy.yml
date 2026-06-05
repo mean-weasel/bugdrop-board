@@ -24,6 +24,10 @@ on:
         description: Optional display name for the provisioned board.
         required: false
         type: string
+      smoke_url:
+        description: Optional deployed Worker URL to verify after deployment.
+        required: false
+        type: string
 
 jobs:
   deploy:
@@ -39,6 +43,7 @@ jobs:
       GITHUB_ISSUE_ACCESS_TOKEN: ${{ secrets.ISSUE_ACCESS_TOKEN }}
       PROVISION_REPO: ${{ inputs.provision_repo }}
       PROVISION_NAME: ${{ inputs.provision_name }}
+      SMOKE_URL: ${{ inputs.smoke_url }}
       WRANGLER_ENVIRONMENT: ${{ inputs.wrangler_environment }}
     steps:
       - uses: actions/checkout@v5
@@ -122,6 +127,10 @@ jobs:
             args+=(--env "$WRANGLER_ENVIRONMENT")
           fi
           npx wrangler "${args[@]}"
+
+      - name: Verify deployed Worker
+        if: ${{ inputs.smoke_url != '' }}
+        run: npm run deploy:smoke -- --url "$SMOKE_URL" --expect-environment "${{ inputs.environment }}"
 
       - name: Remove deployment secrets file
         if: always()
