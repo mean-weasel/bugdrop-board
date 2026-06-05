@@ -18,7 +18,7 @@ deploy-check:
 	npm run deploy:check
 
 deploy-smoke:
-	npm run deploy:smoke -- --url "$(URL)"
+	npm run deploy:smoke -- $(if $(URL),--url "$(URL)",) $(if $(EXPECT_ENVIRONMENT),--expect-environment "$(EXPECT_ENVIRONMENT)",)
 
 pack-check:
 	npm run pack:check
@@ -76,7 +76,8 @@ help:
 	@echo "  make check       - lint, format-check, typecheck, knip, audit, Actions guard"
 	@echo "  make ci          - check, unit tests, widget build, TypeScript build"
 	@echo "  make deploy-check - build widget and run wrangler deploy --dry-run"
-	@echo "  make deploy-smoke URL=https://worker.example.com - verify /health and /board.js"
+	@echo "  make deploy-smoke URL=https://worker.example.com EXPECT_ENVIRONMENT=production - verify /health and /board.js"
+	@echo "                    or use DEPLOY_SMOKE_URL and DEPLOY_SMOKE_EXPECT_ENVIRONMENT"
 	@echo "  make pack-check   - build widget and dry-run npm package contents"
 	@echo "  make release-smoke - install the published package in a temp project"
 	@echo "  make release-rehearsal - run local release-readiness dry-run gates"
