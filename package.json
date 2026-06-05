@@ -12,6 +12,8 @@
   "files": [
     "public/board.js",
     "scripts/verify-deployed-worker.js",
+    "scripts/verify-clean-room-install.js",
+    "scripts/verify-clean-room-install-core.js",
     "scripts/verify-package-install.js",
     "src/widget/",
     "README.md"
@@ -25,6 +27,7 @@
     "deploy:smoke": "node scripts/verify-deployed-worker.js",
     "pack:check": "npm pack --dry-run",
     "release:smoke": "node scripts/verify-package-install.js",
+    "install:smoke": "node scripts/verify-clean-room-install.js",
     "provision:board": "node scripts/provision-board.js",
     "staging:secrets": "node scripts/staging-secrets.js",
     "test": "vitest run",

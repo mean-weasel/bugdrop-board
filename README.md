@@ -529,6 +529,8 @@ All entrypoints resolve to `public/board.js`. The npm package includes:
 
 - `public/board.js`
 - `scripts/verify-deployed-worker.js`
+- `scripts/verify-clean-room-install.js`
+- `scripts/verify-clean-room-install-core.js`
 - `scripts/verify-package-install.js`
 - `src/widget/`
 - `README.md`
@@ -558,6 +560,7 @@ After a publish, verify the registry artifact by installing it into a temporary 
 ```bash
 npm run release:smoke
 npm run release:smoke -- --version 0.1.2
+npm run install:smoke -- --version 0.1.2
 make release-smoke
 ```
 
@@ -565,6 +568,11 @@ The smoke command resolves all public package entrypoints, verifies they point a
 `public/board.js` bundle, and checks the bundle has the expected widget and fetch code. The package
 workflow runs this smoke automatically after a non-dry-run publish with a longer retry window to
 allow npm registry propagation.
+
+`npm run install:smoke` goes one step further: it installs the published package into a temporary
+project, serves only the installed `public/board.js`, loads a minimal host page in Chromium with the
+documented script attributes, mocks the token/items API responses, and verifies the board mounts
+inside `data-mount-selector`.
 
 To verify the package from a completely separate project, run:
 
