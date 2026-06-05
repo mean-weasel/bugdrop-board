@@ -1,0 +1,237 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Chrome Dogfood Audit'
+  slug: 'bugdrop-board-chrome-dogfood-audit'
+  kind: audit
+  tranche: 'Chrome Extension manual production dogfood and self-check only.'
+  status: done
+  oracle:
+    signal: 'A dated production dogfood receipt proves two-viewer Chrome UI creation, polling, upvote, refresh durability, GitHub Issue mirroring, API agreement, and defect triage.'
+    cadence: 'after Chrome setup, after item creation, after polling/upvote, after refresh, after API/GitHub corroboration, and at final audit'
+    final_proof: 'docs/production-dogfood-results/<date>-chrome-audit.md with browser, API, GitHub, screenshot/DOM, console-log, scope-audit, and follow-up issue evidence.'
+  intake:
+    original_request: 'Make a detailed plan using the Codex Chrome extension to do manual dogfooding yourself and check your own work. Use GoalBuddy Prep with refined measurable acceptance criteria.'
+    interpreted_outcome: 'Prepare a GoalBuddy execution board for Chrome-driven production dogfood of BugDrop Board with rigorous measurable acceptance criteria.'
+    input_shape: specific
+    audience: 'BugDrop Board maintainers deciding what to polish after real embedded dogfood'
+    authority: requested
+    proof_type: demo
+    completion_proof: 'A committed Chrome dogfood receipt plus green verification gates and any needed follow-up issues.'
+    likely_misfire: 'Passing API smoke while missing visible UI failures, polling flakiness, confusing states, or Chrome-console errors.'
+    blind_spots_considered:
+      - 'The board may work through API but fail in the embedded Shadow DOM UI.'
+      - 'Polling may only appear to work after manual reload unless two live tabs are observed.'
+      - 'Viewer-specific upvote state may be correct in D1 but confusing in visible UI copy.'
+      - 'Existing production dogfood items may make assertions ambiguous unless the run uses a unique title.'
+      - 'Chrome Extension connectivity may fail and must not be bypassed with unrelated browser automation.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_product_behavior_changes: true
+  no_production_credential_changes: true
+  no_npm_publish_without_explicit_approval: true
+  no_completion_without_chrome_browser_proof: true
+  no_completion_without_api_github_crosscheck: true
+  no_completion_without_scope_audit: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: done
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-chrome-dogfood-audit/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-chrome-dogfood-audit'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Confirm the current production dogfood surface and Chrome execution prerequisites without mutating data.'
+    receipt:
+      result: done
+      note: notes/T001-scout.md
+      summary: 'Production dogfood host, board worker, board script, npm package, GitHub state, and Codex Chrome Extension bridge were verified before mutation.'
+    acceptance_criteria:
+      - '`git status --short --branch` is recorded for `/Users/neonwatty/Desktop/bugdrop-board`.'
+      - 'Open PRs, recent CI runs, npm version, and latest production dogfood receipt are recorded.'
+      - 'Chrome Extension bootstrap is attempted through the Chrome skill path by listing or creating a tab; if it fails, the documented retry and checks are followed.'
+      - '`https://bugdrop.dev/board-dogfood?viewer=a` and `?viewer=b` are reachable by HTTP before browser mutation.'
+      - '`https://board.bugdrop.dev/health` and `/board.js` are reachable.'
+      - 'Stop conditions are evaluated before any UI item creation.'
+    allowed_files:
+      - 'docs/goals/bugdrop-board-chrome-dogfood-audit/state.yaml'
+      - 'docs/goals/bugdrop-board-chrome-dogfood-audit/notes/**'
+    verify:
+      - 'Record command outputs or compact summaries in the T001 receipt.'
+      - 'No production board item is created during T001.'
+    stop_if:
+      - 'Chrome Extension is unavailable after the documented retry/troubleshooting path.'
+      - 'The host page, token endpoint, board health, or board.js is unavailable.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    receipt:
+      result: done
+      note: notes/T002-worker.md
+      changed_files:
+        - docs/goals/bugdrop-board-chrome-dogfood-audit/notes/T002-worker.md
+      commands:
+        - cmd: 'Codex Chrome Extension: Viewer A create item through visible embedded UI'
+          status: pass
+        - cmd: 'Codex Chrome Extension: Viewer B polling check without manual reload'
+          status: pass
+        - cmd: 'Codex Chrome Extension: Viewer B upvote through visible embedded UI'
+          status: pass
+        - cmd: 'Codex Chrome Extension: Viewer A polling check observes one upvote'
+          status: pass
+        - cmd: 'Codex Chrome Extension: refresh both viewer tabs and verify persisted item, GitHub link, and viewer-specific upvote state'
+          status: pass
+        - cmd: 'Codex Chrome Extension: collect warning/error logs at each critical state'
+          status: pass
+      summary: 'After production redeploy fixed CORS, Viewer A created the Chrome dogfood item through the visible UI, Viewer B saw it through polling, Viewer B upvoted it, Viewer A observed one upvote, and both tabs preserved state after refresh.'
+    objective: 'Run two-viewer Chrome dogfood through the visible embedded UI.'
+    acceptance_criteria:
+      - 'Open or claim two Chrome tabs: Viewer A at `https://bugdrop.dev/board-dogfood?viewer=a` and Viewer B at `https://bugdrop.dev/board-dogfood?viewer=b`.'
+      - 'Use a unique title with a timestamp or nonce, prefixed `Chrome dogfood item`.'
+      - 'Create the item from Viewer A through the visible UI, not direct API.'
+      - 'Capture proof that Viewer A sees the created item and GitHub Issue link.'
+      - 'Without full-page reload, wait up to 15 seconds for Viewer B to see the item through polling; record elapsed time or failure.'
+      - 'Upvote from Viewer B through the visible UI.'
+      - 'Capture proof that Viewer B shows viewer-upvoted state and one upvote.'
+      - 'Capture proof that Viewer A sees one upvote after polling or a bounded wait.'
+      - 'Refresh both tabs and prove item, GitHub link, and upvote state persist.'
+      - 'Collect console logs for both tabs and classify blocking vs non-blocking messages.'
+    allowed_files:
+      - 'docs/goals/bugdrop-board-chrome-dogfood-audit/state.yaml'
+      - 'docs/goals/bugdrop-board-chrome-dogfood-audit/notes/**'
+    verify:
+      - 'At least one screenshot or DOM text excerpt per critical state: initial load, created item in Viewer A, polling visibility in Viewer B, upvote state, refresh persistence.'
+      - 'The dogfood action uses Chrome Extension tabs; API calls are only corroboration after UI actions.'
+    stop_if:
+      - 'The UI cannot create an item.'
+      - 'The UI cannot vote.'
+      - 'Polling does not update Viewer B within 15 seconds.'
+      - 'A blocking console error appears.'
+
+  - id: T003
+    type: scout
+    assignee: Scout
+    status: done
+    receipt:
+      result: done
+      note: notes/T003-scout.md
+      summary: 'GitHub issue #2, Viewer A/B board API readbacks, and event stream entries agree with the Chrome-created item and upvote.'
+    objective: 'Cross-check Chrome observations against GitHub, Board API, and event API.'
+    acceptance_criteria:
+      - '`gh issue view` or `gh issue list` proves a matching issue exists in `mean-weasel/bugdrop-board-production-dogfood`.'
+      - 'Board item read API using a host-minted token returns the unique item with matching `githubIssueUrl`.'
+      - 'Viewer A and Viewer B readbacks prove expected `viewerHasUpvoted` differences after the upvote.'
+      - 'Events API returns item creation and upvote events for the item.'
+      - 'The API/GitHub results agree with the browser-observed title, issue URL, and upvote count.'
+    allowed_files:
+      - 'docs/goals/bugdrop-board-chrome-dogfood-audit/state.yaml'
+      - 'docs/goals/bugdrop-board-chrome-dogfood-audit/notes/**'
+    verify:
+      - 'Command summaries redact token values and include no secrets.'
+      - 'Mismatch between UI and API/GitHub becomes a defect follow-up, not a silent pass.'
+    stop_if:
+      - 'GitHub issue creation failed or cannot be verified.'
+      - 'API readback disagrees with visible UI in a product-relevant way.'
+
+  - id: T004
+    type: judge
+    assignee: Judge
+    status: done
+    receipt:
+      result: done
+      decision: 'complete'
+      note: notes/T004-judge.md
+      full_outcome_complete: true
+      summary: 'Classified issue #24 as a valid blocker, then verified it was fixed and closed after production redeploy and Chrome rerun proof.'
+    objective: 'Decide which observed issues require GitHub follow-up issues.'
+    acceptance_criteria:
+      - 'Review Chrome screenshots/DOM excerpts, console logs, API evidence, and operator notes.'
+      - 'Classify findings as blocker, polish, known/acceptable, or no issue.'
+      - 'For each blocker or polish defect, authorize one narrowly titled GitHub issue in `mean-weasel/bugdrop-board`.'
+      - 'Reject duplicate, vague, or out-of-scope issues.'
+    allowed_files:
+      - 'docs/goals/bugdrop-board-chrome-dogfood-audit/state.yaml'
+      - 'docs/goals/bugdrop-board-chrome-dogfood-audit/notes/**'
+    verify:
+      - 'Judge receipt maps every observed problem to either a follow-up issue URL or an explicit no-issue rationale.'
+    stop_if:
+      - 'A finding would require adding hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or secret changes.'
+
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: done
+    receipt:
+      result: done
+      note: notes/T005-worker.md
+      changed_files:
+        - docs/production-dogfood-results/2026-06-05-chrome-audit.md
+        - docs/goals/bugdrop-board-chrome-dogfood-audit/state.yaml
+        - docs/goals/bugdrop-board-chrome-dogfood-audit/notes/T005-worker.md
+      commands:
+        - cmd: 'npx prettier --check docs/production-dogfood-results/2026-06-05-chrome-audit.md docs/goals/bugdrop-board-chrome-dogfood-audit/state.yaml docs/goals/bugdrop-board-chrome-dogfood-audit/notes/*.md'
+          status: pass
+        - cmd: 'token-shaped secret scan over docs/production-dogfood-results/2026-06-05-chrome-audit.md and docs/goals/bugdrop-board-chrome-dogfood-audit'
+          status: pass
+        - cmd: 'make check'
+          status: pass
+      summary: 'Updated the Chrome dogfood audit receipt with production redeploy proof, successful two-viewer Chrome proof, GitHub/API/event proof, issue #24 closure, and scope audit.'
+    objective: 'Write and verify the durable Chrome dogfood receipt.'
+    acceptance_criteria:
+      - 'Create `docs/production-dogfood-results/<date>-chrome-audit.md`.'
+      - 'Receipt includes target URLs, unique title, Chrome tab proof, screenshots/DOM excerpts, console-log summary, GitHub Issue URL, Board API readbacks, event API readback, refresh persistence, follow-up issue decisions, scope audit, and rollback notes.'
+      - 'Receipt says whether the dogfood pass was clean, passed with follow-ups, or blocked.'
+      - 'No secret values, bearer tokens, cookies, local storage, or profile data are recorded.'
+    allowed_files:
+      - 'docs/production-dogfood-results/**'
+      - 'docs/goals/bugdrop-board-chrome-dogfood-audit/state.yaml'
+      - 'docs/goals/bugdrop-board-chrome-dogfood-audit/notes/**'
+    verify:
+      - 'npx prettier --check docs/production-dogfood-results/<date>-chrome-audit.md'
+      - 'secret-pattern scan over the new receipt and GoalBuddy notes.'
+      - 'make check'
+    stop_if:
+      - 'Required Chrome, API, or GitHub evidence is missing.'
+
+  - id: T006
+    type: judge
+    assignee: Judge
+    status: done
+    receipt:
+      result: done
+      decision: 'complete'
+      note: notes/T006-judge-final.md
+      full_outcome_complete: true
+      rationale: 'All Chrome dogfood oracle bullets are proven after production redeploy run 27021970255 and the successful two-viewer rerun.'
+    objective: 'Final audit against the Chrome dogfood oracle.'
+    acceptance_criteria:
+      - 'Every oracle bullet in `goal.md` is mapped to proof in the receipt or a declared blocker.'
+      - 'Verification gates are current after the final receipt edit.'
+      - 'Scope audit confirms no npm publish, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, secret rotation, destructive cleanup, or unrelated behavior.'
+      - 'If complete, the branch is ready for PR; if blocked, the next user decision is explicit.'
+    allowed_files:
+      - 'docs/goals/bugdrop-board-chrome-dogfood-audit/state.yaml'
+      - 'docs/goals/bugdrop-board-chrome-dogfood-audit/notes/**'
+    verify:
+      - 'Run the GoalBuddy state checker.'
+      - 'Record final Judge receipt with completion or blocker decision.'
+
+next:
+  starter_command: '/goal Follow docs/goals/bugdrop-board-chrome-dogfood-audit/goal.md.'
