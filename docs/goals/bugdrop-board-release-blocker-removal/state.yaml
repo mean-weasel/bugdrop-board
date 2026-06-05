@@ -1,0 +1,108 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Release Blocker Removal'
+  slug: 'bugdrop-board-release-blocker-removal'
+  kind: existing_plan
+  tranche: 'Remove reversible release blockers and leave only explicit token/origin/approval gates.'
+  status: done
+  oracle:
+    signal: 'Production environment, generated board secret, production D1, migrations, and Wrangler production config are in place; remaining blockers are explicit operator-provided values and publish/deploy approvals.'
+    cadence: 'after inventory, after reversible mutations, and at final audit'
+    final_proof: 'docs/release-readiness-results/2026-06-04-release-blocker-removal.md with resource ids, command proof, remaining blocker list, and no secret values.'
+  intake:
+    original_request: 'lets knock out the blockers'
+    interpreted_outcome: 'Remove blockers that are safe and possible from the current authenticated CLI session.'
+    input_shape: recovery
+    audience: 'BugDrop Board maintainer preparing npm publish and first production deploy'
+    authority: approved_for_reversible_setup
+    proof_type: artifact
+    completion_proof: 'Committed receipt proves which blockers were removed and which require operator tokens/approval.'
+    likely_misfire: 'Publishing npm or deploying production while attempting to remove prerequisites.'
+    blind_spots_considered:
+      - 'GitHub secrets cannot be read or copied from staging.'
+      - 'Local shell does not contain Cloudflare, GitHub Issues, or npm tokens.'
+      - 'Production host origin and token issuer are product/operator decisions.'
+      - 'A placeholder production config must not be deployed as final.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_completion_without_judge_or_pm_audit: true
+  no_publish_without_explicit_approval: true
+  no_production_deploy_without_explicit_approval: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-release-blocker-removal/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-release-blocker-removal'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Inventory release blockers and available credentials without printing secret values.'
+    receipt:
+      result: done
+      summary: 'Local shell lacks operator token values, npm auth is unavailable, staging secrets exist by name, and production resources were initially absent.'
+      evidence:
+        - 'Local env presence check: `CLOUDFLARE_API_TOKEN`, `BOARD_TOKEN_SECRET`, `GITHUB_ISSUE_ACCESS_TOKEN`, `ISSUE_ACCESS_TOKEN`, and `NPM_TOKEN` were missing.'
+        - '`npm whoami`: npm `E401 Unauthorized`.'
+        - 'GitHub Environment `production` initially returned `404 Not Found`.'
+        - 'Cloudflare D1 list initially included only `bugdrop-board-staging`.'
+        - 'Production Worker names `bugdrop-board` and `bugdrop-board-production` initially returned Cloudflare code `10007`.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Create safe production GitHub/Cloudflare prerequisites and production config without publishing or deploying.'
+    receipt:
+      result: done
+      summary: 'Created production GitHub Environment, set safe production secrets, created production D1, applied migrations, and added explicit Wrangler production env config.'
+      changed_files:
+        - '/Users/neonwatty/Desktop/bugdrop-board/wrangler.toml'
+      evidence:
+        - 'GitHub Environment `production` created at `2026-06-04T18:09:35Z`.'
+        - 'Production Environment secrets by name now include `CLOUDFLARE_ACCOUNT_ID` and generated `BOARD_TOKEN_SECRET`.'
+        - 'Generated production board signing secret preserved only in ignored local file `.secrets/bugdrop-board-production.env` and GitHub Environment secret; value was not printed or committed.'
+        - 'Cloudflare D1 `bugdrop-board-production` created with id `6f463f05-eb50-4de9-836d-0eed35f7305c`.'
+        - 'Production dogfood mirror repo `mean-weasel/bugdrop-board-production-dogfood` created as private with Issues enabled and Projects disabled.'
+        - '`npx wrangler d1 migrations apply DB --remote --env production`: applied `0001_initial.sql` and `0002_request_throttle.sql`.'
+        - 'Production D1 table inspection found `_cf_KV`, `boards`, `board_items`, `board_votes`, `board_events`, `request_throttle_windows`, and `d1_migrations`.'
+        - '`npm run build:widget && npx wrangler deploy --dry-run --env production`: passed and showed binding `env.DB (bugdrop-board-production)` plus production vars.'
+
+  - id: T003
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Audit remaining blockers and mutation boundaries.'
+    receipt:
+      result: done
+      decision: approved_partial_unblock
+      summary: 'Reversible setup blockers are removed. Actual npm publish and production deploy remain blocked by missing operator tokens and final origin/issuer decisions.'
+      remaining_blockers:
+        - 'Set production Environment secret `CLOUDFLARE_API_TOKEN`.'
+        - 'Set production Environment secret `ISSUE_ACCESS_TOKEN` with access to the chosen production mirror repo.'
+        - 'Set repo-level `NPM_TOKEN` if publishing to npm.'
+        - 'Point `board.bugdrop.dev` DNS/route at the production Worker before smoke testing the production custom domain.'
+        - 'Confirm the intended npm package name and whether to publish `0.1.0` or bump first.'
+        - 'Explicitly approve npm publish and production Worker deploy.'
+      evidence:
+        - 'No npm publish ran.'
+        - 'No production Worker deploy ran.'
+        - 'No operator-provided token value was printed or committed.'
+        - 'No hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or new product behavior was added.'

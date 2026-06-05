@@ -60,11 +60,13 @@ tasks:
       result: done
       summary: 'Imported Board 12 readiness facts; production promotion prerequisites are not satisfied yet.'
       evidence:
-        - 'GitHub Environment `production` does not exist.'
-        - 'Production D1 database does not exist.'
+        - 'GitHub Environment `production` now exists.'
+        - 'Production D1 database `bugdrop-board-production` now exists and migrations are applied.'
         - 'Production Worker `bugdrop-board` does not exist.'
-        - 'Production secrets are not configured.'
-        - 'Production board mirror repo and host origin/issuer choices still need approval.'
+        - 'Production secrets are partially configured: `CLOUDFLARE_ACCOUNT_ID` and generated `BOARD_TOKEN_SECRET` exist by name.'
+        - 'Production secrets still missing: `CLOUDFLARE_API_TOKEN` and `ISSUE_ACCESS_TOKEN`.'
+        - 'Production dogfood mirror repo `mean-weasel/bugdrop-board-production-dogfood` exists.'
+        - 'Production origin is `https://board.bugdrop.dev` and issuer is `bugdrop-board-production-host`.'
 
   - id: T002
     type: worker
@@ -91,7 +93,7 @@ tasks:
       - 'Requires explicit maintainer approval after Board 12 readiness is satisfied.'
       - 'Runs Deploy Worker against production only after approval.'
       - 'Runs production smoke and rollback proof after deploy.'
-    blocked_reason: 'Production mutation requires explicit approval and production resource/secret readiness.'
+    blocked_reason: 'Production deploy requires explicit approval, production `CLOUDFLARE_API_TOKEN`, production `ISSUE_ACCESS_TOKEN`, and DNS/route readiness for `board.bugdrop.dev`.'
     receipt:
       result: blocked
-      summary: 'Actual first production promotion is intentionally blocked until the maintainer explicitly approves production mutation after reviewing Board 12 readiness.'
+      summary: 'Actual first production promotion is intentionally blocked until the maintainer explicitly approves production deploy after setting the remaining production tokens and confirming DNS/route readiness.'
