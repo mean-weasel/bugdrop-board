@@ -49,6 +49,11 @@ migrations_dir = "migrations"
 
 [env.production]
 name = "bugdrop-board"
+workers_dev = true
+
+[[env.production.routes]]
+pattern = "board.bugdrop.dev"
+custom_domain = true
 
 [env.production.vars]
 ENVIRONMENT = "production"
