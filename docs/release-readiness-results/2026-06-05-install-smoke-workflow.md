@@ -2,7 +2,8 @@
 
 Date: 2026-06-05
 
-Status: local proof complete; GitHub Actions PR/merge proof follows this receipt.
+Status: local proof complete; first GitHub Actions dispatch exposed a missing browser-install step,
+which is patched in follow-up PR #38.
 
 ## Change
 
@@ -43,8 +44,21 @@ npm run install:smoke:workflow
 ```
 
 Result: passed. The verifier confirmed the workflow is manual, uses `actions/checkout@v5` and
-`actions/setup-node@v5`, runs `make install`, runs `npm run install:smoke -- --version
-"$PACKAGE_VERSION"`, and contains none of `secrets.`, `npm publish`, or `wrangler deploy`.
+`actions/setup-node@v5`, runs `make install`, installs Chromium with `npx playwright install
+--with-deps chromium`, runs `npm run install:smoke -- --version "$PACKAGE_VERSION"`, and contains
+none of `secrets.`, `npm publish`, or `wrangler deploy`.
+
+Post-merge workflow failure that disproved the first implementation:
+
+```bash
+gh workflow run "Install Smoke" --ref main -f package_version=0.1.2 -f retries=1 -f retry_delay_ms=0
+gh run watch 27042195381 --exit-status
+gh run view 27042195381 --log-failed
+```
+
+Result: failed. The GitHub runner installed npm dependencies but did not have Playwright Chromium
+installed, so `browserType.launch` could not find
+`chromium_headless_shell-1223/chrome-headless-shell-linux64/chrome-headless-shell`.
 
 Published package clean-room proof:
 

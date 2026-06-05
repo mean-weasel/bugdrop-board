@@ -139,7 +139,7 @@ tasks:
           evidence: 'RED check failed because .github/workflows/install-smoke.yml did not exist. The test was then replaced with a Node verifier after Cloudflare Vitest filesystem isolation proved unsuitable for workflow-file reads.'
         - command: 'npm run install:smoke:workflow'
           status: pass
-          evidence: 'Verified the workflow is manual, Node-24-ready, runs install:smoke with PACKAGE_VERSION, and contains no secrets., npm publish, or wrangler deploy text.'
+          evidence: 'Verified the workflow is manual, Node-24-ready, installs Chromium, runs install:smoke with PACKAGE_VERSION, and contains no secrets., npm publish, or wrangler deploy text.'
         - command: 'npm run install:smoke -- --version 0.1.2 --retries 1 --retry-delay-ms 0'
           status: pass
           evidence: 'Installed @mean-weasel/bugdrop-board@0.1.2, mounted the published bundle in Chromium, rendered the mocked item/upvote/issue link, and reported no console errors or failed requests.'
@@ -159,7 +159,7 @@ tasks:
           status: pass
           evidence: 'GoalBuddy state schema passed after status correction.'
       remaining_blockers:
-        - 'Post-merge manual GitHub Actions dispatch of Install Smoke should be recorded by the next release handoff audit board.'
+        - 'Post-merge manual GitHub Actions dispatch 27042195381 failed because Chromium was not installed on the runner; follow-up PR #38 patches the workflow and reruns the workflow.'
 
   - id: T999
     type: judge

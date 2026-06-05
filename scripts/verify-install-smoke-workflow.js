@@ -14,6 +14,7 @@ const required = [
   'uses: actions/checkout@v5',
   'uses: actions/setup-node@v5',
   'make install',
+  'npx playwright install --with-deps chromium',
   'npm run install:smoke --',
   '--version "$PACKAGE_VERSION"',
 ];
