@@ -509,10 +509,13 @@ workflow runs:
 npm run validate
 npm run pack:check
 npm publish --access public --tag "$NPM_TAG"
+npm run release:smoke
 ```
 
-Actual publishing also requires npm ownership or publish rights for the configured package scope.
-When in doubt, keep the workflow in dry-run mode and inspect the package file list before publishing.
+The first public package is published as `@mean-weasel/bugdrop-board@0.1.0`. Actual publishing of
+future versions still requires npm ownership or publish rights for the configured package scope.
+When in doubt, keep the workflow in dry-run mode and inspect the package file list before
+publishing.
 
 ## Release Rehearsal
 
@@ -576,8 +579,11 @@ make check
 
 ## Current Handoff Notes
 
-This repository is still an early vertical slice. The conveyor PR stack has landed on `main`. The
-remaining release actions are operational: choose the npm package/version identity, configure real
-Cloudflare/GitHub/npm secrets, run the local release rehearsal, run the GitHub workflows against
-staging/test credentials, and dogfood the embedded widget in a real signed-token host app before
-any production deploy or npm publish.
+This repository is still an early vertical slice. The conveyor PR stack has landed on `main`,
+`@mean-weasel/bugdrop-board@0.1.0` is published on npm, and the production Worker is available at
+`https://board.bugdrop.dev`.
+
+Remaining release actions are operational: keep running the local release rehearsal before
+significant changes, run the GitHub workflows against staging/test credentials when changing deploy
+or package release paths, dogfood the embedded widget in a real signed-token host app, and decide
+the next version before any future npm publish.
