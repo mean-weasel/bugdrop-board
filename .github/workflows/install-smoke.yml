@@ -1,0 +1,48 @@
+name: Install Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_version:
+        description: Published package version or dist-tag to verify.
+        required: true
+        default: '0.1.2'
+        type: string
+      retries:
+        description: npm install attempts before failing.
+        required: true
+        default: 3
+        type: number
+      retry_delay_ms:
+        description: Delay between failed npm install attempts.
+        required: true
+        default: 5000
+        type: number
+
+jobs:
+  install-smoke:
+    name: Clean-Room Install Smoke
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      PACKAGE_VERSION: ${{ inputs.package_version }}
+      RETRIES: ${{ inputs.retries }}
+      RETRY_DELAY_MS: ${{ inputs.retry_delay_ms }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: make install
+
+      - name: Run clean-room install smoke
+        run: |
+          npm run install:smoke -- \
+            --version "$PACKAGE_VERSION" \
+            --retries "$RETRIES" \
+            --retry-delay-ms "$RETRY_DELAY_MS"

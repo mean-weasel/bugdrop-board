@@ -574,6 +574,16 @@ project, serves only the installed `public/board.js`, loads a minimal host page 
 documented script attributes, mocks the token/items API responses, and verifies the board mounts
 inside `data-mount-selector`.
 
+The `Install Smoke` GitHub Actions workflow exposes the same clean-room check as a manual,
+no-secret proof. Dispatch it with a published package version or dist-tag, such as `0.1.2` or
+`latest`, when you want GitHub Actions to verify the installable artifact without running npm
+publish, Cloudflare deploy, or any production credentials. To verify the workflow contract locally,
+run:
+
+```bash
+npm run install:smoke:workflow
+```
+
 To verify the package from a completely separate project, run:
 
 ```bash
