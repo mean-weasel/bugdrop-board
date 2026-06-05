@@ -3,6 +3,7 @@ export interface BoardWidgetConfig {
   boardId: string;
   tokenEndpoint: string;
   accentColor: string;
+  mountSelector?: string;
   pollIntervalMs: number;
 }
 

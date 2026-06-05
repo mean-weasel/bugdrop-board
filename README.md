@@ -196,6 +196,19 @@ Add the built widget script to a host app page:
 ></script>
 ```
 
+For an inline board inside existing page content, provide a mount target and point the script at it:
+
+```html
+<section id="feedback-board"></section>
+<script
+  src="https://your-worker.example.com/board.js"
+  data-board-id="board_mean_weasel_demo"
+  data-api-url="https://your-worker.example.com"
+  data-token-endpoint="/api/bugdrop-board-token"
+  data-mount-selector="#feedback-board"
+></script>
+```
+
 You can serve `board.js` from your deployed Worker, or install the npm package and copy or serve the
 published bundle from one of its equivalent entrypoints:
 
@@ -209,12 +222,17 @@ Attributes:
   `board_mean_weasel_demo`.
 - `data-api-url`: Worker API origin. Defaults to the script origin when omitted.
 - `data-token-endpoint`: host app endpoint that returns a board token for the current app user.
+- `data-mount-selector`: optional CSS selector for a host page element that should contain the
+  widget. The widget throws a clear setup error if the selector does not match.
 - `data-poll-interval`: optional polling interval in milliseconds. Values below `500` are ignored.
 - `data-color`: optional accent color for widget controls. Defaults to `#2563eb`.
 
-The widget runs in an open Shadow DOM root and appends itself to the host page body. Host CSS does
-not style internals directly, but self-hosters can set a small custom-property surface on the
-generated root:
+The widget runs in an open Shadow DOM root. By default, when the script is in the page body, it
+inserts its generated root immediately after the script tag, which keeps the board near the install
+snippet. If the script is outside body content, it falls back to appending to the body. When
+`data-mount-selector` is provided, the generated root is appended inside that target element. Host
+CSS does not style internals directly, but self-hosters can set a small custom-property surface on
+the generated root:
 
 ```css
 [data-bugdrop-board-root] {

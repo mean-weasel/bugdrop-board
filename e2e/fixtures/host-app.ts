@@ -28,6 +28,8 @@ interface HostApp {
 
 interface HostConfig {
   boardId: string;
+  inlineMount: boolean;
+  mountSelector?: string;
   scriptSrc: string;
   workerOrigin: string;
   tokenSecret: string;
@@ -47,8 +49,12 @@ export async function provisionBoard(): Promise<ProvisionedBoard> {
   return result.board;
 }
 
-export async function startHostApp(boardId?: string): Promise<HostApp> {
-  const config = hostConfig(boardId);
+interface HostOptions {
+  inlineMount?: boolean;
+}
+
+export async function startHostApp(boardId?: string, options: HostOptions = {}): Promise<HostApp> {
+  const config = hostConfig(boardId, options);
   const server = createServer(async (req, res) => {
     try {
       const url = new URL(req.url ?? '/', HOST_ORIGIN);
@@ -93,7 +99,7 @@ export async function startHostApp(boardId?: string): Promise<HostApp> {
   };
 }
 
-function hostConfig(boardId?: string): HostConfig {
+function hostConfig(boardId: string | undefined, options: HostOptions): HostConfig {
   const workerOrigin = envValue('BUGDROP_BOARD_WORKER_ORIGIN') ?? DEFAULT_WORKER_ORIGIN;
   const resolvedBoardId = boardId ?? envValue('BUGDROP_BOARD_ID');
   if (!resolvedBoardId) {
@@ -102,6 +108,8 @@ function hostConfig(boardId?: string): HostConfig {
 
   return {
     boardId: resolvedBoardId,
+    inlineMount: options.inlineMount ?? false,
+    mountSelector: options.inlineMount ? '#feedback-board' : undefined,
     scriptSrc: envValue('BUGDROP_BOARD_SCRIPT_SRC') ?? '/board.js',
     workerOrigin,
     tokenSecret: envValue('BUGDROP_BOARD_TOKEN_SECRET') ?? DEFAULT_TOKEN_SECRET,
@@ -160,6 +168,11 @@ function renderHostPage(config: HostConfig, viewer: 'a' | 'b'): string {
   <body>
     <main>
       <h1>Dummy App</h1>
+      ${
+        config.inlineMount
+          ? '<section id="feedback-board" data-testid="inline-feedback-slot"></section>'
+          : ''
+      }
     </main>
     <script
       src="${escapeAttribute(config.scriptSrc)}"
@@ -168,6 +181,7 @@ function renderHostPage(config: HostConfig, viewer: 'a' | 'b'): string {
       data-token-endpoint="/token?viewer=${viewer}"
       data-poll-interval="${escapeAttribute(config.pollInterval)}"
       data-color="#1f883d"
+      ${config.mountSelector ? `data-mount-selector="${escapeAttribute(config.mountSelector)}"` : ''}
     ></script>
   </body>
 </html>`;

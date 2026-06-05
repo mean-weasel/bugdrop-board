@@ -7,7 +7,9 @@ export default tseslint.config(
     ignores: [
       'dist',
       'node_modules',
+      'playwright-report',
       'public',
+      'test-results',
       '.wrangler',
       '.superpowers',
       'docs/goals/**/.goalbuddy-board',
