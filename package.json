@@ -11,6 +11,7 @@
   },
   "files": [
     "public/board.js",
+    "scripts/verify-package-install.js",
     "src/widget/",
     "README.md"
   ],
@@ -21,6 +22,7 @@
     "deploy": "wrangler deploy",
     "deploy:check": "npm run build:widget && wrangler deploy --dry-run",
     "pack:check": "npm pack --dry-run",
+    "release:smoke": "node scripts/verify-package-install.js",
     "provision:board": "node scripts/provision-board.js",
     "staging:secrets": "node scripts/staging-secrets.js",
     "test": "vitest run",

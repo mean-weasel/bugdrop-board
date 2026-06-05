@@ -458,6 +458,7 @@ The package entrypoints are:
 All entrypoints resolve to `public/board.js`. The npm package includes:
 
 - `public/board.js`
+- `scripts/verify-package-install.js`
 - `src/widget/`
 - `README.md`
 - package metadata
@@ -480,6 +481,18 @@ make pack-check
 `npm run pack:check` runs `npm pack --dry-run`. The `prepack` lifecycle rebuilds
 `public/board.js` first, so the tarball preview proves the package would contain the current embed
 bundle for the package version.
+
+After a publish, verify the registry artifact by installing it into a temporary project:
+
+```bash
+npm run release:smoke
+npm run release:smoke -- --version 0.1.0
+make release-smoke
+```
+
+The smoke command resolves all public package entrypoints, verifies they point at the installed
+`public/board.js` bundle, and checks the bundle has the expected widget and fetch code. The package
+workflow runs this smoke automatically after a non-dry-run publish.
 
 The `Package Widget` GitHub Actions workflow is manually dispatched and dry-runs by default:
 

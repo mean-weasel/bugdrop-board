@@ -55,3 +55,7 @@ jobs:
       - name: Publish package
         if: ${{ !inputs.dry_run }}
         run: npm publish --access public --tag "$NPM_TAG"
+
+      - name: Verify published package
+        if: ${{ !inputs.dry_run }}
+        run: npm run release:smoke
