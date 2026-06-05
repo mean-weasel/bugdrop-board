@@ -1,0 +1,127 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Release Handoff Audit'
+  slug: 'bugdrop-board-release-handoff-audit'
+  kind: audit
+  tranche: 'Post-v0.1.2 release-readiness conveyor board 2: reconcile install-smoke workflow proof and current handoff.'
+  status: done
+  oracle:
+    signal: 'A durable receipt records the current merged release-readiness state after Install Smoke workflow proof passed on main.'
+    cadence: 'after source-backed audit and final checks'
+    final_proof: 'Receipt with PR, workflow, package, production Worker, local gate, and scope-audit evidence.'
+  intake:
+    original_request: 'plan out the next several goalbuddy prep boards and manage yourself through them'
+    interpreted_outcome: 'Execute the second safe conveyor board by reconciling release handoff documentation after the install-smoke workflow landed.'
+    input_shape: audit
+    audience: 'BugDrop Board maintainers picking up release-readiness work'
+    authority: approved_for_safe_docs_pr_work_no_publish_or_deploy
+    proof_type: artifact
+    completion_proof: 'Current handoff receipt names merged PRs, green workflow run, current package/deploy state, and next board.'
+    likely_misfire: 'Recording a happy-path summary while leaving the first failed workflow run unexplained or making new release/deploy changes.'
+    blind_spots_considered:
+      - 'A manual workflow can exist but fail after merge because CI does not exercise workflow_dispatch paths.'
+      - 'Receipts need both the failed run and fixed run to preserve the actual operational lesson.'
+      - 'The next board should be dogfood recheck, not package publishing or production mutation.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-release-handoff-audit/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-release-handoff-audit'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Collect source-backed current release-readiness state after Install Smoke workflow proof.'
+    receipt:
+      result: done
+      summary: 'PR #37 and #38 are merged on main; Install Smoke run 27042324248 passed after run 27042195381 exposed missing Chromium on the runner.'
+      evidence:
+        - 'PR #37 merged at 166f2dbf542ed482f385ece4ec3fe13bb732ebda.'
+        - 'PR #38 merged at 753d83f84fc9f649a44713bb9dd911c5cbac61f7.'
+        - 'Install Smoke run 27042324248 passed on main commit 753d83f84fc9f649a44713bb9dd911c5cbac61f7.'
+        - 'Install Smoke run 27042195381 failed on main commit 166f2dbf542ed482f385ece4ec3fe13bb732ebda because Playwright Chromium was not installed.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Write the release handoff audit receipt and reconcile install-smoke workflow receipt status.'
+    allowed_files:
+      - 'docs/release-readiness-results/2026-06-05-install-smoke-workflow.md'
+      - 'docs/release-readiness-results/2026-06-05-release-handoff-audit.md'
+      - 'docs/goals/bugdrop-board-release-handoff-audit/goal.md'
+      - 'docs/goals/bugdrop-board-release-handoff-audit/state.yaml'
+      - 'docs/goals/bugdrop-board-release-handoff-audit/notes/.gitkeep'
+    verify:
+      - 'npx prettier --check docs/release-readiness-results/2026-06-05-install-smoke-workflow.md docs/release-readiness-results/2026-06-05-release-handoff-audit.md docs/goals/bugdrop-board-release-handoff-audit/goal.md docs/goals/bugdrop-board-release-handoff-audit/state.yaml'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-release-handoff-audit/state.yaml'
+      - 'git diff --check'
+      - 'scope scan for forbidden publish/deploy/credential/product changes'
+    stop_if:
+      - 'Need to publish, deploy, rotate secrets, or change runtime behavior.'
+    receipt:
+      result: done
+      task_id: T002
+      changed_files:
+        - 'docs/release-readiness-results/2026-06-05-install-smoke-workflow.md'
+        - 'docs/release-readiness-results/2026-06-05-release-handoff-audit.md'
+        - 'docs/goals/bugdrop-board-release-handoff-audit/goal.md'
+        - 'docs/goals/bugdrop-board-release-handoff-audit/state.yaml'
+        - 'docs/goals/bugdrop-board-release-handoff-audit/notes/.gitkeep'
+      summary: 'Recorded the current release handoff after Install Smoke passed from main and updated the install-smoke receipt from follow-up pending to complete.'
+      commands:
+        - command: 'gh run view 27042324248 --json status,conclusion,headBranch,headSha,url,createdAt,updatedAt,jobs'
+          status: pass
+          evidence: 'Run completed successfully on main commit 753d83f84fc9f649a44713bb9dd911c5cbac61f7; Clean-Room Install Smoke job passed in 50s.'
+        - command: 'gh pr view 37 --json url,state,mergeCommit,title && gh pr view 38 --json url,state,mergeCommit,title'
+          status: pass
+          evidence: 'Both PRs are merged with merge commits 166f2db and 753d83f.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether the release handoff audit satisfies the oracle.'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'Release handoff receipt names merged PRs #37/#38, failed run 27042195381, fixed run 27042324248, current npm package 0.1.2, and current production Worker URL.'
+        - 'No release, deploy, credential, or runtime product mutation occurred in this audit board.'
+      next_starter_board: 'bugdrop-board-production-dogfood-regression-recheck'
+
+checks:
+  dirty_fingerprint: 'docs/release-readiness-results/2026-06-05-install-smoke-workflow.md docs/release-readiness-results/2026-06-05-release-handoff-audit.md docs/goals/bugdrop-board-release-handoff-audit/goal.md docs/goals/bugdrop-board-release-handoff-audit/state.yaml'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'gh run view 27042324248 --json status,conclusion,headBranch,headSha,url,createdAt,updatedAt,jobs'
+      - 'gh pr view 37 --json url,state,mergeCommit,title && gh pr view 38 --json url,state,mergeCommit,title'
+      - 'npx prettier --check docs/release-readiness-results/2026-06-05-install-smoke-workflow.md docs/release-readiness-results/2026-06-05-release-handoff-audit.md docs/goals/bugdrop-board-release-handoff-audit/goal.md docs/goals/bugdrop-board-release-handoff-audit/state.yaml'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-release-handoff-audit/state.yaml'
+      - 'git diff --check'
+      - 'npm run format:check'
+      - 'scope scan found only explicit non-goal/prohibition language'
