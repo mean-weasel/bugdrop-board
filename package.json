@@ -1,6 +1,6 @@
 {
   "name": "@mean-weasel/bugdrop-board",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Embedded, self-hostable ideas/request board.",
   "type": "module",
   "main": "./public/board.js",
