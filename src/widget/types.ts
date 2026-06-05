@@ -21,5 +21,6 @@ export interface BoardState {
   items: BoardItemView[];
   cursor: number;
   loading: boolean;
+  submitting?: boolean;
   error?: string;
 }

@@ -1,9 +1,17 @@
 export function injectTheme(root: ShadowRoot, accentColor: string): void {
   const style = document.createElement('style');
   style.textContent = `
-    :host { color-scheme: light; }
+    :host {
+      --bugdrop-board-accent: ${accentColor};
+      --bugdrop-board-danger: #b42318;
+      --bugdrop-board-muted: #57606a;
+      --bugdrop-board-surface: #ffffff;
+      --bugdrop-board-text: #172026;
+      --bugdrop-board-border: #d0d7de;
+      color-scheme: light;
+    }
     .bugdrop-board {
-      color: #172026;
+      color: var(--bugdrop-board-text);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       max-width: 760px;
     }
@@ -26,17 +34,19 @@ export function injectTheme(root: ShadowRoot, accentColor: string): void {
     }
     .bugdrop-board__form input,
     .bugdrop-board__form textarea {
-      border: 1px solid #d0d7de;
+      background: var(--bugdrop-board-surface);
+      border: 1px solid var(--bugdrop-board-border);
       border-radius: 6px;
       box-sizing: border-box;
-      color: #172026;
+      color: var(--bugdrop-board-text);
       font: inherit;
       padding: 8px 10px;
       width: 100%;
     }
     .bugdrop-board__form button,
-    .bugdrop-board__upvote {
-      background: ${accentColor};
+    .bugdrop-board__upvote,
+    .bugdrop-board__retry {
+      background: var(--bugdrop-board-accent);
       border: 0;
       border-radius: 6px;
       color: white;
@@ -56,7 +66,8 @@ export function injectTheme(root: ShadowRoot, accentColor: string): void {
     }
     .bugdrop-board__item {
       align-items: start;
-      border: 1px solid #d0d7de;
+      background: var(--bugdrop-board-surface);
+      border: 1px solid var(--bugdrop-board-border);
       border-radius: 8px;
       display: grid;
       gap: 12px;
@@ -81,20 +92,30 @@ export function injectTheme(root: ShadowRoot, accentColor: string): void {
     }
     .bugdrop-board__meta a,
     .bugdrop-board__status {
-      color: #57606a;
+      color: var(--bugdrop-board-muted);
       font-size: 12px;
     }
     .bugdrop-board__status {
       text-transform: uppercase;
     }
     .bugdrop-board__empty,
+    .bugdrop-board__loading,
     .bugdrop-board__error {
       font-size: 14px;
       margin: 0;
     }
     .bugdrop-board__error {
-      color: #b42318;
+      align-items: start;
+      color: var(--bugdrop-board-danger);
+      display: grid;
+      gap: 6px;
       margin-bottom: 12px;
+    }
+    .bugdrop-board__error-title {
+      font-weight: 700;
+    }
+    .bugdrop-board__retry {
+      justify-self: start;
     }
   `;
   root.append(style);

@@ -14,6 +14,9 @@ test('embedded board creates, upvotes, and syncs through polling', async ({ brow
     await expect(page.getByRole('heading', { name: 'Dummy App' })).toBeVisible();
     await expect(secondPage.getByRole('heading', { name: 'Dummy App' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Feedback' })).toBeVisible();
+    await expect(
+      page.getByText('No feedback yet. Share the first idea to help prioritize what comes next.')
+    ).toBeVisible();
 
     await page.getByLabel('Idea title').fill('Add dark mode');
     await page.getByLabel('Context').fill('The app should be easier to use at night.');
@@ -23,12 +26,20 @@ test('embedded board creates, upvotes, and syncs through polling', async ({ brow
     await expect(page.getByText('Issue #1001')).toBeVisible();
     await expect(secondPage.getByText('Add dark mode')).toBeVisible({ timeout: 10_000 });
 
-    await page.getByRole('button', { name: 'Upvote 0' }).click();
-
-    await expect(page.getByRole('button', { name: 'Upvoted 1' })).toBeVisible();
-    await expect(secondPage.getByRole('button', { name: 'Upvote 1' })).toBeVisible({
-      timeout: 10_000,
+    const viewerAUpvote = page.getByRole('button', {
+      name: 'Upvote Add dark mode. 0 upvotes.',
     });
+    await expect(viewerAUpvote).toHaveAttribute('aria-pressed', 'false');
+    await viewerAUpvote.click();
+
+    await expect(
+      page.getByRole('button', { name: 'Remove upvote from Add dark mode. 1 upvote.' })
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByText('Upvoted 1')).toBeVisible();
+    await expect(
+      secondPage.getByRole('button', { name: 'Upvote Add dark mode. 1 upvote.' })
+    ).toHaveAttribute('aria-pressed', 'false', { timeout: 10_000 });
+    await expect(secondPage.getByText('Upvote 1')).toBeVisible();
   } finally {
     await secondContext.close();
     await host.close();
