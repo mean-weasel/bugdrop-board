@@ -1,5 +1,5 @@
 {
-  "name": "bugdrop-board",
+  "name": "@mean-weasel/bugdrop-board",
   "version": "0.1.0",
   "description": "Embedded, self-hostable ideas/request board.",
   "type": "module",
