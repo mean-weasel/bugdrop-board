@@ -5,7 +5,7 @@ goal:
   slug: 'bugdrop-board-chrome-dogfood-audit'
   kind: audit
   tranche: 'Chrome Extension manual production dogfood and self-check only.'
-  status: active
+  status: blocked
   oracle:
     signal: 'A dated production dogfood receipt proves two-viewer Chrome UI creation, polling, upvote, refresh durability, GitHub Issue mirroring, API agreement, and defect triage.'
     cadence: 'after Chrome setup, after item creation, after polling/upvote, after refresh, after API/GitHub corroboration, and at final audit'
@@ -45,18 +45,22 @@ agents:
 visual_board:
   selected: local
   local:
-    status: starting
+    status: running
     url: 'http://goalbuddy.localhost:41737/bugdrop-board-chrome-dogfood-audit/'
     command: 'npx goalbuddy board docs/goals/bugdrop-board-chrome-dogfood-audit'
 
-active_task: T001
+active_task: null
 
 tasks:
   - id: T001
     type: scout
     assignee: Scout
-    status: active
+    status: done
     objective: 'Confirm the current production dogfood surface and Chrome execution prerequisites without mutating data.'
+    receipt:
+      result: done
+      note: notes/T001-scout.md
+      summary: 'Production dogfood host, board worker, board script, npm package, GitHub state, and Codex Chrome Extension bridge were verified before mutation.'
     acceptance_criteria:
       - '`git status --short --branch` is recorded for `/Users/neonwatty/Desktop/bugdrop-board`.'
       - 'Open PRs, recent CI runs, npm version, and latest production dogfood receipt are recorded.'
@@ -77,7 +81,11 @@ tasks:
   - id: T002
     type: worker
     assignee: Worker
-    status: queued
+    status: blocked
+    receipt:
+      result: blocked
+      note: notes/T002-worker-blocked.md
+      summary: 'Both Chrome viewer tabs rendered the embedded board but showed Failed to fetch before mutation; CORS probes showed the production Worker omits Access-Control-Allow-Origin for https://bugdrop.dev.'
     objective: 'Run two-viewer Chrome dogfood through the visible embedded UI.'
     acceptance_criteria:
       - 'Open or claim two Chrome tabs: Viewer A at `https://bugdrop.dev/board-dogfood?viewer=a` and Viewer B at `https://bugdrop.dev/board-dogfood?viewer=b`.'
@@ -105,7 +113,11 @@ tasks:
   - id: T003
     type: scout
     assignee: Scout
-    status: queued
+    status: blocked
+    receipt:
+      result: blocked
+      note: notes/T003-scout-blocked.md
+      summary: 'Skipped Chrome-created item cross-checks because T002 could not create an item through the browser-visible UI.'
     objective: 'Cross-check Chrome observations against GitHub, Board API, and event API.'
     acceptance_criteria:
       - '`gh issue view` or `gh issue list` proves a matching issue exists in `mean-weasel/bugdrop-board-production-dogfood`.'
@@ -126,7 +138,12 @@ tasks:
   - id: T004
     type: judge
     assignee: Judge
-    status: queued
+    status: done
+    receipt:
+      result: done
+      decision: 'issue-filed'
+      note: notes/T004-judge.md
+      summary: 'Classified the Chrome-visible CORS failure as a blocker and filed issue #24.'
     objective: 'Decide which observed issues require GitHub follow-up issues.'
     acceptance_criteria:
       - 'Review Chrome screenshots/DOM excerpts, console logs, API evidence, and operator notes.'
@@ -144,7 +161,22 @@ tasks:
   - id: T005
     type: worker
     assignee: Worker
-    status: queued
+    status: done
+    receipt:
+      result: done
+      note: notes/T005-worker.md
+      changed_files:
+        - docs/production-dogfood-results/2026-06-05-chrome-audit.md
+        - docs/goals/bugdrop-board-chrome-dogfood-audit/state.yaml
+        - docs/goals/bugdrop-board-chrome-dogfood-audit/notes/T005-worker.md
+      commands:
+        - cmd: 'npx prettier --check docs/production-dogfood-results/2026-06-05-chrome-audit.md docs/goals/bugdrop-board-chrome-dogfood-audit/state.yaml docs/goals/bugdrop-board-chrome-dogfood-audit/notes/T001-scout.md docs/goals/bugdrop-board-chrome-dogfood-audit/notes/T002-worker-blocked.md docs/goals/bugdrop-board-chrome-dogfood-audit/notes/T003-scout-blocked.md docs/goals/bugdrop-board-chrome-dogfood-audit/notes/T004-judge.md'
+          status: pass
+        - cmd: 'token-shaped secret scan over docs/production-dogfood-results/2026-06-05-chrome-audit.md and docs/goals/bugdrop-board-chrome-dogfood-audit'
+          status: pass
+        - cmd: 'make check'
+          status: pass
+      summary: 'Wrote the blocked Chrome dogfood audit receipt and verified formatting, token-shaped secret scan, make check, and GoalBuddy state.'
     objective: 'Write and verify the durable Chrome dogfood receipt.'
     acceptance_criteria:
       - 'Create `docs/production-dogfood-results/<date>-chrome-audit.md`.'
@@ -165,7 +197,13 @@ tasks:
   - id: T006
     type: judge
     assignee: Judge
-    status: queued
+    status: blocked
+    receipt:
+      result: blocked
+      decision: 'not-complete'
+      note: notes/T006-judge-final.md
+      full_outcome_complete: false
+      rationale: 'Chrome dogfood proved the embedded board renders but is blocked by missing browser CORS allow-origin headers for https://bugdrop.dev; issue #24 tracks the defect.'
     objective: 'Final audit against the Chrome dogfood oracle.'
     acceptance_criteria:
       - 'Every oracle bullet in `goal.md` is mapped to proof in the receipt or a declared blocker.'
