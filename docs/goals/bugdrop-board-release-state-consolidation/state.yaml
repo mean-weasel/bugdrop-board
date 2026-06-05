@@ -1,0 +1,153 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Release State Consolidation'
+  slug: 'bugdrop-board-release-state-consolidation'
+  kind: existing_plan
+  tranche: 'Consolidate v0.1.0 release state and seed the next product tranche.'
+  status: done
+  oracle:
+    signal: 'The current v0.1.0 release state is captured in a durable receipt and GitHub Release, with proof links and preserved exclusions.'
+    cadence: 'after receipt, GitHub Release, and final audit'
+    final_proof: 'Release receipt, GitHub Release v0.1.0, green workflow links, npm package link, and final no-publish/no-dirty-state audit.'
+  intake:
+    original_request: 'Plan this out using GoalBuddy prep and then lets go.'
+    interpreted_outcome: 'Create a GoalBuddy board for release-state consolidation, then execute safe operational release hygiene.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers and early self-hosters'
+    authority: approved_for_safe_release_hygiene
+    proof_type: artifact
+    completion_proof: 'GitHub Release v0.1.0 and a committed release-state receipt both point to current proof runs and dogfood evidence.'
+    likely_misfire: 'Publishing a new npm version or starting product feature work instead of consolidating the already-proven release state.'
+    blind_spots_considered:
+      - 'A green deploy smoke command is weaker than a workflow run that proves the smoke from GitHub Actions.'
+      - 'A GitHub Release without proof links would look official but not be auditable.'
+      - 'Starting embedded UX work before release consolidation would blur what v0.1.0 actually means.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-release-state-consolidation/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-release-state-consolidation'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Verify the current release state and exact proof URLs before writing release artifacts.'
+    acceptance:
+      - 'Records npm package/version state without publishing.'
+      - 'Records production Worker and workflow proof URLs.'
+      - 'Checks whether GitHub Release v0.1.0 already exists.'
+      - 'Checks local git state, open PRs/issues, and latest workflow conclusions.'
+    receipt:
+      result: done
+      summary: 'Current release state is healthy and already has a GitHub Release v0.1.0, but the release notes predate the latest production dogfood and CORS deploy-smoke workflow proof.'
+      evidence:
+        - 'git status --short --branch: main is aligned with origin/main; only this new GoalBuddy board is untracked.'
+        - 'npm view @mean-weasel/bugdrop-board version dist-tags --json: version 0.1.0, latest 0.1.0.'
+        - 'gh release view v0.1.0: release exists at https://github.com/mean-weasel/bugdrop-board/releases/tag/v0.1.0 and is not draft/prerelease.'
+        - 'gh run list: latest Package Widget run 27024681636 succeeded on main.'
+        - 'gh run list: latest Deploy Worker run 27024621845 succeeded on main.'
+        - 'gh pr list and gh issue list: no open PRs or issues.'
+      worker_adjustment: 'T002 should update the existing GitHub Release notes instead of creating a new release.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Create the v0.1.0 release-state receipt and update existing GitHub Release notes with current proof links.'
+    allowed_files:
+      - 'docs/release-readiness-results/2026-06-05-v0.1.0-release-state.md'
+      - 'docs/goals/bugdrop-board-release-state-consolidation/goal.md'
+      - 'docs/goals/bugdrop-board-release-state-consolidation/state.yaml'
+      - 'docs/goals/bugdrop-board-release-state-consolidation/notes/.gitkeep'
+    verify:
+      - 'direct inspection of receipt proof links'
+      - 'gh release view v0.1.0 --json tagName,name,url,isDraft,isPrerelease,body'
+      - 'git diff --check'
+      - 'git status --short --branch'
+    stop_if:
+      - 'Existing GitHub Release notes conflict with the current proof record in a way that requires owner decision.'
+      - 'Creating or editing the GitHub Release would require a new package publish, version bump, secret change, or production mutation.'
+    receipt:
+      result: done
+      changed_files:
+        - 'docs/release-readiness-results/2026-06-05-v0.1.0-release-state.md'
+        - 'docs/goals/bugdrop-board-release-state-consolidation/goal.md'
+        - 'docs/goals/bugdrop-board-release-state-consolidation/state.yaml'
+        - 'docs/goals/bugdrop-board-release-state-consolidation/notes/.gitkeep'
+      remote_changes:
+        - 'Updated existing GitHub Release v0.1.0 notes at https://github.com/mean-weasel/bugdrop-board/releases/tag/v0.1.0.'
+      summary: 'Created the v0.1.0 release-state receipt and updated the existing GitHub Release notes to include current npm, production Worker, dogfood, deploy CORS smoke, package dry-run, scope-audit, and next-starter proof.'
+      commands:
+        - command: 'gh release edit v0.1.0 --notes-file docs/release-readiness-results/2026-06-05-v0.1.0-release-state.md'
+          status: pass
+          evidence: 'Returned https://github.com/mean-weasel/bugdrop-board/releases/tag/v0.1.0.'
+        - command: 'gh release view v0.1.0 --json tagName,name,url,isDraft,isPrerelease,body'
+          status: pass
+          evidence: 'Release body now starts with BugDrop Board v0.1.0 Release State and includes deploy run 27024621845, package run 27024681636, and the Chrome dogfood receipt.'
+        - command: 'git diff --check'
+          status: pass
+          evidence: 'No whitespace errors.'
+        - command: 'node .../check-goal-state.mjs docs/goals/bugdrop-board-release-state-consolidation/state.yaml'
+          status: pass
+          evidence: 'State was valid with active task T002 before advancing to final audit.'
+
+  - id: T003
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether release-state consolidation satisfies the oracle.'
+    acceptance:
+      - 'Release receipt exists and maps every oracle bullet to proof.'
+      - 'GitHub Release v0.1.0 exists with proof links.'
+      - 'No package publish, version bump, runtime behavior change, secret rotation, or excluded product scope occurred.'
+      - 'Next starter command for embedded UX polish and install ergonomics is recorded.'
+      - 'Repo is clean after commit/PR/merge or explicitly reports remaining local changes.'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: 'Release-state consolidation satisfies the oracle. The receipt exists, the existing GitHub Release v0.1.0 now carries the consolidated proof body, the latest deploy/package workflow runs are green, npm remains at 0.1.0, and no runtime/package/product/secret scope drift occurred.'
+      evidence:
+        - 'docs/release-readiness-results/2026-06-05-v0.1.0-release-state.md maps npm, production Worker, package dry-run, production deploy CORS smoke, production dogfood, scope audit, and next starter proof.'
+        - 'gh release view v0.1.0 marker check found release body includes 27024621845, 27024681636, 2026-06-05-chrome-audit.md, @mean-weasel/bugdrop-board@0.1.0, and https://board.bugdrop.dev.'
+        - 'gh run list --limit 2 shows Package Widget 27024681636 and Deploy Worker 27024621845 completed successfully on main.'
+        - 'npm view @mean-weasel/bugdrop-board version dist-tags --json and local package.json both report 0.1.0.'
+        - 'git diff -- package.json package-lock.json src scripts .github public test produced no output.'
+        - 'npm run format:check passed.'
+        - 'git diff --check passed.'
+      next_starter_command: '$goal-prep Build BugDrop Board embedded UX polish and install ergonomics: improve loading, empty, error, and accessibility states; tighten host styling hooks and install snippets; preserve existing API/auth/GitHub foundations; exclude hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, and package publishing.'
+
+checks:
+  dirty_fingerprint: null
+  last_verification:
+    result: passed
+    task: T003
+    commands:
+      - 'npm run format:check'
+      - 'git diff --check'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-release-state-consolidation/state.yaml'
+      - 'gh release view v0.1.0 marker check'
+      - 'gh run list --limit 2'
+      - 'npm view @mean-weasel/bugdrop-board version dist-tags --json'
+      - 'git diff -- package.json package-lock.json src scripts .github public test'
