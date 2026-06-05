@@ -2,8 +2,8 @@
 
 Date: 2026-06-05
 
-Status: local proof complete; first GitHub Actions dispatch exposed a missing browser-install step,
-which is patched in follow-up PR #38.
+Status: complete. First GitHub Actions dispatch exposed a missing browser-install step; follow-up
+PR #38 patched it and the fixed workflow passed from `main`.
 
 ## Change
 
@@ -59,6 +59,17 @@ gh run view 27042195381 --log-failed
 Result: failed. The GitHub runner installed npm dependencies but did not have Playwright Chromium
 installed, so `browserType.launch` could not find
 `chromium_headless_shell-1223/chrome-headless-shell-linux64/chrome-headless-shell`.
+
+Fixed post-merge workflow proof:
+
+```bash
+gh workflow run "Install Smoke" --ref main -f package_version=0.1.2 -f retries=1 -f retry_delay_ms=0
+gh run watch 27042324248 --exit-status
+```
+
+Result: passed. The `Clean-Room Install Smoke` job ran from `main` commit
+`753d83f84fc9f649a44713bb9dd911c5cbac61f7`, installed Chromium, and completed the clean-room
+install smoke successfully.
 
 Published package clean-room proof:
 
