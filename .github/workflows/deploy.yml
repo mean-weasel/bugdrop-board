@@ -32,6 +32,18 @@ on:
         description: Optional expected /health environment value. Defaults to the GitHub Environment name.
         required: false
         type: string
+      smoke_cors_origin:
+        description: Optional browser origin expected in deployed Worker CORS responses.
+        required: false
+        type: string
+      smoke_cors_board_id:
+        description: Optional board id used for authenticated CORS /items and /events smoke checks.
+        required: false
+        type: string
+      smoke_cors_token_endpoint:
+        description: Optional endpoint returning a short-lived board token for CORS smoke checks.
+        required: false
+        type: string
 
 jobs:
   deploy:
@@ -48,6 +60,9 @@ jobs:
       PROVISION_REPO: ${{ inputs.provision_repo }}
       PROVISION_NAME: ${{ inputs.provision_name }}
       SMOKE_EXPECT_ENVIRONMENT: ${{ inputs.smoke_expect_environment || inputs.environment }}
+      SMOKE_CORS_BOARD_ID: ${{ inputs.smoke_cors_board_id }}
+      SMOKE_CORS_ORIGIN: ${{ inputs.smoke_cors_origin }}
+      SMOKE_CORS_TOKEN_ENDPOINT: ${{ inputs.smoke_cors_token_endpoint }}
       SMOKE_URL: ${{ inputs.smoke_url }}
       WRANGLER_ENVIRONMENT: ${{ inputs.wrangler_environment }}
     steps:
@@ -135,7 +150,14 @@ jobs:
 
       - name: Verify deployed Worker
         if: ${{ inputs.smoke_url != '' }}
-        run: npm run deploy:smoke -- --url "$SMOKE_URL" --expect-environment "$SMOKE_EXPECT_ENVIRONMENT"
+        run: |
+          args=(--url "$SMOKE_URL" --expect-environment "$SMOKE_EXPECT_ENVIRONMENT")
+          if [ -n "$SMOKE_CORS_ORIGIN" ] || [ -n "$SMOKE_CORS_BOARD_ID" ] || [ -n "$SMOKE_CORS_TOKEN_ENDPOINT" ]; then
+            args+=(--cors-origin "$SMOKE_CORS_ORIGIN")
+            args+=(--cors-board-id "$SMOKE_CORS_BOARD_ID")
+            args+=(--cors-token-endpoint "$SMOKE_CORS_TOKEN_ENDPOINT")
+          fi
+          npm run deploy:smoke -- "${args[@]}"
 
       - name: Remove deployment secrets file
         if: always()

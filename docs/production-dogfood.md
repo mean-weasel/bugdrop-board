@@ -71,16 +71,25 @@ After the board-side config is merged, deploy production explicitly through **De
 4. Set `provision_name` to `BugDrop Board Production Dogfood`.
 5. Set `smoke_url` to `https://board.bugdrop.dev`.
 6. Leave `smoke_expect_environment` blank, or set it to `production`.
+7. Set `smoke_cors_origin` to `https://bugdrop.dev`.
+8. Set `smoke_cors_board_id` to `board_mean_weasel_bugdrop_board_production_dogfood`.
+9. Set `smoke_cors_token_endpoint` to `https://bugdrop.dev/api/bugdrop-board-token?viewer=a`.
 
-The deployment should provision or update the board row, deploy the Worker, and verify `/health`
-and `/board.js`.
+The deployment should provision or update the board row, deploy the Worker, verify `/health` and
+`/board.js`, then prove browser CORS for preflight, `/items`, and `/events` from the dogfood host
+origin.
 
 ## Manual Smoke
 
 Run these non-mutating checks after the deploy:
 
 ```bash
-npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production
+npm run deploy:smoke -- \
+  --url https://board.bugdrop.dev \
+  --expect-environment production \
+  --cors-origin https://bugdrop.dev \
+  --cors-board-id board_mean_weasel_bugdrop_board_production_dogfood \
+  --cors-token-endpoint "https://bugdrop.dev/api/bugdrop-board-token?viewer=a"
 curl https://board.bugdrop.dev/health
 curl -I https://board.bugdrop.dev/board.js
 ```

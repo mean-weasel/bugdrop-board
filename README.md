@@ -420,6 +420,8 @@ Run the workflow from GitHub Actions:
 6. Optionally enter `smoke_expect_environment` when the Worker `ENVIRONMENT` value differs from the
    GitHub Environment name. Leave it blank to expect the selected GitHub Environment, such as
    `production`.
+7. Optionally enter all browser CORS smoke inputs to prove embedded browser access:
+   `smoke_cors_origin`, `smoke_cors_board_id`, and `smoke_cors_token_endpoint`.
 
 The workflow runs:
 
@@ -430,7 +432,7 @@ npx wrangler deploy --dry-run [--env staging]
 npx wrangler d1 migrations apply DB --remote
 npm run provision:board -- --repo owner/name --remote
 npx wrangler deploy --secrets-file .deploy.secrets
-npm run deploy:smoke -- --url https://bugdrop-board.example.workers.dev --expect-environment production
+npm run deploy:smoke -- --url https://bugdrop-board.example.workers.dev --expect-environment production [--cors-origin https://app.example.com --cors-board-id board_owner_repo --cors-token-endpoint https://app.example.com/api/board-token]
 ```
 
 The secrets file is generated inside the workflow runner and removed at the end of the job. Do not
@@ -445,6 +447,12 @@ npm run deploy:smoke -- --url https://bugdrop-board.example.workers.dev --expect
 DEPLOY_SMOKE_URL=https://bugdrop-board.example.workers.dev \
   DEPLOY_SMOKE_EXPECT_ENVIRONMENT=production \
   make deploy-smoke
+npm run deploy:smoke -- \
+  --url https://bugdrop-board.example.workers.dev \
+  --expect-environment production \
+  --cors-origin https://app.example.com \
+  --cors-board-id board_owner_repo \
+  --cors-token-endpoint https://app.example.com/api/board-token
 ```
 
 Then open a signed-in host app page, create a test item, confirm the matching GitHub Issue appears,
@@ -584,7 +592,12 @@ npm run provision:board -- --repo mean-weasel/demo --name "Demo Board" --local
 npm run build:widget
 npm run pack:check
 npm run deploy:check
-npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production
+npm run deploy:smoke -- \
+  --url https://board.bugdrop.dev \
+  --expect-environment production \
+  --cors-origin https://bugdrop.dev \
+  --cors-board-id board_mean_weasel_bugdrop_board_production_dogfood \
+  --cors-token-endpoint "https://bugdrop.dev/api/bugdrop-board-token?viewer=a"
 DEPLOY_SMOKE_URL=https://board.bugdrop.dev DEPLOY_SMOKE_EXPECT_ENVIRONMENT=production make deploy-smoke
 npm run test:e2e
 npm run validate
