@@ -57,7 +57,7 @@ custom_domain = true
 
 [env.production.vars]
 ENVIRONMENT = "production"
-ALLOWED_ORIGINS = "https://board.bugdrop.dev"
+ALLOWED_ORIGINS = "https://bugdrop.dev,https://board.bugdrop.dev"
 BOARD_TOKEN_AUDIENCE = "bugdrop-board"
 BOARD_TOKEN_ISSUER = "bugdrop-board-production-host"
 REQUEST_THROTTLE_WINDOW_SECONDS = "60"

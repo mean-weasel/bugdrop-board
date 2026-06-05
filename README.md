@@ -598,5 +598,6 @@ This repository is still an early vertical slice. The conveyor PR stack has land
 
 Remaining release actions are operational: keep running the local release rehearsal before
 significant changes, run the GitHub workflows against staging/test credentials when changing deploy
-or package release paths, dogfood the embedded widget in a real signed-token host app, and decide
-the next version before any future npm publish.
+or package release paths, dogfood the embedded widget in the real signed-token host app at
+`https://bugdrop.dev` against the board Worker at `https://board.bugdrop.dev`, and decide the next
+version before any future npm publish.

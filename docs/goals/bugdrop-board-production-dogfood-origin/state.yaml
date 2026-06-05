@@ -1,0 +1,137 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Production Dogfood Origin'
+  slug: 'bugdrop-board-production-dogfood-origin'
+  kind: existing_plan
+  tranche: 'Prepare production board origin config for bugdrop.dev host dogfood.'
+  status: done
+  oracle:
+    signal: 'Production config accepts the real dogfood host origin and handoff notes identify the selected host/board pair.'
+    cadence: 'after config/docs edit and final audit'
+    final_proof: 'wrangler.toml and README inspection plus validation gates and deployed smoke.'
+  intake:
+    original_request: 'The dummy app can be bugdrop.dev. We can use the subdomain board.bugdrop.dev.'
+    interpreted_outcome: 'Prepare the board Worker side for production dogfood from bugdrop.dev without deploying or touching secrets.'
+    input_shape: specific
+    audience: 'BugDrop Board maintainers setting up real embedded dogfood'
+    authority: approved_for_safe_local_and_pr_work
+    proof_type: artifact
+    completion_proof: 'Exact origins are configured and verified locally; production deployment remains an explicit later operation.'
+    likely_misfire: 'Deploying production or editing the dirty bugdrop host repo while only preparing board-side config.'
+    blind_spots_considered:
+      - 'The browser Origin for an embedded host page on bugdrop.dev is https://bugdrop.dev, not https://board.bugdrop.dev.'
+      - 'Keeping https://board.bugdrop.dev avoids removing the previous exact origin while the dogfood host is introduced.'
+      - 'The bugdrop host repo currently has unrelated uncommitted work, so host app edits should happen in a separate clean branch/worktree.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-production-dogfood-origin/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-production-dogfood-origin'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Confirm the required production dogfood origins.'
+    receipt:
+      result: done
+      summary: 'Scout found production board config allowed only https://board.bugdrop.dev, while the selected dummy host app origin is https://bugdrop.dev.'
+      evidence:
+        - 'wrangler.toml production ALLOWED_ORIGINS previously contained https://board.bugdrop.dev only.'
+        - 'User selected bugdrop.dev as the dummy host app and board.bugdrop.dev as the board Worker subdomain.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Add the real host origin to production config and document the dogfood pair.'
+    allowed_files:
+      - 'wrangler.toml'
+      - 'README.md'
+      - 'docs/goals/bugdrop-board-production-dogfood-origin/goal.md'
+      - 'docs/goals/bugdrop-board-production-dogfood-origin/state.yaml'
+    verify:
+      - 'rg inspection for production ALLOWED_ORIGINS and README dogfood target'
+      - 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production'
+      - 'npm run validate'
+      - 'make check'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-production-dogfood-origin/state.yaml'
+      - 'scope scan for forbidden deploy, publish, secret, or product changes'
+    stop_if:
+      - 'Need to deploy production.'
+      - 'Need to edit the dirty bugdrop host repo.'
+      - 'Need secret values or credential rotation.'
+    receipt:
+      result: done
+      task_id: T002
+      changed_files:
+        - 'wrangler.toml'
+        - 'README.md'
+        - 'docs/goals/bugdrop-board-production-dogfood-origin/goal.md'
+        - 'docs/goals/bugdrop-board-production-dogfood-origin/state.yaml'
+      summary: 'Added https://bugdrop.dev to production ALLOWED_ORIGINS while preserving https://board.bugdrop.dev, and documented the chosen host/board dogfood pair.'
+      commands:
+        - command: 'rg -n "ALLOWED_ORIGINS|bugdrop.dev|board.bugdrop.dev|production dogfood|signed-token host app" wrangler.toml README.md docs/goals/bugdrop-board-production-dogfood-origin -S'
+          status: pass
+          evidence: 'wrangler.toml production ALLOWED_ORIGINS is "https://bugdrop.dev,https://board.bugdrop.dev"; README names https://bugdrop.dev as the signed-token host app and https://board.bugdrop.dev as the board Worker.'
+        - command: 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production'
+          status: pass
+          evidence: 'Returned production health ok and HEAD /board.js 200 with content-type text/javascript.'
+        - command: 'npm run validate'
+          status: pass
+          evidence: 'eslint, Prettier, TypeScript, and 50 Vitest tests passed.'
+        - command: 'make check'
+          status: pass
+          evidence: 'eslint, format-check, typecheck, knip, critical npm audit, and Actions Node guard passed.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether production dogfood origin prep satisfies the oracle.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'missing evidence'
+      - 'next task if not complete'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'Production ALLOWED_ORIGINS now includes exact host origin https://bugdrop.dev.'
+        - 'Production ALLOWED_ORIGINS still includes https://board.bugdrop.dev.'
+        - 'README handoff notes identify bugdrop.dev as the real signed-token host app and board.bugdrop.dev as the board Worker.'
+        - 'The already-deployed board Worker still passes /health and /board.js smoke.'
+        - 'No deploy, publish, secret rotation, dirty bugdrop host repo edit, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or unrelated product behavior change was introduced.'
+
+checks:
+  dirty_fingerprint: 'wrangler.toml README.md docs/goals/bugdrop-board-production-dogfood-origin/goal.md docs/goals/bugdrop-board-production-dogfood-origin/state.yaml'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'rg -n "ALLOWED_ORIGINS|bugdrop.dev|board.bugdrop.dev|production dogfood|signed-token host app" wrangler.toml README.md docs/goals/bugdrop-board-production-dogfood-origin -S'
+      - 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production'
+      - 'npm run validate'
+      - 'make check'
