@@ -21,6 +21,7 @@
     "build:widget": "node scripts/build-widget.js",
     "deploy": "wrangler deploy",
     "deploy:check": "npm run build:widget && wrangler deploy --dry-run",
+    "deploy:smoke": "node scripts/verify-deployed-worker.js",
     "pack:check": "npm pack --dry-run",
     "release:smoke": "node scripts/verify-package-install.js",
     "provision:board": "node scripts/provision-board.js",
