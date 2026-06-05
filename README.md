@@ -462,6 +462,7 @@ The package entrypoints are:
 All entrypoints resolve to `public/board.js`. The npm package includes:
 
 - `public/board.js`
+- `scripts/verify-deployed-worker.js`
 - `scripts/verify-package-install.js`
 - `src/widget/`
 - `README.md`
