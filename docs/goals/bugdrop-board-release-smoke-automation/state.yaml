@@ -1,0 +1,182 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Release Smoke Automation'
+  slug: 'bugdrop-board-release-smoke-automation'
+  kind: existing_plan
+  tranche: 'Post-v0.1.0 release hardening: reusable npm registry install smoke and post-publish workflow proof.'
+  status: done
+  oracle:
+    signal: 'The published npm package can be installed in a temporary project and its public entrypoints resolve to the installed widget bundle.'
+    cadence: 'after Worker implementation and final audit'
+    final_proof: 'Receipt-backed script/workflow/docs diff plus local smoke against @mean-weasel/bugdrop-board@0.1.0 and standard validation gates.'
+  intake:
+    original_request: 'Leave the next several rounds of GoalBuddy prep, implementation, testing, PR-ing, etc. to Codex while away.'
+    interpreted_outcome: 'Continue the release-readiness conveyor with a safe post-release hardening slice.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers publishing future embed package versions'
+    authority: approved_for_safe_local_and_pr_work
+    proof_type: artifact
+    completion_proof: 'The release smoke is automated locally and in the package workflow, verified against the already-published 0.1.0 package.'
+    likely_misfire: 'Publishing a new npm version or touching production credentials while trying to harden release proof.'
+    blind_spots_considered:
+      - 'Dry-run package proof does not prove the registry tarball can be installed by self-hosters.'
+      - 'The public package exports intentionally do not expose package.json, so smoke must use public entrypoints only.'
+      - 'Post-publish verification must be skipped on dry-runs to avoid failing before a version exists.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-release-smoke-automation/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-release-smoke-automation'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Inspect package publishing proof and identify the safest post-v0.1.0 hardening slice.'
+    receipt:
+      result: done
+      summary: 'Scout found v0.1.0 published and package dry-runs automated, but the clean-install registry smoke was manual and not reusable.'
+      evidence:
+        - 'npm latest is @mean-weasel/bugdrop-board@0.1.0.'
+        - 'Package workflow publish run 26991312353 succeeded.'
+        - 'README documents pack-check and package workflow but not a reusable registry install smoke command.'
+        - 'Manual clean install smoke was performed in the thread after v0.1.0 publish.'
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Authorize the release smoke automation Worker slice.'
+    receipt:
+      result: done
+      decision: proceed
+      worker_objective: 'Add a reusable npm package registry install smoke script, expose it through npm/Makefile commands, run it after non-dry-run publishes, document it, and verify against the published 0.1.0 package.'
+      allowed_files:
+        - '.github/workflows/package.yml'
+        - 'Makefile'
+        - 'README.md'
+        - 'package.json'
+        - 'scripts/verify-package-install.js'
+        - 'docs/goals/bugdrop-board-release-smoke-automation/goal.md'
+        - 'docs/goals/bugdrop-board-release-smoke-automation/state.yaml'
+      verify:
+        - 'npm run release:smoke -- --version 0.1.0'
+        - 'npm run validate'
+        - 'make check'
+        - 'npm run pack:check'
+        - 'scope scan for forbidden product or credential changes'
+      stop_if:
+        - 'Need to publish a new npm version.'
+        - 'Need to rotate or inspect secret values.'
+        - 'Need production credential changes or destructive operations.'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Implement and verify the release smoke automation Worker slice.'
+    allowed_files:
+      - '.github/workflows/package.yml'
+      - 'Makefile'
+      - 'README.md'
+      - 'package.json'
+      - 'scripts/verify-package-install.js'
+      - 'docs/goals/bugdrop-board-release-smoke-automation/goal.md'
+      - 'docs/goals/bugdrop-board-release-smoke-automation/state.yaml'
+    verify:
+      - 'npm run release:smoke -- --version 0.1.0'
+      - 'npm run validate'
+      - 'make check'
+      - 'npm run pack:check'
+      - 'scope scan for forbidden product or credential changes'
+    stop_if:
+      - 'Need files outside allowed_files.'
+      - 'Need to publish a new npm version.'
+      - 'Need to rotate or inspect secret values.'
+      - 'Verification fails twice.'
+    receipt:
+      result: done
+      task_id: T003
+      changed_files:
+        - '.github/workflows/package.yml'
+        - 'Makefile'
+        - 'README.md'
+        - 'package.json'
+        - 'scripts/verify-package-install.js'
+        - 'docs/goals/bugdrop-board-release-smoke-automation/goal.md'
+        - 'docs/goals/bugdrop-board-release-smoke-automation/state.yaml'
+      summary: 'Added a reusable npm registry install smoke, exposed it through npm and Makefile commands, included the verifier in the npm package contents, documented the release smoke flow, and wired the package workflow to run the smoke after non-dry-run publishes.'
+      commands:
+        - command: 'npm run release:smoke -- --version 0.1.0'
+          status: pass
+          evidence: 'Installed @mean-weasel/bugdrop-board@0.1.0 in a temporary project; root, /board, and /board.js entrypoints all resolved to public/board.js; widget/fetch checks passed.'
+        - command: 'npm run pack:check'
+          status: pass
+          evidence: 'Tarball dry-run rebuilt public/board.js and now includes scripts/verify-package-install.js, README.md, package.json, public/board.js, and src/widget files.'
+        - command: 'make check'
+          status: pass
+          evidence: 'eslint, format-check, typecheck, knip, critical npm audit, and Actions Node guard passed.'
+        - command: 'npm run validate'
+          status: pass
+          evidence: 'eslint, Prettier, TypeScript, and 50 Vitest tests passed.'
+        - command: 'git diff scope scan for forbidden product or credential changes'
+          status: pass
+          evidence: 'Diff-scoped scan only matched the intended existing npm publish workflow line; no hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, secret rotation, or production credential change was introduced.'
+      remaining_blockers: []
+      verification_attempts: 1
+      stopped_because: null
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether release smoke automation satisfies the tranche oracle.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'missing evidence'
+      - 'next task if not complete'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'Local release smoke is available through npm run release:smoke and make release-smoke.'
+        - 'The smoke script uses only public package entrypoints and avoids non-exported package internals.'
+        - 'The Package Widget workflow runs release:smoke only after dry_run=false publishes.'
+        - 'README documents the registry artifact smoke.'
+        - 'Verification passed against the already-published 0.1.0 package without publishing a new version.'
+        - 'Final scope scan found no forbidden product or credential changes.'
+      next_starter_command: '$goal-prep Build the next BugDrop Board release-readiness tranche after release smoke automation, preserving standing exclusions.'
+
+checks:
+  dirty_fingerprint: '.github/workflows/package.yml Makefile README.md package.json scripts/verify-package-install.js docs/goals/bugdrop-board-release-smoke-automation/goal.md docs/goals/bugdrop-board-release-smoke-automation/state.yaml'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'npm run release:smoke -- --version 0.1.0'
+      - 'npm run pack:check'
+      - 'make check'
+      - 'npm run validate'
+      - 'git diff scope scan for forbidden product or credential changes'
