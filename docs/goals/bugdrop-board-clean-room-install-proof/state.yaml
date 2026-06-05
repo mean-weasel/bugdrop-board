@@ -1,0 +1,169 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Clean-Room Install Proof'
+  slug: 'bugdrop-board-clean-room-install-proof'
+  kind: specific
+  tranche: 'Post-v0.1.2 self-host install proof and package dry-run verification.'
+  status: done
+  oracle:
+    signal: 'A fresh temp project can install the published board package, verify exports/embed artifacts, and the repo can dry-run package verification without publishing.'
+    cadence: 'after clean-room proof, docs/helper edits, and final audit'
+    final_proof: 'Committed receipt plus CI show npm install/export/embed proof, package dry-run/release smoke proof, and no excluded release/deploy/credential scope.'
+  intake:
+    original_request: 'Excellent - do this'
+    interpreted_outcome: 'Create and execute a GoalBuddy board proving a fresh self-hoster can install and verify BugDrop Board 0.1.2 without local repo assumptions.'
+    input_shape: specific
+    audience: 'BugDrop Board maintainers and early self-hosters'
+    authority: approved_for_safe_local_pr_work_no_publish_or_deploy
+    proof_type: artifact
+    completion_proof: 'Fresh temp install proof, package verification commands, docs patches if needed, PR/CI/merge, and a release-readiness receipt.'
+    likely_misfire: 'Only running repo-local package checks and missing install/docs issues that appear in a fresh self-hoster environment.'
+    blind_spots_considered:
+      - 'The npm package may include the correct files but docs may not give a copy/pasteable host embed path.'
+      - 'The package verifier may prove entrypoints but not the documented script-tag shape.'
+      - 'Package Widget dry-run should be verified without triggering another publish.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: running
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-clean-room-install-proof/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-clean-room-install-proof'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Map the published-package install contract and identify the exact clean-room proof commands.'
+    expected_output:
+      - 'temporary workspace path strategy'
+      - 'commands for npm install, entrypoint checks, embed snippet proof, package dry-run, and release smoke'
+      - 'candidate docs or helper gaps'
+    allowed_files:
+      - 'README.md'
+      - 'package.json'
+      - 'scripts/verify-package-install.js'
+      - '.github/workflows/package.yml'
+      - 'docs/release-readiness-results/'
+      - 'docs/goals/bugdrop-board-clean-room-install-proof/goal.md'
+      - 'docs/goals/bugdrop-board-clean-room-install-proof/state.yaml'
+      - 'docs/goals/bugdrop-board-clean-room-install-proof/notes/.gitkeep'
+    verify:
+      - 'read-only inspection only before receipt'
+    stop_if:
+      - 'Need to publish, deploy, rotate secrets, or inspect secret values.'
+      - 'Published package 0.1.2 is unavailable from npm.'
+    receipt:
+      result: done
+      summary: 'Scout found that the existing release:smoke verifier proves package entrypoints and bundle content, but does not exercise the README script-tag embed shape. The clean-room proof should install the published package in a fresh temp project, serve only the installed public/board.js bundle, mock token/items endpoints, and confirm data-mount-selector places the widget in the documented host container.'
+      evidence:
+        - 'README documents script embed attributes, package entrypoints, token endpoint expectations, and data-mount-selector behavior.'
+        - 'scripts/verify-package-install.js installs a published package into a temporary project and verifies root, /board, and /board.js entrypoints.'
+        - '.github/workflows/package.yml dry-runs by default and skips token validation, publish, and post-publish smoke when dry_run=true.'
+        - 'Published npm metadata for @mean-weasel/bugdrop-board@0.1.2 returned the version, tarball URL, and integrity.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Execute the clean-room install proof and patch docs/helpers only for discovered install-proof gaps.'
+    allowed_files:
+      - 'README.md'
+      - 'scripts/verify-package-install.js'
+      - 'docs/release-readiness-results/2026-06-05-clean-room-install-proof.md'
+      - 'docs/goals/bugdrop-board-clean-room-install-proof/goal.md'
+      - 'docs/goals/bugdrop-board-clean-room-install-proof/state.yaml'
+      - 'docs/goals/bugdrop-board-clean-room-install-proof/notes/.gitkeep'
+    verify:
+      - 'fresh temp npm install @mean-weasel/bugdrop-board@0.1.2'
+      - 'fresh temp entrypoint and board.js artifact checks'
+      - 'fresh temp documented embed snippet/static boot proof'
+      - 'npm run pack:check'
+      - 'npm run release:smoke -- --version 0.1.2 --retries 1 --retry-delay-ms 0'
+      - 'npm run validate'
+      - 'make check'
+      - 'git diff --check'
+      - 'scope scan for publish/deploy/credential/product-behavior changes'
+    stop_if:
+      - 'Need files outside allowed_files.'
+      - 'Need a new npm publish or package version bump.'
+      - 'Need production deploys or credential changes.'
+      - 'Clean-room install fails because npm cannot serve 0.1.2 after retry.'
+    receipt:
+      result: done
+      task_id: T002
+      changed_files:
+        - 'README.md'
+        - 'docs/release-readiness-results/2026-06-05-clean-room-install-proof.md'
+        - 'docs/goals/bugdrop-board-clean-room-install-proof/goal.md'
+        - 'docs/goals/bugdrop-board-clean-room-install-proof/state.yaml'
+        - 'docs/goals/bugdrop-board-clean-room-install-proof/notes/.gitkeep'
+      summary: 'Executed the clean-room install proof and patched README to name the npm-installed public/board.js path plus a temp-project verification snippet.'
+      commands:
+        - command: 'fresh temp npm install + Playwright host harness for @mean-weasel/bugdrop-board@0.1.2'
+          status: pass
+          evidence: 'Installed version 0.1.2; root, /board, and /board.js resolved to public/board.js; bundle size 10445; inline #feedback-board mounted one data-bugdrop-board-root; Shadow DOM rendered Clean room install proof, Upvote 2, and Issue #12; token/items endpoints were requested; no console errors or failed requests.'
+        - command: 'attempt to resolve @mean-weasel/bugdrop-board/package.json in fresh temp project'
+          status: pass
+          evidence: 'ERR_PACKAGE_PATH_NOT_EXPORTED confirmed package.json is not a public entrypoint; proof now uses npm ls for installed-version verification.'
+        - command: 'npm run pack:check'
+          status: pass
+          evidence: 'Dry-run tarball for 0.1.2 included README.md, package.json, public/board.js, verify scripts, src/widget/mount.ts, and widget source files.'
+        - command: 'npm run release:smoke -- --version 0.1.2 --retries 1 --retry-delay-ms 0'
+          status: pass
+          evidence: 'Installed published 0.1.2 into a temporary project and passed entrypoint/content/version checks.'
+        - command: 'gh workflow run package.yml --ref main -f dry_run=true -f npm_tag=latest; gh run watch 27037127255 --exit-status'
+          status: pass
+          evidence: 'Package Widget dry run succeeded; Validate npm token, Publish package, and Verify published package steps were skipped.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether clean-room install proof satisfies the full oracle.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'missing evidence'
+      - 'next task if not complete'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'Fresh temp project installed @mean-weasel/bugdrop-board@0.1.2 and booted the published bundle in a host page using documented script attributes.'
+        - 'README now documents the npm-installed browser bundle path and an independent temp-project package verification snippet.'
+        - 'npm run pack:check passed without publishing.'
+        - 'npm run release:smoke -- --version 0.1.2 --retries 1 --retry-delay-ms 0 passed.'
+        - 'Package Widget dry-run workflow 27037127255 passed from main with publish steps skipped.'
+        - 'Release-readiness receipt docs/release-readiness-results/2026-06-05-clean-room-install-proof.md records commands, artifacts, and the package.json non-export failed-assumption check.'
+        - 'Scope audit found no publish, version bump, deploy, credential change, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or runtime product behavior change.'
+
+checks:
+  dirty_fingerprint: 'README.md docs/release-readiness-results/2026-06-05-clean-room-install-proof.md docs/goals/bugdrop-board-clean-room-install-proof/goal.md docs/goals/bugdrop-board-clean-room-install-proof/state.yaml docs/goals/bugdrop-board-clean-room-install-proof/notes/.gitkeep'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'fresh temp npm install + Playwright host harness for @mean-weasel/bugdrop-board@0.1.2'
+      - 'npm run pack:check'
+      - 'npm run release:smoke -- --version 0.1.2 --retries 1 --retry-delay-ms 0'
+      - 'gh run watch 27037127255 --exit-status'
