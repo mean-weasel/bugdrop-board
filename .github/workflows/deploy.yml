@@ -28,6 +28,10 @@ on:
         description: Optional deployed Worker URL to verify after deployment.
         required: false
         type: string
+      smoke_expect_environment:
+        description: Optional expected /health environment value. Defaults to the GitHub Environment name.
+        required: false
+        type: string
 
 jobs:
   deploy:
@@ -43,6 +47,7 @@ jobs:
       GITHUB_ISSUE_ACCESS_TOKEN: ${{ secrets.ISSUE_ACCESS_TOKEN }}
       PROVISION_REPO: ${{ inputs.provision_repo }}
       PROVISION_NAME: ${{ inputs.provision_name }}
+      SMOKE_EXPECT_ENVIRONMENT: ${{ inputs.smoke_expect_environment || inputs.environment }}
       SMOKE_URL: ${{ inputs.smoke_url }}
       WRANGLER_ENVIRONMENT: ${{ inputs.wrangler_environment }}
     steps:
@@ -130,7 +135,7 @@ jobs:
 
       - name: Verify deployed Worker
         if: ${{ inputs.smoke_url != '' }}
-        run: npm run deploy:smoke -- --url "$SMOKE_URL" --expect-environment "${{ inputs.environment }}"
+        run: npm run deploy:smoke -- --url "$SMOKE_URL" --expect-environment "$SMOKE_EXPECT_ENVIRONMENT"
 
       - name: Remove deployment secrets file
         if: always()
