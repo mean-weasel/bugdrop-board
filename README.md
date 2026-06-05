@@ -216,6 +216,17 @@ published bundle from one of its equivalent entrypoints:
 - `@mean-weasel/bugdrop-board/board`
 - `@mean-weasel/bugdrop-board/board.js`
 
+For npm-based installs, the browser script file is installed at:
+
+```text
+node_modules/@mean-weasel/bugdrop-board/public/board.js
+```
+
+Copy that file into your host app's static assets or serve it from your own asset pipeline, then
+point the script `src` at the URL where your app serves the copied bundle. The npm package contains
+the embedded widget bundle only; it does not provision D1, deploy the Worker, or replace the
+self-host Worker setup above.
+
 Attributes:
 
 - `data-board-id`: D1 board id. Current ids are generated from repo owner/name, for example
@@ -554,6 +565,20 @@ The smoke command resolves all public package entrypoints, verifies they point a
 `public/board.js` bundle, and checks the bundle has the expected widget and fetch code. The package
 workflow runs this smoke automatically after a non-dry-run publish with a longer retry window to
 allow npm registry propagation.
+
+To verify the package from a completely separate project, run:
+
+```bash
+tmpdir=$(mktemp -d)
+cd "$tmpdir"
+npm init -y
+npm install @mean-weasel/bugdrop-board@0.1.2
+test -f node_modules/@mean-weasel/bugdrop-board/public/board.js
+node -e "require.resolve('@mean-weasel/bugdrop-board/board.js'); require.resolve('@mean-weasel/bugdrop-board/board')"
+```
+
+This proves the published package can be installed without this repository checkout and that the
+documented static bundle path exists.
 
 The `Package Widget` GitHub Actions workflow is manually dispatched and dry-runs by default:
 
