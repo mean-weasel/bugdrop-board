@@ -1,0 +1,149 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Production Dogfood Runbook'
+  slug: 'bugdrop-board-production-dogfood-runbook'
+  kind: existing_plan
+  tranche: 'Document production bugdrop.dev host dogfood execution path.'
+  status: done
+  oracle:
+    signal: 'A production dogfood runbook names exact host, board, repo, token, deploy, browser proof, and receipt requirements.'
+    cadence: 'after docs edit and final audit'
+    final_proof: 'Runbook/README inspection plus docs formatting and standard validation gates.'
+  intake:
+    original_request: 'The dummy app can be bugdrop.dev. We can use the subdomain board.bugdrop.dev.'
+    interpreted_outcome: 'Turn the selected production dogfood target into an operator runbook without editing the dirty host repo or deploying.'
+    input_shape: specific
+    audience: 'BugDrop Board maintainers preparing real embedded dogfood'
+    authority: approved_for_safe_docs_and_pr_work
+    proof_type: artifact
+    completion_proof: 'docs/production-dogfood.md is committed and linked from README handoff notes.'
+    likely_misfire: 'Adding host app behavior without approval or touching secrets while the safe next slice is documentation.'
+    blind_spots_considered:
+      - 'The Superpowers brainstorming skill requires approval before new host-app behavior.'
+      - 'The bugdrop repo checkout has unrelated dirty work and should not be edited in place.'
+      - 'Production dogfood needs both board-side origin config and host-side token signing.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-production-dogfood-runbook/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-production-dogfood-runbook'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Collect production dogfood facts and constraints.'
+    receipt:
+      result: done
+      summary: 'Scout confirmed bugdrop-board is clean/green, production package remains 0.1.0, production dogfood repo exists with Issues enabled, and the bugdrop host repo checkout is dirty.'
+      evidence:
+        - 'gh repo view mean-weasel/bugdrop-board-production-dogfood returned private repo with Issues enabled.'
+        - 'wrangler.toml contains board.bugdrop.dev route and production ALLOWED_ORIGINS for bugdrop.dev and board.bugdrop.dev.'
+        - '/Users/neonwatty/Desktop/bugdrop status showed uncommitted review work on codex/pr-188-review.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Write and verify the production dogfood runbook.'
+    allowed_files:
+      - 'README.md'
+      - 'docs/production-dogfood.md'
+      - 'docs/goals/bugdrop-board-production-dogfood-runbook/goal.md'
+      - 'docs/goals/bugdrop-board-production-dogfood-runbook/state.yaml'
+    verify:
+      - 'rg inspection for production dogfood fixed targets and receipt requirements'
+      - 'npx prettier --check README.md docs/production-dogfood.md docs/goals/bugdrop-board-production-dogfood-runbook/goal.md docs/goals/bugdrop-board-production-dogfood-runbook/state.yaml'
+      - 'npm run validate'
+      - 'make check'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-production-dogfood-runbook/state.yaml'
+      - 'scope scan for secret values and forbidden product/deploy/publish changes'
+    stop_if:
+      - 'Need to edit the dirty bugdrop host repo.'
+      - 'Need to deploy production.'
+      - 'Need secret values.'
+    receipt:
+      result: done
+      task_id: T002
+      changed_files:
+        - 'README.md'
+        - 'docs/production-dogfood.md'
+        - 'docs/goals/bugdrop-board-production-dogfood-runbook/goal.md'
+        - 'docs/goals/bugdrop-board-production-dogfood-runbook/state.yaml'
+      summary: 'Added the production dogfood runbook for bugdrop.dev host proof and linked it from README handoff notes.'
+      commands:
+        - command: 'rg -n "Production Dogfood|bugdrop.dev|board.bugdrop.dev|bugdrop-board-production-dogfood|board_mean_weasel_bugdrop_board_production_dogfood|bugdrop-board-production-host|docs/production-dogfood|secret|No secret|Rollback|GitHub Projects|downvotes|realtime" README.md docs/production-dogfood.md docs/goals/bugdrop-board-production-dogfood-runbook -S'
+          status: pass
+          evidence: 'Runbook names exact host, board Worker, dogfood repo, board id, issuer, deploy/proof steps, receipt requirements, rollback notes, and excluded scope.'
+        - command: 'npx prettier --check README.md docs/production-dogfood.md docs/goals/bugdrop-board-production-dogfood-runbook/goal.md docs/goals/bugdrop-board-production-dogfood-runbook/state.yaml'
+          status: pass
+          evidence: 'All matched files use Prettier code style.'
+        - command: 'npm run validate'
+          status: pass
+          evidence: 'eslint, Prettier, TypeScript, and 50 Vitest tests passed.'
+        - command: 'make check'
+          status: pass
+          evidence: 'eslint, format-check, typecheck, knip, critical npm audit, and Actions Node guard passed.'
+        - command: 'secret-looking value scan over README.md, docs/production-dogfood.md, and runbook GoalBuddy files'
+          status: pass
+          evidence: 'No GitHub, npm, Cloudflare, Slack, OpenAI, private-key, BOARD_TOKEN_SECRET, or GITHUB_ISSUE_ACCESS_TOKEN value-shaped matches.'
+        - command: 'diff scope scan for forbidden product, deploy, publish, or secret operations'
+          status: pass
+          evidence: 'No diff matches for hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, npm publish, wrangler deploy, secret put, or secret names outside runbook text.'
+        - command: 'git diff --check'
+          status: pass
+          evidence: 'No whitespace errors.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether production dogfood runbook satisfies the oracle.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'missing evidence'
+      - 'next task if not complete'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'docs/production-dogfood.md identifies https://bugdrop.dev as host and https://board.bugdrop.dev as Worker.'
+        - 'Runbook names production dogfood repo, expected board id, audience, issuer, allowed origins, deploy workflow inputs, browser proof, and receipt contents.'
+        - 'README links to the production dogfood runbook from the staging/release-readiness area.'
+        - 'No host app code, production deploy, npm publish, secret operation, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or unrelated product behavior change was introduced.'
+
+checks:
+  dirty_fingerprint: 'README.md docs/production-dogfood.md docs/goals/bugdrop-board-production-dogfood-runbook/goal.md docs/goals/bugdrop-board-production-dogfood-runbook/state.yaml'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'rg inspection for production dogfood fixed targets and receipt requirements'
+      - 'npx prettier --check README.md docs/production-dogfood.md docs/goals/bugdrop-board-production-dogfood-runbook/goal.md docs/goals/bugdrop-board-production-dogfood-runbook/state.yaml'
+      - 'npm run validate'
+      - 'make check'
+      - 'secret-looking value scan'
+      - 'diff scope scan for forbidden product/deploy/publish/secret changes'
+      - 'git diff --check'
