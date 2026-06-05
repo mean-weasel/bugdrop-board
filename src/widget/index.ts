@@ -81,19 +81,40 @@ function mount(config: BoardWidgetConfig): void {
   const api = new BoardApi(config.apiUrl, config.boardId, () => getToken(config));
   let state: BoardState = { items: [], cursor: 0, loading: true };
 
+  const refreshItems = async () => {
+    const items = await api.listItems();
+    state = { ...state, items: replaceItems(state.items, items), loading: false, error: undefined };
+    rerender();
+  };
+
+  const retryRefresh = async () => {
+    state = { ...state, loading: true, error: undefined };
+    rerender();
+    try {
+      await refreshItems();
+    } catch (error) {
+      state = {
+        ...state,
+        loading: false,
+        error: error instanceof Error ? error.message : 'Load failed',
+      };
+      rerender();
+    }
+  };
+
   const rerender = () =>
     renderBoard(root, state, {
       onCreate: async input => {
-        state = { ...state, loading: true, error: undefined };
+        state = { ...state, submitting: true, error: undefined };
         rerender();
         try {
           const item = await api.createItem(input);
-          state = { ...state, items: upsertItem(state.items, item), loading: false };
+          state = { ...state, items: upsertItem(state.items, item), submitting: false };
           rerender();
         } catch (error) {
           state = {
             ...state,
-            loading: false,
+            submitting: false,
             error: error instanceof Error ? error.message : 'Create failed',
           };
           rerender();
@@ -112,13 +133,8 @@ function mount(config: BoardWidgetConfig): void {
           rerender();
         }
       },
+      onRetry: retryRefresh,
     });
-
-  const refreshItems = async () => {
-    const items = await api.listItems();
-    state = { ...state, items: replaceItems(state.items, items), loading: false, error: undefined };
-    rerender();
-  };
 
   rerender();
   refreshItems().catch(error => {

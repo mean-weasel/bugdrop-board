@@ -1,0 +1,203 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Embedded UX And Install Ergonomics'
+  slug: 'bugdrop-board-embedded-ux-install-ergonomics'
+  kind: existing_plan
+  tranche: 'Embedded widget UX polish and install ergonomics after v0.1.0 release-state consolidation.'
+  status: done
+  oracle:
+    signal: 'The embedded widget visibly handles loading, empty, retryable error, and accessible voting/status states, with documented host styling/install hooks and preserved foundations.'
+    cadence: 'after each Worker slice and final audit'
+    final_proof: 'Focused widget/DOM tests, Playwright dummy-host proof, widget build, validation gates, README inspection, and scope audit receipts.'
+  intake:
+    original_request: '$goal-prep Build BugDrop Board embedded UX polish and install ergonomics: improve loading, empty, error, and accessibility states; tighten host styling hooks and install snippets; preserve existing API/auth/GitHub foundations; exclude hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, and package publishing.'
+    interpreted_outcome: 'Prepare and execute a bounded polish tranche for the existing embedded widget and install docs, without broad product or release behavior changes.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers, host-app integrators, and early self-hosters'
+    authority: approved_for_goal_prep_and_subsequent_safe_local_execution
+    proof_type: demo
+    completion_proof: 'Browser and test proof show polished embedded states and docs explain installation/styling clearly while excluded scopes remain untouched.'
+    likely_misfire: 'Changing backend/product scope, publishing a new package, or adding a hosted control plane instead of polishing the existing embedded widget and install path.'
+    blind_spots_considered:
+      - 'Visible loading should not disable the entire form indefinitely after background polling errors.'
+      - 'Retry needs to recover initial load failures without requiring a full host page reload.'
+      - 'Styling hooks should be conservative because the widget lives in Shadow DOM and must avoid host CSS leakage.'
+      - 'Install docs should help both npm/package readers and script-tag self-hosters without implying a managed CDN/control plane.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-embedded-ux-install-ergonomics/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-embedded-ux-install-ergonomics'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Inspect the current widget, README install contract, dummy host fixture, and E2E proof to identify the concrete UX/install gaps.'
+    receipt:
+      result: done
+      summary: 'Read-only Scout pass found the current widget has basic labels, empty text, and alert errors, but lacks a visible initial loading/list state, retry affordance, richer accessible vote semantics, documented CSS custom-property hooks, and focused widget/DOM tests. README has a usable embed contract but can better explain npm/script install paths and styling hooks. Existing Playwright dummy-host proof should be extended rather than replaced.'
+      evidence:
+        - 'src/widget/index.ts currently models one loading boolean and sets loading false after listItems, but has no retry handler.'
+        - 'src/widget/dom.ts renders heading, form labels, a minimal No feedback yet empty state, role=alert error text, and Upvote/Upvoted button text.'
+        - 'src/widget/theme.ts uses Shadow DOM CSS plus data-color-derived accent color, but no documented CSS custom-property hook surface.'
+        - 'README.md Embed Contract documents data-board-id, data-api-url, data-token-endpoint, data-poll-interval, and data-color.'
+        - 'e2e/board-widget.spec.ts proves create, issue link, upvote, and polling between two dummy-host viewers.'
+        - 'No focused test file exists for src/widget/dom.ts or widget state rendering.'
+      gaps:
+        - 'Visible loading state for initial board fetch.'
+        - 'Friendly empty state with clearer first-action copy.'
+        - 'Retryable error state for failed initial load and polling refresh.'
+        - 'Accessible status/vote semantics: aria-live, aria-busy, aria-pressed, and clearer button labels.'
+        - 'Conservative styling hooks documented for self-hosters.'
+        - 'Install docs that distinguish package entrypoints, script embed, signed token endpoint, Worker URL, board id, polling, and styling.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Implement the first complete widget UX/install polish slice.'
+    allowed_files:
+      - 'src/widget/index.ts'
+      - 'src/widget/dom.ts'
+      - 'src/widget/theme.ts'
+      - 'src/widget/types.ts'
+      - 'test/widget-dom.test.ts'
+      - 'e2e/board-widget.spec.ts'
+      - 'e2e/fixtures/host-app.ts'
+      - 'README.md'
+      - 'docs/goals/bugdrop-board-embedded-ux-install-ergonomics/goal.md'
+      - 'docs/goals/bugdrop-board-embedded-ux-install-ergonomics/state.yaml'
+      - 'docs/goals/bugdrop-board-embedded-ux-install-ergonomics/notes/.gitkeep'
+    acceptance:
+      - 'Initial load renders a visible loading/list status and uses aria-busy or equivalent accessible state.'
+      - 'Empty list renders clearer first-action copy without changing API behavior.'
+      - 'Initial load or polling errors render a friendly message plus a retry button that calls the existing list API again.'
+      - 'Upvote buttons expose pressed state and a more descriptive accessible label while preserving visible Upvote/Upvoted count text expected by existing E2E.'
+      - 'Theme supports a small documented CSS custom-property surface while preserving data-color as the default accent path.'
+      - 'README embed/install docs explain package entrypoints, script embed attributes, token endpoint, Worker URL, board id, polling interval, data-color, styling hooks, and verification.'
+      - 'Existing create/upvote/polling E2E behavior remains green.'
+    verify:
+      - 'npm run test -- test/widget-dom.test.ts'
+      - 'npm run build:widget'
+      - 'npm run test:e2e'
+      - 'npm run validate'
+      - 'make check'
+      - 'scope audit: git diff --name-only must stay within allowed files and no package version/publish/deploy/runtime backend files change'
+    stop_if:
+      - 'Need Worker API, auth, D1 schema, GitHub mirror, release workflow, package publish, version bump, production deploy, hosted control plane, billing, realtime, comments, downvotes, or GitHub Projects changes.'
+      - 'Need a new design decision about public widget copy, branding, or managed hosted behavior.'
+    receipt:
+      result: done
+      changed_files:
+        - 'README.md'
+        - 'e2e/board-widget.spec.ts'
+        - 'src/widget/dom.ts'
+        - 'src/widget/index.ts'
+        - 'src/widget/theme.ts'
+        - 'src/widget/types.ts'
+        - 'test/widget-dom.test.ts'
+        - 'docs/goals/bugdrop-board-embedded-ux-install-ergonomics/goal.md'
+        - 'docs/goals/bugdrop-board-embedded-ux-install-ergonomics/state.yaml'
+        - 'docs/goals/bugdrop-board-embedded-ux-install-ergonomics/notes/.gitkeep'
+      summary: 'Implemented the complete widget UX/install polish slice: visible loading status, clearer empty copy, retryable friendly error state, accessible upvote pressed/label semantics, conservative Shadow DOM CSS custom-property hooks, README install/styling docs, focused widget DOM tests, and extended dummy-host E2E assertions.'
+      commands:
+        - command: 'npm run test -- test/widget-dom.test.ts'
+          status: pass
+          evidence: '5 focused widget DOM tests passed after RED first failed on missing loading, empty, retry, aria-pressed, and CSS variable behavior.'
+        - command: 'npm run build:widget'
+          status: pass
+          evidence: 'Built BugDrop Board bundle 0.1.0.'
+        - command: 'npm run test:e2e'
+          status: pass
+          evidence: '1 Playwright test passed, proving embedded empty copy, create, GitHub issue link, aria-pressed upvote, visible vote text, and polling sync.'
+        - command: 'npm run validate'
+          status: pass
+          evidence: 'eslint, Prettier, TypeScript, and Vitest passed: 9 test files and 58 tests.'
+        - command: 'make check'
+          status: pass
+          evidence: 'eslint, format-check, typecheck, knip, critical audit, and Actions Node 24 guard passed.'
+        - command: 'scope audit: git diff --name-only package.json package-lock.json .github public scripts src/routes src/lib wrangler.toml wrangler.jsonc'
+          status: pass
+          evidence: 'No output; no package/version, release workflow, public bundle, script, backend, or Wrangler config drift.'
+
+  - id: T003
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Review the completed widget UX/install polish slice against the oracle.'
+    acceptance:
+      - 'Maps implementation and tests to every T002 acceptance bullet.'
+      - 'Identifies whether one slice completes the full goal or a second Worker slice is needed.'
+      - 'Records any UX/documentation residual risks with exact evidence.'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: 'The T002 slice covers every worker acceptance bullet; no second implementation slice is needed for the requested embedded UX/install ergonomics tranche.'
+      evidence:
+        - 'Initial loading: test/widget-dom.test.ts asserts role=status Loading feedback..., aria-busy=true, and aria-live=polite.'
+        - 'Empty state: focused test and Playwright assert the clearer first-action copy.'
+        - 'Retryable error: focused test asserts friendly error title, underlying detail, and retry button callback.'
+        - 'Accessible upvote: focused test asserts aria-pressed and descriptive aria-label; Playwright asserts aria-pressed in the embedded dummy host while visible Upvote/Upvoted count text remains present.'
+        - 'Styling hooks: focused test asserts --bugdrop-board-accent with data-color default plus surface and danger variables; README documents the custom-property surface.'
+        - 'Install docs: README now documents package entrypoints, script embed attributes, token endpoint, Worker URL, board id, polling interval, data-color, styling hooks, and verification.'
+      residual_risks:
+        - 'Initial loading is proven by focused DOM tests, not Playwright timing, because local initial API reads complete too quickly for stable browser observation.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether embedded UX/install ergonomics satisfies the full oracle.'
+    acceptance:
+      - 'Every oracle bullet is proven by current file inspection, tests, browser proof, or docs.'
+      - 'All required verification commands have fresh pass/fail receipts.'
+      - 'No excluded scope was introduced.'
+      - 'If complete, branch is ready for PR; if not complete, the next active task is explicit.'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: 'Embedded UX/install ergonomics satisfies the full oracle and is ready for PR after final formatting/state validation.'
+      evidence:
+        - 'Widget visibly handles loading, empty, and error states: focused DOM tests pass and E2E sees the empty state in the embedded host.'
+        - 'Retry path exists: focused DOM test clicks .bugdrop-board__retry and observes onRetry once; src/widget/index.ts wires retry to the existing list API.'
+        - 'Accessibility semantics exist: aria-busy, aria-live, role=status, role=alert, aria-pressed, and aria-label are covered by focused tests and E2E.'
+        - 'Styling hooks exist and are documented: injectTheme uses --bugdrop-board-* custom properties with data-color as accent default; README documents host root variables.'
+        - 'Install docs cover package entrypoints, script embed, Worker URL, board id, token endpoint, poll interval, data-color, styling hooks, and verification.'
+        - 'Existing foundations are preserved: E2E create/upvote/polling still passes, validate/make check pass, and forbidden-scope diff is empty.'
+      next_starter_command: null
+
+checks:
+  dirty_fingerprint: 'README.md e2e/board-widget.spec.ts src/widget/dom.ts src/widget/index.ts src/widget/theme.ts src/widget/types.ts test/widget-dom.test.ts docs/goals/bugdrop-board-embedded-ux-install-ergonomics/goal.md docs/goals/bugdrop-board-embedded-ux-install-ergonomics/state.yaml docs/goals/bugdrop-board-embedded-ux-install-ergonomics/notes/.gitkeep'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'npm run test -- test/widget-dom.test.ts'
+      - 'npm run build:widget'
+      - 'npm run test:e2e'
+      - 'npm run validate'
+      - 'make check'
+      - 'scope audit: git diff --name-only package.json package-lock.json .github public scripts src/routes src/lib wrangler.toml wrangler.jsonc'

@@ -3,6 +3,7 @@ import type { BoardItemView, BoardState } from './types';
 interface BoardDomHandlers {
   onCreate(input: { title: string; description: string }): void;
   onUpvote(itemId: string): void;
+  onRetry(): void;
 }
 
 export function renderBoard(
@@ -14,6 +15,7 @@ export function renderBoard(
 
   const shell = document.createElement('section');
   shell.className = 'bugdrop-board';
+  shell.setAttribute('aria-busy', String(state.loading || Boolean(state.submitting)));
 
   const header = document.createElement('header');
   header.className = 'bugdrop-board__header';
@@ -22,14 +24,21 @@ export function renderBoard(
   heading.textContent = 'Feedback';
   header.append(heading);
 
-  const form = createForm(handlers, state.loading);
+  const form = createForm(handlers, Boolean(state.submitting));
   const list = document.createElement('div');
   list.className = 'bugdrop-board__list';
+  list.setAttribute('aria-live', 'polite');
 
-  if (state.items.length === 0 && !state.loading) {
+  if (state.loading) {
+    const loading = document.createElement('p');
+    loading.className = 'bugdrop-board__loading';
+    loading.setAttribute('role', 'status');
+    loading.textContent = 'Loading feedback...';
+    list.append(loading);
+  } else if (state.items.length === 0) {
     const empty = document.createElement('p');
     empty.className = 'bugdrop-board__empty';
-    empty.textContent = 'No feedback yet.';
+    empty.textContent = 'No feedback yet. Share the first idea to help prioritize what comes next.';
     list.append(empty);
   } else {
     state.items.forEach(item => list.append(renderItem(item, handlers)));
@@ -40,7 +49,18 @@ export function renderBoard(
     const error = document.createElement('p');
     error.className = 'bugdrop-board__error';
     error.setAttribute('role', 'alert');
-    error.textContent = state.error;
+    const title = document.createElement('span');
+    title.className = 'bugdrop-board__error-title';
+    title.textContent = "We couldn't load feedback.";
+    const detail = document.createElement('span');
+    detail.className = 'bugdrop-board__error-detail';
+    detail.textContent = state.error;
+    const retry = document.createElement('button');
+    retry.type = 'button';
+    retry.className = 'bugdrop-board__retry';
+    retry.textContent = 'Retry';
+    retry.addEventListener('click', () => handlers.onRetry());
+    error.append(title, detail, retry);
     shell.append(error);
   }
   shell.append(list);
@@ -98,6 +118,8 @@ function renderItem(item: BoardItemView, handlers: BoardDomHandlers): HTMLElemen
   vote.type = 'button';
   vote.className = 'bugdrop-board__upvote';
   vote.textContent = `${item.viewerHasUpvoted ? 'Upvoted' : 'Upvote'} ${item.upvoteCount}`;
+  vote.setAttribute('aria-pressed', String(Boolean(item.viewerHasUpvoted)));
+  vote.setAttribute('aria-label', voteLabel(item));
   vote.addEventListener('click', () => handlers.onUpvote(item.id));
 
   const content = document.createElement('div');
@@ -129,4 +151,12 @@ function renderItem(item: BoardItemView, handlers: BoardDomHandlers): HTMLElemen
   content.append(title, meta, description);
   article.append(vote, content);
   return article;
+}
+
+function voteLabel(item: BoardItemView): string {
+  const count = `${item.upvoteCount} ${item.upvoteCount === 1 ? 'upvote' : 'upvotes'}`;
+  if (item.viewerHasUpvoted) {
+    return `Remove upvote from ${item.title}. ${count}.`;
+  }
+  return `Upvote ${item.title}. ${count}.`;
 }

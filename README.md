@@ -196,6 +196,13 @@ Add the built widget script to a host app page:
 ></script>
 ```
 
+You can serve `board.js` from your deployed Worker, or install the npm package and copy or serve the
+published bundle from one of its equivalent entrypoints:
+
+- `@mean-weasel/bugdrop-board`
+- `@mean-weasel/bugdrop-board/board`
+- `@mean-weasel/bugdrop-board/board.js`
+
 Attributes:
 
 - `data-board-id`: D1 board id. Current ids are generated from repo owner/name, for example
@@ -203,9 +210,25 @@ Attributes:
 - `data-api-url`: Worker API origin. Defaults to the script origin when omitted.
 - `data-token-endpoint`: host app endpoint that returns a board token for the current app user.
 - `data-poll-interval`: optional polling interval in milliseconds. Values below `500` are ignored.
-- `data-color`: optional accent color for widget controls.
+- `data-color`: optional accent color for widget controls. Defaults to `#2563eb`.
 
-The widget runs in an open Shadow DOM root and appends itself to the host page body.
+The widget runs in an open Shadow DOM root and appends itself to the host page body. Host CSS does
+not style internals directly, but self-hosters can set a small custom-property surface on the
+generated root:
+
+```css
+[data-bugdrop-board-root] {
+  --bugdrop-board-accent: #1f883d;
+  --bugdrop-board-surface: #ffffff;
+  --bugdrop-board-text: #172026;
+  --bugdrop-board-muted: #57606a;
+  --bugdrop-board-border: #d0d7de;
+  --bugdrop-board-danger: #b42318;
+}
+```
+
+`data-color` remains the easiest accent path for script-tag installs. CSS custom properties are for
+hosts that need the board to match an existing app theme without piercing the Shadow DOM.
 
 ## Host Token Endpoint
 
