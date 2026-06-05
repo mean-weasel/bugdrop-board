@@ -1,0 +1,121 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Docs Drift Cleanup'
+  slug: 'bugdrop-board-docs-drift-cleanup'
+  kind: existing_plan
+  tranche: 'Post-v0.1.0 docs accuracy cleanup only.'
+  status: done
+  oracle:
+    signal: 'README release and package docs match the current npm/production state.'
+    cadence: 'after Worker edit and final audit'
+    final_proof: 'README diff inspection, markdown formatting, validate, and forbidden-scope scan.'
+  intake:
+    original_request: 'Continue the BugDrop Board release-readiness conveyor while the user is away.'
+    interpreted_outcome: 'Fix a small, safe docs drift bundle found after v0.1.0 and release-smoke automation.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers and self-hosters reading the setup/release docs'
+    authority: approved_for_safe_local_and_pr_work
+    proof_type: artifact
+    completion_proof: 'README is current and verification gates pass without publishing or production changes.'
+    likely_misfire: 'Changing product behavior or doing operational release work while trying to fix docs drift.'
+    blind_spots_considered:
+      - 'README handoff still described npm identity and production deploy as future work after they were completed.'
+      - 'Package workflow docs did not mention the new release smoke step.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-docs-drift-cleanup/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-docs-drift-cleanup'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Identify the smallest safe docs drift cleanup after v0.1.0 release and release-smoke automation.'
+    receipt:
+      result: done
+      summary: 'Scout found two README drift issues: package workflow docs missing release:smoke and stale handoff notes saying package identity/production deploy were still future actions.'
+      evidence:
+        - 'README package workflow command list ended at npm publish and omitted npm run release:smoke.'
+        - 'Current Handoff Notes still said to choose the npm package/version identity and avoid production deploy/npm publish.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Apply the README docs drift cleanup.'
+    allowed_files:
+      - 'README.md'
+      - 'docs/goals/bugdrop-board-docs-drift-cleanup/goal.md'
+      - 'docs/goals/bugdrop-board-docs-drift-cleanup/state.yaml'
+    verify:
+      - 'npx prettier --check README.md docs/goals/bugdrop-board-docs-drift-cleanup/goal.md docs/goals/bugdrop-board-docs-drift-cleanup/state.yaml'
+      - 'npm run validate'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-docs-drift-cleanup/state.yaml'
+      - 'README scope scan for stale or forbidden release language'
+    stop_if:
+      - 'Need runtime/product behavior changes.'
+      - 'Need a new npm publish, production deploy, secret rotation, or credential change.'
+    receipt:
+      result: done
+      task_id: T002
+      changed_files:
+        - 'README.md'
+        - 'docs/goals/bugdrop-board-docs-drift-cleanup/goal.md'
+        - 'docs/goals/bugdrop-board-docs-drift-cleanup/state.yaml'
+      summary: 'Added the post-publish release smoke to the package workflow docs and updated handoff notes to reflect the live npm package and production Worker.'
+      commands:
+        - command: 'npx prettier --check README.md docs/goals/bugdrop-board-docs-drift-cleanup/goal.md docs/goals/bugdrop-board-docs-drift-cleanup/state.yaml'
+          status: pass
+          evidence: 'All selected docs files use Prettier style.'
+        - command: 'npm run validate'
+          status: pass
+          evidence: 'eslint, Prettier, TypeScript, and 50 Vitest tests passed.'
+        - command: 'README scope scan for stale or forbidden release language'
+          status: pass
+          evidence: 'Stale handoff strings are absent; matches are expected secret-management docs, release-smoke docs, the existing publish command, and the updated live release status.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether docs drift cleanup satisfies the oracle.'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'README package workflow command block includes npm run release:smoke after npm publish.'
+        - 'Current Handoff Notes identify @mean-weasel/bugdrop-board@0.1.0 and https://board.bugdrop.dev as live.'
+        - 'No runtime product behavior, new npm publish, production deploy, secret rotation, hosted control plane, billing, realtime, comments, downvotes, or GitHub Projects change was introduced.'
+
+checks:
+  dirty_fingerprint: 'README.md docs/goals/bugdrop-board-docs-drift-cleanup/goal.md docs/goals/bugdrop-board-docs-drift-cleanup/state.yaml'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'npx prettier --check README.md docs/goals/bugdrop-board-docs-drift-cleanup/goal.md docs/goals/bugdrop-board-docs-drift-cleanup/state.yaml'
+      - 'npm run validate'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-docs-drift-cleanup/state.yaml'
+      - 'README scope scan for stale or forbidden release language'
