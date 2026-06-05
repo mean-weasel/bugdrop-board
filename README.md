@@ -528,7 +528,7 @@ After a publish, verify the registry artifact by installing it into a temporary 
 
 ```bash
 npm run release:smoke
-npm run release:smoke -- --version 0.1.0
+npm run release:smoke -- --version 0.1.1
 make release-smoke
 ```
 
@@ -631,7 +631,7 @@ make check
 ## Current Handoff Notes
 
 This repository is still an early vertical slice. The conveyor PR stack has landed on `main`,
-`@mean-weasel/bugdrop-board@0.1.0` is published on npm, and the production Worker is available at
+`@mean-weasel/bugdrop-board@0.1.1` is published on npm, and the production Worker is available at
 `https://board.bugdrop.dev`.
 
 Remaining release actions are operational: keep running the local release rehearsal before
