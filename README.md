@@ -451,9 +451,9 @@ flow above.
 
 The package entrypoints are:
 
-- `bugdrop-board`
-- `bugdrop-board/board`
-- `bugdrop-board/board.js`
+- `@mean-weasel/bugdrop-board`
+- `@mean-weasel/bugdrop-board/board`
+- `@mean-weasel/bugdrop-board/board.js`
 
 All entrypoints resolve to `public/board.js`. The npm package includes:
 
@@ -488,7 +488,9 @@ The `Package Widget` GitHub Actions workflow is manually dispatched and dry-runs
 3. Choose `latest` or `next` as the npm dist-tag.
 4. To publish, rerun with dry-run disabled after the version PR has merged.
 
-Publishing requires a repository secret named `NPM_TOKEN`. The workflow runs:
+Publishing requires a repository secret named `NPM_TOKEN`. Create a granular npm token with
+read/write access to the `@mean-weasel` package scope and no organization-management access. The
+workflow runs:
 
 ```bash
 npm run validate
@@ -496,7 +498,7 @@ npm run pack:check
 npm publish --access public --tag "$NPM_TAG"
 ```
 
-Actual publishing also requires npm ownership or publish rights for the configured package name.
+Actual publishing also requires npm ownership or publish rights for the configured package scope.
 When in doubt, keep the workflow in dry-run mode and inspect the package file list before publishing.
 
 ## Release Rehearsal
