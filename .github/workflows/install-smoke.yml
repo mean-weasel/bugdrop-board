@@ -40,6 +40,9 @@ jobs:
       - name: Install dependencies
         run: make install
 
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
       - name: Run clean-room install smoke
         run: |
           npm run install:smoke -- \
