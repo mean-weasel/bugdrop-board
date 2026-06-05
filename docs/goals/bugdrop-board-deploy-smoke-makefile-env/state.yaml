@@ -1,0 +1,144 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Deploy Smoke Makefile Env'
+  slug: 'bugdrop-board-deploy-smoke-makefile-env'
+  kind: existing_plan
+  tranche: 'Post-v0.1.0 deploy smoke helper ergonomics.'
+  status: done
+  oracle:
+    signal: 'The Makefile deploy smoke helper supports both Makefile variables and DEPLOY_SMOKE_* environment variables.'
+    cadence: 'after Makefile/docs edit and final audit'
+    final_proof: 'Both supported Makefile invocation forms pass against https://board.bugdrop.dev, and standard repo checks pass.'
+  intake:
+    original_request: 'Continue the BugDrop Board release-readiness conveyor while the user is away.'
+    interpreted_outcome: 'Remove a small self-host verification footgun from make deploy-smoke without changing runtime behavior.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers and self-hosters verifying Worker deployments'
+    authority: approved_for_safe_local_and_pr_work
+    proof_type: artifact
+    completion_proof: 'Makefile deploy smoke commands prove the documented invocation styles.'
+    likely_misfire: 'Adding product behavior or touching deployment credentials instead of tightening the helper command.'
+    blind_spots_considered:
+      - 'The verifier script already supports DEPLOY_SMOKE_URL, but the Makefile always passed an empty --url when URL was omitted.'
+      - 'Self-hosters may naturally export DEPLOY_SMOKE_* values in CI or local shells.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-deploy-smoke-makefile-env/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-deploy-smoke-makefile-env'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Identify the deploy smoke Makefile mismatch.'
+    receipt:
+      result: done
+      summary: 'Scout found scripts/verify-deployed-worker.js supports DEPLOY_SMOKE_URL and DEPLOY_SMOKE_EXPECT_ENVIRONMENT, while make deploy-smoke always supplied --url "$(URL)".'
+      evidence:
+        - 'scripts/verify-deployed-worker.js reads process.env.DEPLOY_SMOKE_URL and process.env.DEPLOY_SMOKE_EXPECT_ENVIRONMENT.'
+        - 'Makefile deploy-smoke previously passed --url "$(URL)" unconditionally.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Make deploy-smoke preserve env fallback and document both invocation styles.'
+    allowed_files:
+      - 'Makefile'
+      - 'README.md'
+      - 'docs/goals/bugdrop-board-deploy-smoke-makefile-env/goal.md'
+      - 'docs/goals/bugdrop-board-deploy-smoke-makefile-env/state.yaml'
+    verify:
+      - 'make deploy-smoke URL=https://board.bugdrop.dev EXPECT_ENVIRONMENT=production'
+      - 'DEPLOY_SMOKE_URL=https://board.bugdrop.dev DEPLOY_SMOKE_EXPECT_ENVIRONMENT=production make deploy-smoke'
+      - 'env -u DEPLOY_SMOKE_URL -u DEPLOY_SMOKE_EXPECT_ENVIRONMENT make deploy-smoke'
+      - 'npm run validate'
+      - 'make check'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-deploy-smoke-makefile-env/state.yaml'
+      - 'scope scan for forbidden product, publish, deploy, or credential changes'
+    stop_if:
+      - 'Need files outside allowed_files.'
+      - 'Need to run a deployment.'
+      - 'Need to publish a new npm version.'
+      - 'Need to rotate or inspect secret values.'
+      - 'Verification fails twice.'
+    receipt:
+      result: done
+      task_id: T002
+      changed_files:
+        - 'Makefile'
+        - 'README.md'
+        - 'docs/goals/bugdrop-board-deploy-smoke-makefile-env/goal.md'
+        - 'docs/goals/bugdrop-board-deploy-smoke-makefile-env/state.yaml'
+      summary: 'Updated make deploy-smoke so URL and EXPECT_ENVIRONMENT are optional Make variables that do not mask the verifier script DEPLOY_SMOKE_* environment fallbacks, then documented both invocation styles.'
+      commands:
+        - command: 'make deploy-smoke URL=https://board.bugdrop.dev EXPECT_ENVIRONMENT=production'
+          status: pass
+          evidence: 'Command passed; verifier received explicit --url/--expect-environment and returned production health ok plus HEAD /board.js 200 text/javascript.'
+        - command: 'DEPLOY_SMOKE_URL=https://board.bugdrop.dev DEPLOY_SMOKE_EXPECT_ENVIRONMENT=production make deploy-smoke'
+          status: pass
+          evidence: 'Command passed with no CLI args after npm --; verifier used environment fallback and returned production health ok plus HEAD /board.js 200 text/javascript.'
+        - command: 'env -u DEPLOY_SMOKE_URL -u DEPLOY_SMOKE_EXPECT_ENVIRONMENT make deploy-smoke'
+          status: pass
+          evidence: 'Command failed with "Missing Worker URL. Pass --url or set DEPLOY_SMOKE_URL.", proving the Makefile no longer injects an empty --url value.'
+        - command: 'npm run validate'
+          status: pass
+          evidence: 'eslint, Prettier, TypeScript, and 50 Vitest tests passed.'
+        - command: 'make check'
+          status: pass
+          evidence: 'eslint, format-check, typecheck, knip, critical npm audit, and Actions Node guard passed.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether Makefile deploy smoke env support satisfies the oracle.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'missing evidence'
+      - 'next task if not complete'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'Makefile deploy-smoke no longer passes an empty --url when URL is omitted.'
+        - 'Explicit Make variable invocation passed against https://board.bugdrop.dev.'
+        - 'DEPLOY_SMOKE_URL and DEPLOY_SMOKE_EXPECT_ENVIRONMENT invocation passed against https://board.bugdrop.dev.'
+        - 'Missing URL invocation fails with the verifier script missing-URL message instead of --url requires a value.'
+        - 'README documents both verification styles.'
+        - 'No deploy, publish, secret rotation, runtime product behavior, hosted control plane, billing, realtime, comments, downvotes, or GitHub Projects change was introduced.'
+
+checks:
+  dirty_fingerprint: 'Makefile README.md docs/goals/bugdrop-board-deploy-smoke-makefile-env/goal.md docs/goals/bugdrop-board-deploy-smoke-makefile-env/state.yaml'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'make deploy-smoke URL=https://board.bugdrop.dev EXPECT_ENVIRONMENT=production'
+      - 'DEPLOY_SMOKE_URL=https://board.bugdrop.dev DEPLOY_SMOKE_EXPECT_ENVIRONMENT=production make deploy-smoke'
+      - 'env -u DEPLOY_SMOKE_URL -u DEPLOY_SMOKE_EXPECT_ENVIRONMENT make deploy-smoke'
+      - 'npm run validate'
+      - 'make check'

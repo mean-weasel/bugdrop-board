@@ -439,6 +439,9 @@ After promotion, verify the deployed Worker:
 curl https://bugdrop-board.example.workers.dev/health
 curl -I https://bugdrop-board.example.workers.dev/board.js
 npm run deploy:smoke -- --url https://bugdrop-board.example.workers.dev --expect-environment production
+DEPLOY_SMOKE_URL=https://bugdrop-board.example.workers.dev \
+  DEPLOY_SMOKE_EXPECT_ENVIRONMENT=production \
+  make deploy-smoke
 ```
 
 Then open a signed-in host app page, create a test item, confirm the matching GitHub Issue appears,
@@ -578,6 +581,7 @@ npm run build:widget
 npm run pack:check
 npm run deploy:check
 npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production
+DEPLOY_SMOKE_URL=https://board.bugdrop.dev DEPLOY_SMOKE_EXPECT_ENVIRONMENT=production make deploy-smoke
 npm run test:e2e
 npm run validate
 make check
