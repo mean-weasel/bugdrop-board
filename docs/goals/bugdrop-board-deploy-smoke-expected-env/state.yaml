@@ -1,0 +1,146 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Deploy Smoke Expected Env'
+  slug: 'bugdrop-board-deploy-smoke-expected-env'
+  kind: existing_plan
+  tranche: 'Post-v0.1.0 deploy workflow smoke expected-environment hardening.'
+  status: done
+  oracle:
+    signal: 'Deploy Worker smoke verification can expect a Worker health environment value independent of the GitHub Environment name.'
+    cadence: 'after workflow/docs edit and final audit'
+    final_proof: 'Workflow diff shows optional input, fallback env expression, and deploy:smoke receives the resolved value; validation gates pass.'
+  intake:
+    original_request: 'Continue the BugDrop Board release-readiness conveyor while the user is away.'
+    interpreted_outcome: 'Make the self-host deploy workflow less brittle for operators whose GitHub Environment name differs from Worker ENVIRONMENT.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board self-hosters and maintainers running manual Worker promotions'
+    authority: approved_for_safe_local_and_pr_work
+    proof_type: artifact
+    completion_proof: 'Workflow and docs support the optional expected health environment without changing deploy behavior.'
+    likely_misfire: 'Changing runtime health behavior, deploying production, or weakening the smoke check instead of only making its expected value configurable.'
+    blind_spots_considered:
+      - 'GitHub Environment names are access-control containers and may not match Worker ENVIRONMENT values.'
+      - 'Existing production workflow usage should continue to work when the new input is blank.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-deploy-smoke-expected-env/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-deploy-smoke-expected-env'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Identify the deploy smoke expected-environment coupling.'
+    receipt:
+      result: done
+      summary: 'Scout found the Deploy Worker workflow passed the selected GitHub Environment name directly to deploy:smoke as the expected /health environment.'
+      evidence:
+        - '.github/workflows/deploy.yml used --expect-environment "${{ inputs.environment }}" in the Verify deployed Worker step.'
+        - 'README instructed operators to choose a GitHub Environment such as production, but did not describe different GitHub Environment and Worker ENVIRONMENT names.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Add optional smoke expected-environment input and document fallback behavior.'
+    allowed_files:
+      - '.github/workflows/deploy.yml'
+      - 'README.md'
+      - 'docs/goals/bugdrop-board-deploy-smoke-expected-env/goal.md'
+      - 'docs/goals/bugdrop-board-deploy-smoke-expected-env/state.yaml'
+    verify:
+      - 'direct workflow inspection for smoke_expect_environment input and fallback to inputs.environment'
+      - 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production'
+      - 'npm run validate'
+      - 'make check'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-deploy-smoke-expected-env/state.yaml'
+      - 'scope scan for forbidden product, publish, deploy, or credential changes'
+    stop_if:
+      - 'Need files outside allowed_files.'
+      - 'Need to run a deployment.'
+      - 'Need to publish a new npm version.'
+      - 'Need to rotate or inspect secret values.'
+      - 'Verification fails twice.'
+    receipt:
+      result: done
+      task_id: T002
+      changed_files:
+        - '.github/workflows/deploy.yml'
+        - 'README.md'
+        - 'docs/goals/bugdrop-board-deploy-smoke-expected-env/goal.md'
+        - 'docs/goals/bugdrop-board-deploy-smoke-expected-env/state.yaml'
+      summary: 'Added optional Deploy Worker smoke_expect_environment input, wired it through SMOKE_EXPECT_ENVIRONMENT with fallback to inputs.environment, and documented when to override it.'
+      commands:
+        - command: 'direct workflow inspection for smoke_expect_environment input and fallback to inputs.environment'
+          status: pass
+          evidence: 'rg found smoke_expect_environment input, SMOKE_EXPECT_ENVIRONMENT fallback expression using inputs.smoke_expect_environment || inputs.environment, and deploy:smoke receiving "$SMOKE_EXPECT_ENVIRONMENT".'
+        - command: 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production'
+          status: pass
+          evidence: 'Returned production health ok and HEAD /board.js 200 with content-type text/javascript.'
+        - command: 'npx prettier --check .github/workflows/deploy.yml README.md docs/goals/bugdrop-board-deploy-smoke-expected-env/goal.md docs/goals/bugdrop-board-deploy-smoke-expected-env/state.yaml'
+          status: pass
+          evidence: 'All matched files use Prettier code style.'
+        - command: 'npm run validate'
+          status: pass
+          evidence: 'eslint, Prettier, TypeScript, and 50 Vitest tests passed.'
+        - command: 'make check'
+          status: pass
+          evidence: 'eslint, format-check, typecheck, knip, critical npm audit, and Actions Node guard passed.'
+        - command: 'git diff --check'
+          status: pass
+          evidence: 'No whitespace errors.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether deploy smoke expected-environment support satisfies the oracle.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'missing evidence'
+      - 'next task if not complete'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'Deploy Worker exposes optional smoke_expect_environment.'
+        - 'SMOKE_EXPECT_ENVIRONMENT resolves to smoke_expect_environment when provided, otherwise inputs.environment.'
+        - 'Verify deployed Worker step passes "$SMOKE_EXPECT_ENVIRONMENT" to deploy:smoke.'
+        - 'README documents when to override the expected environment and when to leave it blank.'
+        - 'No deploy, publish, secret rotation, runtime product behavior, hosted control plane, billing, realtime, comments, downvotes, or GitHub Projects change was introduced.'
+
+checks:
+  dirty_fingerprint: '.github/workflows/deploy.yml README.md docs/goals/bugdrop-board-deploy-smoke-expected-env/goal.md docs/goals/bugdrop-board-deploy-smoke-expected-env/state.yaml'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'rg -n "smoke_expect_environment|SMOKE_EXPECT_ENVIRONMENT|Verify deployed Worker|expect-environment" .github/workflows/deploy.yml README.md'
+      - 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production'
+      - 'npx prettier --check .github/workflows/deploy.yml README.md docs/goals/bugdrop-board-deploy-smoke-expected-env/goal.md docs/goals/bugdrop-board-deploy-smoke-expected-env/state.yaml'
+      - 'npm run validate'
+      - 'make check'
+      - 'git diff --check'

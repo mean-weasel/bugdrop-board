@@ -417,6 +417,9 @@ Run the workflow from GitHub Actions:
    board row before deployment.
 5. Optionally enter `smoke_url`, such as `https://bugdrop-board.example.workers.dev`, to verify the
    deployed `/health` and `/board.js` endpoints after deployment.
+6. Optionally enter `smoke_expect_environment` when the Worker `ENVIRONMENT` value differs from the
+   GitHub Environment name. Leave it blank to expect the selected GitHub Environment, such as
+   `production`.
 
 The workflow runs:
 
