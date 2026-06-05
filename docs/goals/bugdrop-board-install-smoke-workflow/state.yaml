@@ -1,0 +1,196 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Install Smoke Workflow'
+  slug: 'bugdrop-board-install-smoke-workflow'
+  kind: existing_plan
+  tranche: 'Post-v0.1.2 release-readiness conveyor: manual no-secret clean-room install smoke workflow.'
+  status: done
+  oracle:
+    signal: 'A maintainer can manually run a GitHub Actions clean-room install smoke for a published package version or dist-tag without any secrets, publishing, deployment, or runtime product changes.'
+    cadence: 'after workflow/docs implementation and final audit'
+    final_proof: 'RED/GREEN focused workflow contract verifier, workflow/docs diff inspection, local install smoke against 0.1.2, standard validation gates, and scope scan.'
+  intake:
+    original_request: 'plan out the next several goalbuddy prep boards and manage yourself through them'
+    interpreted_outcome: 'Create a release-readiness GoalBuddy conveyor, then execute the first safe board end to end.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers and self-hosters validating published embeds'
+    authority: approved_for_safe_local_and_pr_work_no_publish_or_deploy
+    proof_type: test
+    completion_proof: 'Manual Install Smoke workflow exists, is contract-verified/documented, local smoke passes, PR/CI proves the change, and excluded scope remains untouched.'
+    likely_misfire: 'Adding a workflow that only proves repo-local package state, or accidentally coupling smoke proof to publish/deploy/secrets.'
+    blind_spots_considered:
+      - 'A dry-run package workflow does not prove a published package can boot in a clean host app.'
+      - 'Running install smoke by default on unreleased version-bump branches would create false failures.'
+      - 'Workflow proof should be manual and version-pinned so it can verify current or historical published artifacts.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-install-smoke-workflow/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-install-smoke-workflow'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Identify the next several safe release-readiness boards after v0.1.2.'
+    receipt:
+      result: done
+      summary: 'Scout found no open PRs/issues and a clean main branch after clean-room install proof and install:smoke command work. The next useful conveyor is install-smoke workflow proof, release handoff audit, and production dogfood regression recheck.'
+      evidence:
+        - 'git status --short --branch returned ## main...origin/main before this branch.'
+        - 'gh pr list and gh issue list returned no open PRs/issues.'
+        - 'Recent successful PRs #35 and #36 added clean-room install proof and reusable install:smoke.'
+        - 'README documents install:smoke locally, but no GitHub Actions workflow exposes a no-secret clean-room install smoke.'
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Authorize the first conveyor board implementation slice.'
+    receipt:
+      result: done
+      decision: proceed
+      worker_objective: 'Add a manual no-secret Install Smoke workflow, a focused workflow contract verifier, README usage docs, and GoalBuddy receipt updates.'
+      allowed_files:
+        - '.github/workflows/install-smoke.yml'
+        - 'package.json'
+        - 'README.md'
+        - 'scripts/verify-install-smoke-workflow.js'
+        - 'docs/goals/bugdrop-board-install-smoke-workflow/goal.md'
+        - 'docs/goals/bugdrop-board-install-smoke-workflow/state.yaml'
+        - 'docs/goals/bugdrop-board-install-smoke-workflow/notes/.gitkeep'
+        - 'docs/release-readiness-results/2026-06-05-install-smoke-workflow.md'
+      verify:
+        - 'npm run install:smoke:workflow'
+        - 'npm run install:smoke -- --version 0.1.2 --retries 1 --retry-delay-ms 0'
+        - 'npm run validate'
+        - 'make check'
+        - 'git diff --check'
+        - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-install-smoke-workflow/state.yaml'
+        - 'scope scan for forbidden publish/deploy/credential/product changes'
+      stop_if:
+        - 'Need to publish a package.'
+        - 'Need to deploy or change Cloudflare production.'
+        - 'Need to rotate, inspect, or change secrets.'
+        - 'Need runtime product behavior changes.'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Implement and verify the install smoke workflow board.'
+    allowed_files:
+      - '.github/workflows/install-smoke.yml'
+      - 'package.json'
+      - 'README.md'
+      - 'scripts/verify-install-smoke-workflow.js'
+      - 'docs/goals/bugdrop-board-install-smoke-workflow/goal.md'
+      - 'docs/goals/bugdrop-board-install-smoke-workflow/state.yaml'
+      - 'docs/goals/bugdrop-board-install-smoke-workflow/notes/.gitkeep'
+      - 'docs/release-readiness-results/2026-06-05-install-smoke-workflow.md'
+    verify:
+      - 'npm run install:smoke:workflow'
+      - 'npm run install:smoke -- --version 0.1.2 --retries 1 --retry-delay-ms 0'
+      - 'npm run validate'
+      - 'make check'
+      - 'git diff --check'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-install-smoke-workflow/state.yaml'
+      - 'scope scan for forbidden publish/deploy/credential/product changes'
+    stop_if:
+      - 'Need files outside allowed_files.'
+      - 'Need to publish, deploy, rotate secrets, or change runtime product behavior.'
+      - 'Verification fails twice for reasons unrelated to this workflow/docs slice.'
+    receipt:
+      result: done
+      task_id: T003
+      changed_files:
+        - '.github/workflows/install-smoke.yml'
+        - 'README.md'
+        - 'package.json'
+        - 'scripts/verify-install-smoke-workflow.js'
+        - 'docs/release-readiness-results/2026-06-05-install-smoke-workflow.md'
+        - 'docs/goals/bugdrop-board-install-smoke-workflow/goal.md'
+        - 'docs/goals/bugdrop-board-install-smoke-workflow/state.yaml'
+        - 'docs/goals/bugdrop-board-install-smoke-workflow/notes/.gitkeep'
+      summary: 'Added a manual no-secret Install Smoke workflow, a local workflow contract verifier, README instructions, package file hygiene for the verifier script, and a release-readiness receipt.'
+      commands:
+        - command: 'npm run test -- test/install-smoke-workflow.test.ts'
+          status: pass
+          evidence: 'RED check failed because .github/workflows/install-smoke.yml did not exist. The test was then replaced with a Node verifier after Cloudflare Vitest filesystem isolation proved unsuitable for workflow-file reads.'
+        - command: 'npm run install:smoke:workflow'
+          status: pass
+          evidence: 'Verified the workflow is manual, Node-24-ready, runs install:smoke with PACKAGE_VERSION, and contains no secrets., npm publish, or wrangler deploy text.'
+        - command: 'npm run install:smoke -- --version 0.1.2 --retries 1 --retry-delay-ms 0'
+          status: pass
+          evidence: 'Installed @mean-weasel/bugdrop-board@0.1.2, mounted the published bundle in Chromium, rendered the mocked item/upvote/issue link, and reported no console errors or failed requests.'
+        - command: 'npm run pack:check'
+          status: pass
+          evidence: 'Dry-run tarball includes scripts/verify-install-smoke-workflow.js.'
+        - command: 'npm run validate'
+          status: pass
+          evidence: 'eslint, Prettier, TypeScript, and 11 Vitest files / 64 tests passed.'
+        - command: 'make check'
+          status: pass
+          evidence: 'lint, format-check, typecheck, knip, critical audit, and Actions Node guard passed.'
+        - command: 'git diff --check'
+          status: pass
+          evidence: 'No whitespace errors.'
+        - command: 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-install-smoke-workflow/state.yaml'
+          status: pass
+          evidence: 'GoalBuddy state schema passed after status correction.'
+      remaining_blockers:
+        - 'Post-merge manual GitHub Actions dispatch of Install Smoke should be recorded by the next release handoff audit board.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether the install smoke workflow board satisfies the oracle.'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'A manual Install Smoke workflow exists and accepts a published version/dist-tag.'
+        - 'The workflow requires no secrets and contains no npm publish or wrangler deploy path.'
+        - 'README documents when and how to run the workflow plus the local contract verifier.'
+        - 'Local install smoke proved @mean-weasel/bugdrop-board@0.1.2 still boots from a clean temp host.'
+        - 'Standard validation gates passed.'
+        - 'Scope audit found no package version bump, publish, deploy, credential, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or runtime behavior change.'
+      next_starter_boards:
+        - 'bugdrop-board-release-handoff-audit'
+        - 'bugdrop-board-production-dogfood-regression-recheck'
+
+checks:
+  dirty_fingerprint: '.github/workflows/install-smoke.yml package.json README.md scripts/verify-install-smoke-workflow.js docs/goals/bugdrop-board-install-smoke-workflow/goal.md docs/goals/bugdrop-board-install-smoke-workflow/state.yaml'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'npm run install:smoke:workflow'
+      - 'npm run install:smoke -- --version 0.1.2 --retries 1 --retry-delay-ms 0'
+      - 'npm run pack:check'
+      - 'npm run validate'
+      - 'make check'
+      - 'git diff --check'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-install-smoke-workflow/state.yaml'
