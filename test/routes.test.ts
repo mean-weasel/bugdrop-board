@@ -163,6 +163,8 @@ describe('api routes', () => {
       githubIssueNumber: 7,
       githubIssueUrl: 'https://github.com/mean-weasel/demo/issues/7',
     });
+    expect(JSON.stringify(body)).not.toContain('createdByExternalUserId');
+    expect(JSON.stringify(body)).not.toContain('user_1');
 
     await expect(repo.getItem(board.id, body.item.id)).resolves.toMatchObject({
       title: 'Add SSO',
@@ -251,7 +253,8 @@ describe('api routes', () => {
     );
 
     expect(viewerTwo.status).toBe(200);
-    await expect(viewerTwo.json()).resolves.toMatchObject({
+    const viewerTwoBody = await viewerTwo.json();
+    expect(viewerTwoBody).toMatchObject({
       items: [
         {
           id: item.id,
@@ -263,6 +266,8 @@ describe('api routes', () => {
         },
       ],
     });
+    expect(JSON.stringify(viewerTwoBody)).not.toContain('createdByExternalUserId');
+    expect(JSON.stringify(viewerTwoBody)).not.toContain('user_1');
     expect(viewerThree.status).toBe(200);
     await expect(viewerThree.json()).resolves.toMatchObject({
       items: [{ id: item.id, upvoteCount: 1, viewerHasUpvoted: false }],
@@ -300,13 +305,16 @@ describe('api routes', () => {
     );
 
     expect(upvoted.status).toBe(200);
-    await expect(upvoted.json()).resolves.toMatchObject({
+    const upvotedBody = await upvoted.json();
+    expect(upvotedBody).toMatchObject({
       item: {
         id: item.id,
         upvoteCount: 1,
         viewerHasUpvoted: true,
       },
     });
+    expect(JSON.stringify(upvotedBody)).not.toContain('createdByExternalUserId');
+    expect(JSON.stringify(upvotedBody)).not.toContain('user_1');
     expect(removed.status).toBe(200);
     await expect(removed.json()).resolves.toMatchObject({
       item: {

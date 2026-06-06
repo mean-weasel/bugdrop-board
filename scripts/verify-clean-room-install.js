@@ -14,7 +14,7 @@ const rootRequire = createRequire(import.meta.url);
 const localPackage = rootRequire('../package.json');
 
 function printHelp() {
-  console.log(`Usage: npm run install:smoke -- [--version 0.1.2] [--package @scope/name]
+  console.log(`Usage: npm run install:smoke -- [--version ${localPackage.version}] [--package @scope/name]
 
 Installs the published npm package into a temporary project, serves only the installed
 public/board.js bundle, and verifies the documented inline embed boots in a browser.

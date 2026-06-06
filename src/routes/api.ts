@@ -3,7 +3,7 @@ import { BoardRepository } from '../lib/board-repository';
 import { createGitHubIssueCreator, type IssueCreator } from '../lib/github';
 import { createId } from '../lib/ids';
 import type { ThrottleAction } from '../lib/request-throttle';
-import type { Env } from '../types';
+import type { BoardItem, Env } from '../types';
 import { applyCorsHeaders, authorizeBoardRequest, parseJsonBody, parseSince } from './api-helpers';
 import { enforceRequestThrottle, enforceWriteThrottle } from './write-throttle';
 
@@ -119,7 +119,7 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
       githubIssueUrl: issue.htmlUrl,
     });
 
-    return c.json({ item }, 201);
+    return c.json({ item: publicBoardItem(item) }, 201);
   });
 
   api.get('/boards/:boardId/items', listItems);
@@ -153,7 +153,7 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
         c.req.param('itemId'),
         authorized.claims.externalUserId
       );
-      return c.json({ item });
+      return c.json({ item: publicBoardItem(item) });
     } catch (error) {
       if (error instanceof Error && error.message === 'Board item not found') {
         return c.json({ error: 'Board item not found' }, 404);
@@ -190,7 +190,9 @@ async function listItems(c: Context<ApiEnv>) {
     return throttled;
   }
 
-  const items = await repo.listItemsForViewer(boardId, authorized.claims.externalUserId);
+  const items = (await repo.listItemsForViewer(boardId, authorized.claims.externalUserId)).map(
+    publicBoardItem
+  );
   return c.json({ items });
 }
 
@@ -255,6 +257,22 @@ function enforceApiThrottle(
   externalUserId: string
 ) {
   return enforceRequestThrottle(c, action, boardId, externalUserId);
+}
+
+function publicBoardItem(item: BoardItem & { viewerHasUpvoted?: boolean }) {
+  return {
+    id: item.id,
+    boardId: item.boardId,
+    title: item.title,
+    description: item.description,
+    status: item.status,
+    githubIssueNumber: item.githubIssueNumber,
+    githubIssueUrl: item.githubIssueUrl,
+    upvoteCount: item.upvoteCount,
+    viewerHasUpvoted: item.viewerHasUpvoted,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+  };
 }
 
 const api = createApi();

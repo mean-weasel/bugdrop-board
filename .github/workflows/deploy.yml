@@ -36,6 +36,10 @@ on:
         description: Optional browser origin expected in deployed Worker CORS responses.
         required: false
         type: string
+      smoke_cors_disallowed_origin:
+        description: Optional browser origin expected not to receive deployed Worker CORS access.
+        required: false
+        type: string
       smoke_cors_board_id:
         description: Optional board id used for authenticated CORS /items and /events smoke checks.
         required: false
@@ -59,8 +63,10 @@ jobs:
       GITHUB_ISSUE_ACCESS_TOKEN: ${{ secrets.ISSUE_ACCESS_TOKEN }}
       PROVISION_REPO: ${{ inputs.provision_repo }}
       PROVISION_NAME: ${{ inputs.provision_name }}
+      GITHUB_DEPLOY_ENVIRONMENT: ${{ inputs.environment }}
       SMOKE_EXPECT_ENVIRONMENT: ${{ inputs.smoke_expect_environment || inputs.environment }}
       SMOKE_CORS_BOARD_ID: ${{ inputs.smoke_cors_board_id }}
+      SMOKE_CORS_DISALLOWED_ORIGIN: ${{ inputs.smoke_cors_disallowed_origin }}
       SMOKE_CORS_ORIGIN: ${{ inputs.smoke_cors_origin }}
       SMOKE_CORS_TOKEN_ENDPOINT: ${{ inputs.smoke_cors_token_endpoint }}
       SMOKE_URL: ${{ inputs.smoke_url }}
@@ -91,8 +97,24 @@ jobs:
 
       - name: Validate Wrangler environment
         run: |
-          if [[ -n "$WRANGLER_ENVIRONMENT" && ! "$WRANGLER_ENVIRONMENT" =~ ^[A-Za-z0-9_][A-Za-z0-9_-]*$ ]]; then
+          resolved_environment="$WRANGLER_ENVIRONMENT"
+          if [ -z "$resolved_environment" ]; then
+            resolved_environment="$GITHUB_DEPLOY_ENVIRONMENT"
+            echo "WRANGLER_ENVIRONMENT=$resolved_environment" >> "$GITHUB_ENV"
+          fi
+
+          if [[ ! "$resolved_environment" =~ ^[A-Za-z0-9_][A-Za-z0-9_-]*$ ]]; then
             echo "::error::Wrangler environment must contain only letters, numbers, underscores, and hyphens"
+            exit 1
+          fi
+
+          if [ "$GITHUB_DEPLOY_ENVIRONMENT" = "production" ] && [ "$resolved_environment" != "production" ]; then
+            echo "::error::Production deploys must use wrangler_environment=production or leave it blank to default to production"
+            exit 1
+          fi
+
+          if [ "$GITHUB_DEPLOY_ENVIRONMENT" = "production" ] && [ -z "$SMOKE_URL" ]; then
+            echo "::error::Production deploys require smoke_url so the deployed Worker is verified"
             exit 1
           fi
 
@@ -152,8 +174,9 @@ jobs:
         if: ${{ inputs.smoke_url != '' }}
         run: |
           args=(--url "$SMOKE_URL" --expect-environment "$SMOKE_EXPECT_ENVIRONMENT")
-          if [ -n "$SMOKE_CORS_ORIGIN" ] || [ -n "$SMOKE_CORS_BOARD_ID" ] || [ -n "$SMOKE_CORS_TOKEN_ENDPOINT" ]; then
+          if [ -n "$SMOKE_CORS_ORIGIN" ] || [ -n "$SMOKE_CORS_DISALLOWED_ORIGIN" ] || [ -n "$SMOKE_CORS_BOARD_ID" ] || [ -n "$SMOKE_CORS_TOKEN_ENDPOINT" ]; then
             args+=(--cors-origin "$SMOKE_CORS_ORIGIN")
+            args+=(--cors-disallowed-origin "$SMOKE_CORS_DISALLOWED_ORIGIN")
             args+=(--cors-board-id "$SMOKE_CORS_BOARD_ID")
             args+=(--cors-token-endpoint "$SMOKE_CORS_TOKEN_ENDPOINT")
           fi

@@ -20,6 +20,10 @@ Cloudflare Worker, D1 database, Worker secrets, and GitHub access token.
 
 ## Local Setup
 
+Closed-beta development and self-host setup are verified on Node 22 with npm 10. The repo currently
+uses `node >=22.12.0 <23`, `npm >=10 <11`, and Wrangler 4.x from the checked-in dev dependency.
+Use the committed npm lockfile rather than mixing package managers.
+
 1. Install dependencies:
 
    ```bash
@@ -743,13 +747,14 @@ Run the workflow from GitHub Actions:
 3. Leave **Apply remote D1 migrations** enabled unless migrations were already applied.
 4. Optionally enter `provision_repo` as `owner/name` and `provision_name` to create or update the
    board row before deployment.
-5. Optionally enter `smoke_url`, such as `https://bugdrop-board.example.workers.dev`, to verify the
-   deployed `/health` and `/board.js` endpoints after deployment.
+5. Enter `smoke_url`, such as `https://bugdrop-board.example.workers.dev`, to verify the deployed
+   `/health` and `/board.js` endpoints after deployment. Production promotions require this value.
 6. Optionally enter `smoke_expect_environment` when the Worker `ENVIRONMENT` value differs from the
    GitHub Environment name. Leave it blank to expect the selected GitHub Environment, such as
    `production`.
 7. Optionally enter all browser CORS smoke inputs to prove embedded browser access:
-   `smoke_cors_origin`, `smoke_cors_board_id`, and `smoke_cors_token_endpoint`.
+   `smoke_cors_origin`, `smoke_cors_disallowed_origin`, `smoke_cors_board_id`, and
+   `smoke_cors_token_endpoint`.
 
 The workflow runs:
 
@@ -760,11 +765,13 @@ npx wrangler deploy --dry-run --env production
 npx wrangler d1 migrations apply DB --remote --env production
 npm run provision:board -- --repo owner/name --remote --env production
 npx wrangler deploy --secrets-file .deploy.secrets --env production
-npm run deploy:smoke -- --url https://bugdrop-board.example.workers.dev --expect-environment production [--cors-origin https://app.example.com --cors-board-id board_owner_repo --cors-token-endpoint https://app.example.com/api/board-token]
+npm run deploy:smoke -- --url https://bugdrop-board.example.workers.dev --expect-environment production [--cors-origin https://app.example.com --cors-disallowed-origin https://evil.example --cors-board-id board_owner_repo --cors-token-endpoint https://app.example.com/api/board-token]
 ```
 
-For staging or another target, replace `production` with the matching Wrangler environment. The
-workflow does this when the `wrangler_environment` input is set.
+For staging or another target, replace `production` with the matching Wrangler environment. If
+`wrangler_environment` is blank, the workflow defaults it to the selected GitHub Environment. A
+production GitHub Environment may only use Wrangler environment `production`, which prevents
+production secrets from falling through to the top-level development Wrangler config.
 
 The secrets file is generated inside the workflow runner and removed at the end of the job. Do not
 commit `.deploy.secrets`.

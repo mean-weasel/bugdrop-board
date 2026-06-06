@@ -3,6 +3,11 @@
   "version": "0.2.0",
   "description": "Embedded, self-hostable ideas/request board.",
   "type": "module",
+  "packageManager": "npm@10.9.8",
+  "engines": {
+    "node": ">=22.12.0 <23",
+    "npm": ">=10 <11"
+  },
   "main": "./public/board.js",
   "exports": {
     ".": "./public/board.js",
@@ -35,6 +40,7 @@
     "release:smoke": "node scripts/verify-package-install.js",
     "install:smoke": "node scripts/verify-clean-room-install.js",
     "install:smoke:workflow": "node scripts/verify-install-smoke-workflow.js",
+    "deploy:workflow:check": "node scripts/verify-deploy-workflow.js",
     "package:workflow:check": "node scripts/verify-package-workflow.js",
     "provision:board": "node scripts/provision-board.js",
     "staging:secrets": "node scripts/staging-secrets.js",
@@ -50,7 +56,7 @@
     "knip": "knip",
     "audit": "npm audit --audit-level=critical",
     "check:actions-node24": "node -e \"const {execSync}=require('node:child_process'); const out=execSync('rg -n \\\\\\\"actions/(checkout|setup-node|cache|upload-artifact)@v4|cloudflare/wrangler-action\\\\\\\" .github/workflows || true',{encoding:'utf8'}); if(out.trim()){ console.error(out); process.exit(1); } console.log('GitHub Actions are Node 24-ready');\"",
-    "validate": "npm run lint && npm run format:check && npm run typecheck && npm run package:workflow:check && npm run test",
+    "validate": "npm run lint && npm run format:check && npm run typecheck && npm run package:workflow:check && npm run deploy:workflow:check && npm run test",
     "release:rehearsal": "npm run provision:board -- --repo mean-weasel/release-rehearsal --name \"Release Rehearsal\" --local && npm run pack:check && npm run deploy:check && npm run test:e2e && npm run validate && npm run knip && npm run audit && npm run check:actions-node24",
     "prepack": "npm run build:widget",
     "prepare": "husky"
