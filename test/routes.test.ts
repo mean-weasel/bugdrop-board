@@ -322,7 +322,8 @@ describe('api routes', () => {
       'upvote_added',
       'upvote_removed',
     ]);
-    expect(events[1]).toMatchObject({ payload: { itemId: item.id, externalUserId: 'user_2' } });
+    expect(events[1]).toMatchObject({ payload: { itemId: item.id } });
+    expect(JSON.stringify(events)).not.toContain('user_2');
   });
 
   it('returns ordered events after the since cursor', async () => {

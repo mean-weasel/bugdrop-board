@@ -2,9 +2,10 @@ import { Hono, type Context } from 'hono';
 import { BoardRepository } from '../lib/board-repository';
 import { createGitHubIssueCreator, type IssueCreator } from '../lib/github';
 import { createId } from '../lib/ids';
+import type { ThrottleAction } from '../lib/request-throttle';
 import type { Env } from '../types';
 import { applyCorsHeaders, authorizeBoardRequest, parseJsonBody, parseSince } from './api-helpers';
-import { enforceWriteThrottle } from './write-throttle';
+import { enforceRequestThrottle, enforceWriteThrottle } from './write-throttle';
 
 type ApiEnv = { Bindings: Env };
 
@@ -121,22 +122,7 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
     return c.json({ item }, 201);
   });
 
-  api.get('/boards/:boardId/items', async c => {
-    const boardId = c.req.param('boardId');
-    const authorized = await authorizeBoardRequest(c, boardId);
-    if (!authorized.ok) {
-      return authorized.response;
-    }
-
-    const repo = new BoardRepository(c.env.DB);
-    const board = await repo.getBoard(boardId);
-    if (!board) {
-      return c.json({ error: 'Board not found' }, 404);
-    }
-
-    const items = await repo.listItemsForViewer(boardId, authorized.claims.externalUserId);
-    return c.json({ items });
-  });
+  api.get('/boards/:boardId/items', listItems);
 
   api.post('/boards/:boardId/items/:itemId/upvote', async c => {
     const boardId = c.req.param('boardId');
@@ -176,29 +162,68 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
     }
   });
 
-  api.get('/boards/:boardId/events', async c => {
-    const boardId = c.req.param('boardId');
-    const authorized = await authorizeBoardRequest(c, boardId);
-    if (!authorized.ok) {
-      return authorized.response;
-    }
-
-    const since = parseSince(c.req.query('since'));
-    if (!since.ok) {
-      return c.json({ error: since.error }, 400);
-    }
-
-    const repo = new BoardRepository(c.env.DB);
-    const board = await repo.getBoard(boardId);
-    if (!board) {
-      return c.json({ error: 'Board not found' }, 404);
-    }
-
-    const events = await repo.listEvents(boardId, since.value);
-    return c.json({ cursor: events.at(-1)?.id ?? since.value, events });
-  });
+  api.get('/boards/:boardId/events', listEvents);
 
   return api;
+}
+
+async function listItems(c: Context<ApiEnv>) {
+  const boardId = c.req.param('boardId') as string;
+  const authorized = await authorizeBoardRequest(c, boardId);
+  if (!authorized.ok) {
+    return authorized.response;
+  }
+
+  const repo = new BoardRepository(c.env.DB);
+  const board = await repo.getBoard(boardId);
+  if (!board) {
+    return c.json({ error: 'Board not found' }, 404);
+  }
+
+  const throttled = await enforceApiThrottle(
+    c,
+    'list_items',
+    boardId,
+    authorized.claims.externalUserId
+  );
+  if (throttled) {
+    return throttled;
+  }
+
+  const items = await repo.listItemsForViewer(boardId, authorized.claims.externalUserId);
+  return c.json({ items });
+}
+
+async function listEvents(c: Context<ApiEnv>) {
+  const boardId = c.req.param('boardId') as string;
+  const authorized = await authorizeBoardRequest(c, boardId);
+  if (!authorized.ok) {
+    return authorized.response;
+  }
+
+  const since = parseSince(c.req.query('since'));
+  if (!since.ok) {
+    return c.json({ error: since.error }, 400);
+  }
+
+  const repo = new BoardRepository(c.env.DB);
+  const board = await repo.getBoard(boardId);
+  if (!board) {
+    return c.json({ error: 'Board not found' }, 404);
+  }
+
+  const throttled = await enforceApiThrottle(
+    c,
+    'list_events',
+    boardId,
+    authorized.claims.externalUserId
+  );
+  if (throttled) {
+    return throttled;
+  }
+
+  const events = await repo.listEvents(boardId, since.value);
+  return c.json({ cursor: events.at(-1)?.id ?? since.value, events });
 }
 
 async function resetE2eBoard(c: Context<ApiEnv>) {
@@ -222,6 +247,16 @@ async function resetE2eBoard(c: Context<ApiEnv>) {
 
   return c.json({ board });
 }
+
+function enforceApiThrottle(
+  c: Context<ApiEnv>,
+  action: ThrottleAction,
+  boardId: string,
+  externalUserId: string
+) {
+  return enforceRequestThrottle(c, action, boardId, externalUserId);
+}
+
 const api = createApi();
 
 export default api;

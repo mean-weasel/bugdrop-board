@@ -10,6 +10,15 @@ export async function enforceWriteThrottle(
   boardId: string,
   externalUserId: string
 ): Promise<Response | null> {
+  return enforceRequestThrottle(c, action, boardId, externalUserId);
+}
+
+export async function enforceRequestThrottle(
+  c: Context<ApiEnv>,
+  action: ThrottleAction,
+  boardId: string,
+  externalUserId: string
+): Promise<Response | null> {
   const result = await new RequestThrottle(c.env.DB).check({
     action,
     boardId,

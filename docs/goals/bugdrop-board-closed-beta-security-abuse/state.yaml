@@ -1,0 +1,297 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Closed Beta Security And Abuse Hardening'
+  slug: 'bugdrop-board-closed-beta-security-abuse'
+  kind: existing_plan
+  tranche: 'Closed-beta security and abuse hardening only.'
+  status: done
+  oracle:
+    signal: 'Closed-beta board APIs have bounded read/event misuse controls, bounded token lifetime policy, event payload privacy, and CORS negative smoke proof.'
+    cadence: 'after each Worker tranche and final Judge audit'
+    final_proof: 'Focused security tests, deploy-smoke helper tests, docs diff inspection, standard repo gates, and forbidden-scope scan.'
+  intake:
+    original_request: 'Build BugDrop Board Closed Beta Board 2: security and abuse hardening only.'
+    interpreted_outcome: 'Prepare the second closed-beta conveyor board to add concrete misuse controls and proof after Board 1 setup safety.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers and closed-beta self-host operators'
+    authority: requested
+    proof_type: test
+    completion_proof: 'Security/abuse oracle is satisfied with passing focused tests, docs, and no excluded release/deploy/credential work.'
+    likely_misfire: 'Expanding into setup docs, status workflow, hosted control plane, monitoring, deploys, or broad product changes instead of bounded abuse-hardening proof.'
+    blind_spots_considered:
+      - 'Authenticated reads/events may be unthrottled even if writes are rate-limited.'
+      - 'Token `exp` may accept overly long-lived tokens unless a max TTL exists.'
+      - 'Polling event payloads may expose stable host user ids to other viewers.'
+      - 'CORS smoke may prove only allowed origins and miss disallowed-origin regressions.'
+      - 'Docs alone are weak proof when a realistic misuse case can be tested.'
+    hard_constraints:
+      - 'Preserve current product shape.'
+      - 'Exclude setup docs already handled in Board 1.'
+      - 'No status workflow.'
+      - 'No hosted control plane, billing, realtime, comments, downvotes, or GitHub Projects.'
+      - 'No npm publishing, Cloudflare deploys, credential changes, secret rotation, or secret file edits.'
+      - 'No ops monitoring, incident response, backup/export/restore implementation.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: active
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-closed-beta-security-abuse/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-closed-beta-security-abuse'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Map the current security/abuse surface and choose the smallest safe hardening plan.'
+    allowed_files:
+      - 'README.md'
+      - 'docs/closed-beta-setup.md'
+      - 'docs/staging-dogfood.md'
+      - 'docs/production-dogfood.md'
+      - 'src/'
+      - 'test/'
+      - 'scripts/verify-deployed-worker.js'
+      - 'wrangler.toml'
+      - 'package.json'
+      - 'docs/goals/bugdrop-board-closed-beta-security-abuse/notes/T001-security-scout.md'
+      - 'docs/goals/bugdrop-board-closed-beta-security-abuse/state.yaml'
+    expected_output: 'A compact evidence note listing read/event throttle gaps, token TTL behavior, event payload privacy state, CORS smoke coverage, and a smallest safe edit plan.'
+    verify:
+      - 'git status --short --branch'
+      - 'focused rg scans for throttle actions, event payload contents, token expiry validation, CORS smoke helpers, and existing security docs'
+      - 'focused test inventory for auth/throttle/events/CORS coverage'
+    stop_if:
+      - 'Scout finds that the oracle requires deploys, credentials, hosted control plane, monitoring, status workflow, or other excluded work.'
+    receipt:
+      result: done
+      summary: 'Mapped the Board 2 security surface and selected a local-only hardening plan for read/event throttles, token TTL, event privacy, and negative CORS smoke proof.'
+      evidence:
+        - 'Write throttles existed for `create_item` and `toggle_upvote`, but reads/events were unbounded.'
+        - 'Token verification rejected expired tokens but did not bound future `exp`.'
+        - 'Upvote event payloads included stable `externalUserId` values.'
+        - 'Deploy smoke proved allowed CORS only.'
+      note: 'docs/goals/bugdrop-board-closed-beta-security-abuse/notes/T001-security-scout.md'
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Validate the Scout plan and split safe Worker tranches.'
+    expected_output: 'A decision note confirming the plan is inside Board 2 scope and sequencing Worker tasks.'
+    verify:
+      - 'Scout note exists and cites concrete files or commands.'
+      - 'No Worker task requires excluded release/deploy/credential/product work.'
+    receipt:
+      result: done
+      decision: proceed
+      summary: 'Approved the Scout plan and kept the original Worker sequence.'
+      evidence:
+        - 'T001 note cites concrete files and command scans.'
+        - 'Approved tranches require no npm publish, Cloudflare deploy, credential changes, hosted control plane, status workflow, or ops monitoring.'
+      note: 'docs/goals/bugdrop-board-closed-beta-security-abuse/notes/T002-judge.md'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Add read/event misuse controls and focused route tests.'
+    allowed_files:
+      - 'src/lib/request-throttle.ts'
+      - 'src/routes/write-throttle.ts'
+      - 'src/routes/api.ts'
+      - 'src/routes/api-helpers.ts'
+      - 'src/types.ts'
+      - 'wrangler.toml'
+      - 'test/request-throttling.test.ts'
+      - 'test/routes.test.ts'
+      - 'docs/goals/bugdrop-board-closed-beta-security-abuse/notes/T003-worker.md'
+      - 'docs/goals/bugdrop-board-closed-beta-security-abuse/state.yaml'
+    acceptance:
+      - 'Authenticated item-list reads and events polling have throttling or an explicitly equivalent misuse control.'
+      - 'Allowed read/event requests continue to work.'
+      - 'Over-limit read/event requests return a clear 429-style response with no data side effect.'
+      - 'Existing create/upvote throttling behavior is preserved.'
+    verify:
+      - 'npm run test -- request-throttling routes'
+      - 'npm run typecheck'
+      - 'focused rg scan proving read/event routes call the misuse control'
+    receipt:
+      result: done
+      changed_files:
+        - 'src/lib/request-throttle.ts'
+        - 'src/routes/write-throttle.ts'
+        - 'src/routes/api.ts'
+        - 'src/types.ts'
+        - 'wrangler.toml'
+        - 'test/request-throttling.test.ts'
+      summary: 'Added D1-backed per-board/per-user throttles for item reads and event polls while preserving write/upvote throttles.'
+      commands:
+        - command: 'npm run test -- request-throttling routes'
+          status: pass
+          evidence: '2 files, 18 tests passed.'
+        - command: 'npm run typecheck'
+          status: pass
+          evidence: 'Worker and widget TypeScript checks passed.'
+        - command: 'rg -n "list_items|list_events|ITEM_READ_RATE_LIMIT|EVENTS_POLL_RATE_LIMIT|enforceRequestThrottle" src test wrangler.toml'
+          status: pass
+          evidence: 'Read/event route calls and env knobs are present.'
+      note: 'docs/goals/bugdrop-board-closed-beta-security-abuse/notes/T003-worker.md'
+
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Add token max-TTL policy and event payload privacy cleanup.'
+    allowed_files:
+      - 'src/lib/board-token.ts'
+      - 'src/lib/board-repository.ts'
+      - 'src/routes/api.ts'
+      - 'src/routes/api-helpers.ts'
+      - 'src/types.ts'
+      - 'wrangler.toml'
+      - 'test/board-token.test.ts'
+      - 'test/board-repository.test.ts'
+      - 'test/routes.test.ts'
+      - 'README.md'
+      - 'docs/closed-beta-setup.md'
+      - 'docs/goals/bugdrop-board-closed-beta-security-abuse/notes/T004-worker.md'
+      - 'docs/goals/bugdrop-board-closed-beta-security-abuse/state.yaml'
+    acceptance:
+      - 'Token lifetime policy is bounded for closed beta, with negative tests if code enforces max TTL.'
+      - 'Events returned to viewers no longer expose stable `externalUserId` values.'
+      - 'Widget/API behavior needed for polling remains intact.'
+      - 'Docs explain the token lifetime and event privacy boundary.'
+    verify:
+      - 'npm run test -- board-token board-repository routes'
+      - 'npm run typecheck'
+      - 'focused rg scan proving `externalUserId` is not serialized in viewer event payloads'
+    receipt:
+      result: done
+      changed_files:
+        - 'src/lib/board-token.ts'
+        - 'src/lib/board-repository.ts'
+        - 'src/routes/api-helpers.ts'
+        - 'src/types.ts'
+        - 'wrangler.toml'
+        - 'test/board-token.test.ts'
+        - 'test/board-repository.test.ts'
+        - 'test/routes.test.ts'
+        - 'README.md'
+        - 'docs/closed-beta-setup.md'
+      summary: 'Enforced a default 300-second board token max TTL and removed stable host user ids from viewer event payload output.'
+      commands:
+        - command: 'npm run test -- board-token board-repository routes'
+          status: pass
+          evidence: '3 files, 33 tests passed.'
+        - command: 'npm run typecheck'
+          status: pass
+          evidence: 'Worker and widget TypeScript checks passed.'
+        - command: 'rg -n "JSON\\.stringify\\(\\{ itemId, externalUserId|payload: \\{ itemId: item\\.id, externalUserId" src test || true'
+          status: pass
+          evidence: 'No old leaking event payload serialization or test expectation remains.'
+      note: 'docs/goals/bugdrop-board-closed-beta-security-abuse/notes/T004-worker.md'
+
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Add CORS negative smoke proof and security docs polish.'
+    allowed_files:
+      - 'scripts/verify-deployed-worker.js'
+      - 'test/verify-deployed-worker.test.ts'
+      - 'README.md'
+      - 'docs/closed-beta-setup.md'
+      - 'docs/goals/bugdrop-board-closed-beta-security-abuse/notes/T005-worker.md'
+      - 'docs/goals/bugdrop-board-closed-beta-security-abuse/state.yaml'
+    acceptance:
+      - 'Deploy-smoke helper can prove a disallowed origin does not receive an allowed CORS response.'
+      - 'Focused tests cover disallowed-origin success and failure cases.'
+      - 'Docs explain that CORS is browser containment, not authentication.'
+      - 'No live deploy or credential is required to verify the helper behavior locally.'
+    verify:
+      - 'npm run test -- verify-deployed-worker'
+      - 'npm run typecheck'
+      - 'focused rg scan for documented CORS negative-smoke flags and tests'
+    receipt:
+      result: done
+      changed_files:
+        - 'scripts/verify-deployed-worker.js'
+        - 'test/verify-deployed-worker.test.ts'
+        - 'README.md'
+        - 'docs/closed-beta-setup.md'
+      summary: 'Added deployed-smoke negative CORS proof for disallowed origins and documented the CLI/env path.'
+      commands:
+        - command: 'npm run test -- verify-deployed-worker'
+          status: pass
+          evidence: '1 file, 4 tests passed.'
+        - command: 'npm run typecheck'
+          status: pass
+          evidence: 'Worker and widget TypeScript checks passed.'
+        - command: 'rg -n "cors-disallowed-origin|DEPLOY_SMOKE_CORS_DISALLOWED_ORIGIN|disallowed-origin|disallowed origin|CORS is browser containment|Bearer token verification remains" scripts test README.md docs/closed-beta-setup.md'
+          status: pass
+          evidence: 'Script, tests, and docs expose the negative CORS proof path.'
+      note: 'docs/goals/bugdrop-board-closed-beta-security-abuse/notes/T005-worker.md'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether Closed Beta Board 2 satisfies the security/abuse oracle.'
+    expected_output: 'Final receipt with pass/fail decision, proof commands, file references, and carry-forward gaps for later boards.'
+    verify:
+      - 'npm run validate'
+      - 'npm run test -- request-throttling routes board-token board-repository verify-deployed-worker'
+      - 'npx prettier --check README.md docs/closed-beta-setup.md docs/goals/bugdrop-board-closed-beta-security-abuse/goal.md docs/goals/bugdrop-board-closed-beta-security-abuse/state.yaml docs/goals/bugdrop-board-closed-beta-security-abuse/notes/*.md'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-closed-beta-security-abuse/state.yaml'
+      - 'forbidden-scope scan proving no npm publish, Cloudflare deploy, credential edits, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, status workflow, setup-doc redo, or ops monitoring implementation were introduced'
+    receipt:
+      result: done
+      decision: complete
+      summary: 'Closed Beta Board 2 satisfies the security/abuse oracle with read/event throttles, max token TTL, event payload privacy cleanup, negative CORS smoke proof, docs, and passing gates.'
+      commands:
+        - command: 'npm run validate'
+          status: pass
+          evidence: 'eslint, repo-wide Prettier check, typecheck, package workflow check, and 72 Vitest tests passed.'
+        - command: 'npm run test -- request-throttling routes board-token board-repository verify-deployed-worker'
+          status: pass
+          evidence: '5 focused files, 43 tests passed.'
+        - command: 'npx prettier --check README.md docs/closed-beta-setup.md docs/goals/bugdrop-board-closed-beta-security-abuse/goal.md docs/goals/bugdrop-board-closed-beta-security-abuse/state.yaml docs/goals/bugdrop-board-closed-beta-security-abuse/notes/*.md scripts/verify-deployed-worker.js test/verify-deployed-worker.test.ts src/routes/api.ts src/lib/request-throttle.ts'
+          status: pass
+          evidence: 'Selected docs, board files, smoke verifier, tests, and changed route/throttle files use Prettier style.'
+        - command: 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-closed-beta-security-abuse/state.yaml'
+          status: pass
+          evidence: 'GoalBuddy state checker returned ok.'
+        - command: 'git diff -U0 -- scripts src test wrangler.toml package.json .github | rg --pcre2 -n "^\\+.*(npm publish|npm version|wrangler deploy(?! --dry-run)|secret put|GitHub Projects|downvotes|comments|realtime|billing|hosted control plane|status workflow|incident response|backup/export|restore)" || true'
+          status: pass
+          evidence: 'No forbidden code/config/workflow additions found.'
+      note: 'docs/goals/bugdrop-board-closed-beta-security-abuse/notes/T999-judge-final.md'
+
+checks:
+  dirty_fingerprint: null
+  last_verification:
+    result: pass
+    task: T999
+    commands:
+      - 'npm run validate'
+      - 'npm run test -- request-throttling routes board-token board-repository verify-deployed-worker'
+      - 'npx prettier --check README.md docs/closed-beta-setup.md docs/goals/bugdrop-board-closed-beta-security-abuse/goal.md docs/goals/bugdrop-board-closed-beta-security-abuse/state.yaml docs/goals/bugdrop-board-closed-beta-security-abuse/notes/*.md scripts/verify-deployed-worker.js test/verify-deployed-worker.test.ts src/routes/api.ts src/lib/request-throttle.ts'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-closed-beta-security-abuse/state.yaml'

@@ -64,7 +64,9 @@ dogfood-style setup in a new app. It is intentionally limited to setup safety an
 - Add a backend-only token endpoint that returns `{ "token": "payload.signature" }`.
 - Sign with the same `BOARD_TOKEN_SECRET`, `BOARD_TOKEN_AUDIENCE`, and `BOARD_TOKEN_ISSUER` as the
   Worker expects.
-- Include `boardId`, stable `externalUserId`, and a short `exp`, usually five minutes or less.
+- Include `boardId`, stable `externalUserId`, and a short `exp`, usually five minutes or less. The
+  Worker rejects tokens whose expiry is more than `BOARD_TOKEN_MAX_TTL_SECONDS` in the future; the
+  closed-beta default is `300` seconds.
 - Confirm the endpoint works in the signed-in host page. The widget fetches the endpoint with
   browser credentials, so host cookies and host CORS rules must permit that token request.
 
@@ -101,12 +103,16 @@ dogfood-style setup in a new app. It is intentionally limited to setup safety an
     --url https://bugdrop-board.example.workers.dev \
     --expect-environment production \
     --cors-origin https://app.example.com \
+    --cors-disallowed-origin https://evil.example \
     --cors-board-id board_owner_name \
     --cors-token-endpoint https://app.example.com/api/bugdrop-board-token
   ```
 
 - In the embedded host app, create a test item, confirm the GitHub Issue appears in the provisioned
   repo, then use a second signed-in viewer to confirm the upvote count and polling update.
+- Confirm the operator understands the closed-beta throttle boundary: reads, event polling, item
+  creation, and upvote toggles are rate-limited per board and signed host user. CORS is browser
+  containment only; bearer tokens remain the Worker authorization boundary.
 
 ## 8. Handoff Evidence
 
@@ -124,6 +130,7 @@ Record these before calling the beta install ready:
 ## Out Of Scope For Board 1
 
 This checklist does not add or prove hosted control plane, billing, realtime, comments, downvotes,
-GitHub Projects, status workflow, new throttles, token replay prevention, monitoring, incident
-response, backup/export/restore, npm publishing, Cloudflare deploy automation changes, or
-credential rotation. Those belong to later closed-beta conveyor boards.
+GitHub Projects, status workflow, token replay prevention, monitoring, incident response,
+backup/export/restore, npm publishing, Cloudflare deploy automation changes, credential rotation, or
+abuse controls beyond the closed-beta throttles and token TTL boundary documented here. Those belong
+to later closed-beta conveyor boards.

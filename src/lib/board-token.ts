@@ -13,8 +13,11 @@ interface VerifyBoardTokenOptions {
   expectedBoardId: string;
   expectedAudience?: string;
   expectedIssuer?: string;
+  maxTtlSeconds?: number;
   now?: Date;
 }
+
+const DEFAULT_BOARD_TOKEN_MAX_TTL_SECONDS = 300;
 
 const encoder = new TextEncoder();
 
@@ -43,6 +46,9 @@ export async function verifyBoardToken(
   if (claims.exp <= nowSeconds) {
     throw new Error('Board token expired');
   }
+  if (claims.exp > nowSeconds + maxTtlSeconds(options.maxTtlSeconds)) {
+    throw new Error('Board token exceeds maximum TTL');
+  }
   if (claims.boardId !== options.expectedBoardId) {
     throw new Error('Board token scope mismatch');
   }
@@ -57,6 +63,12 @@ export async function verifyBoardToken(
   }
 
   return claims;
+}
+
+function maxTtlSeconds(value: number | undefined): number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0
+    ? value
+    : DEFAULT_BOARD_TOKEN_MAX_TTL_SECONDS;
 }
 
 async function sign(payload: string, secret: string): Promise<string> {
