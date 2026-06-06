@@ -10,7 +10,7 @@ const required = [
   'name: Install Smoke',
   'workflow_dispatch:',
   'package_version:',
-  "default: '0.1.2'",
+  'default: latest',
   'uses: actions/checkout@v5',
   'uses: actions/setup-node@v5',
   'make install',

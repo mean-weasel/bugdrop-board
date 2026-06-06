@@ -37,7 +37,7 @@ describe('verify-clean-room-install', () => {
     expect(
       parseArgs([
         '--version',
-        '0.1.2',
+        '0.2.0',
         '--package',
         '@mean-weasel/bugdrop-board',
         '--retries',
@@ -48,7 +48,7 @@ describe('verify-clean-room-install', () => {
       ])
     ).toMatchObject({
       packageName: '@mean-weasel/bugdrop-board',
-      version: '0.1.2',
+      version: '0.2.0',
       retries: 2,
       retryDelayMs: 10,
       keep: true,
