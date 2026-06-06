@@ -1,0 +1,284 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Closed Beta Setup Safety'
+  slug: 'bugdrop-board-closed-beta-setup-safety'
+  kind: existing_plan
+  tranche: 'Closed-beta setup safety and installer trust only.'
+  status: done
+  oracle:
+    signal: 'A fresh closed-beta self-host installer can follow docs/scripts/workflow defaults without stale package references, ambiguous token scopes, or accidental development deploy configuration.'
+    cadence: 'after each Worker tranche and final Judge audit'
+    final_proof: 'Docs/workflow/script diff inspection, current package/version proof, focused drift scans, standard verification gates, and explicit forbidden-scope scan.'
+  intake:
+    original_request: 'Build BugDrop Board Closed Beta Board 1: setup safety and installer trust only.'
+    interpreted_outcome: 'Prepare the first closed-beta conveyor board to make setup and deploy guidance trustworthy before broader beta security, UX, CI, or ops work.'
+    input_shape: existing_plan
+    audience: 'Closed-beta self-host installers and BugDrop Board maintainers'
+    authority: requested
+    proof_type: artifact
+    completion_proof: 'Goal oracle is satisfied with passing verification and no excluded runtime, deploy, credential, or publish work.'
+    likely_misfire: 'Turning setup-safety prep into product feature work, security hardening, monitoring, or a release/publish/deploy operation.'
+    blind_spots_considered:
+      - 'Plain deploy scripts may target top-level development Wrangler config instead of production env.'
+      - 'README and install-smoke defaults may still reference old package versions.'
+      - 'Host token setup can be technically correct but not copy-pasteable for beta installers.'
+      - 'GitHub token guidance can remain too vague, leading to over-scoped or wrong-repo tokens.'
+      - 'Closed-beta readiness can be claimed without an installer-facing checklist and focused drift scan.'
+    hard_constraints:
+      - 'Preserve current product behavior.'
+      - 'No status workflow.'
+      - 'No new security throttles or abuse-control behavior.'
+      - 'No ops monitoring or backup/export implementation.'
+      - 'No hosted control plane, billing, realtime, comments, downvotes, or GitHub Projects.'
+      - 'No npm publishing, package version bump, Cloudflare deploy, credential changes, or secret edits.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: active
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-closed-beta-setup-safety/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-closed-beta-setup-safety'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Map the exact setup-safety drift and footguns before any edits.'
+    allowed_files:
+      - 'README.md'
+      - 'package.json'
+      - 'Makefile'
+      - '.github/workflows/install-smoke.yml'
+      - '.github/workflows/deploy.yml'
+      - 'wrangler.toml'
+      - '.dev.vars.example'
+      - 'docs/staging-dogfood.md'
+      - 'docs/production-dogfood.md'
+      - 'docs/release-readiness-results/'
+      - 'docs/goals/bugdrop-board-closed-beta-setup-safety/notes/T001-setup-scout.md'
+      - 'docs/goals/bugdrop-board-closed-beta-setup-safety/state.yaml'
+    expected_output: 'A compact evidence note listing stale version/package claims, deploy-env footguns, missing host-token examples, GitHub token ambiguities, and the smallest safe edit plan.'
+    verify:
+      - 'git status --short --branch'
+      - 'npm view @mean-weasel/bugdrop-board version dist-tags --json'
+      - 'focused grep/rg scans for stale versions, plain deploy commands, token guidance, and forbidden-scope terms'
+    stop_if:
+      - 'The scout finds that product behavior, publishing, deploy, credentials, or security-hardening changes are required to satisfy the setup-safety oracle.'
+    receipt:
+      result: done
+      summary: 'Mapped concrete setup-safety drift: stale install-smoke/default handoff references, production docs that can fall through to top-level development Wrangler config, missing copy-paste host-token endpoint examples, and GitHub token scope ambiguity.'
+      evidence:
+        - '`npm view @mean-weasel/bugdrop-board version dist-tags --json` reports version/latest `0.2.0`.'
+        - '`.github/workflows/install-smoke.yml` still defaults `package_version` to `0.1.2`.'
+        - '`README.md` handoff notes still describe `0.1.2` as latest and `0.2.0` as pending.'
+        - '`README.md` production deploy examples omit explicit `--env production` despite top-level development Wrangler config and placeholder D1 ids.'
+        - '`src/widget/index.ts` fetches the token endpoint with browser credentials, but README does not call out the cookie/CORS implication.'
+        - '`docs/staging-dogfood.md` has clearer fine-grained issue-token guidance than the README setup path.'
+      note: 'docs/goals/bugdrop-board-closed-beta-setup-safety/notes/T001-setup-scout.md'
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Validate the Scout plan and split the work into safe Worker tranches.'
+    expected_output: 'A decision note confirming the setup-safety plan is within scope, or narrowing it before edits begin.'
+    verify:
+      - 'Scout note exists and references concrete files or commands.'
+      - 'No Worker task requires excluded product/security/ops/release behavior.'
+    receipt:
+      result: done
+      decision: proceed
+      summary: 'Validated the Scout plan as setup-safety work only and approved the three Worker sequence: deploy/version drift, token guidance, and beta checklist.'
+      evidence:
+        - 'T001 note references concrete files and command evidence.'
+        - 'No approved Worker requires product behavior, publishing, deploy execution, credential changes, status workflow, new throttles, or monitoring.'
+      note: 'docs/goals/bugdrop-board-closed-beta-setup-safety/notes/T002-judge.md'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Fix deploy-env, version, and install-smoke setup trust issues.'
+    allowed_files:
+      - 'README.md'
+      - 'package.json'
+      - 'Makefile'
+      - '.github/workflows/install-smoke.yml'
+      - '.github/workflows/deploy.yml'
+      - 'scripts/verify-install-smoke-workflow.js'
+      - 'test/verify-clean-room-install.test.ts'
+      - 'test/verify-deployed-worker.test.ts'
+      - 'test/verify-install-smoke-workflow.test.ts'
+      - 'docs/goals/bugdrop-board-closed-beta-setup-safety/notes/T003-worker.md'
+      - 'docs/goals/bugdrop-board-closed-beta-setup-safety/state.yaml'
+    acceptance:
+      - 'Production/self-host deployment docs and safe scripts make Wrangler env selection explicit.'
+      - 'Install Smoke default no longer verifies stale `0.1.2` by default.'
+      - 'Current handoff/setup docs reflect `@mean-weasel/bugdrop-board@0.2.0` without implying a new publish is required.'
+      - 'No Cloudflare deploy, npm publish, package version bump, or credential edit occurs.'
+    verify:
+      - 'npm run install:smoke:workflow'
+      - 'npm run package:workflow:check'
+      - 'npm run validate'
+      - 'focused rg scan for stale `0.1.2` latest/default claims and unsafe plain production deploy guidance'
+    receipt:
+      result: done
+      changed_files:
+        - 'README.md'
+        - 'package.json'
+        - 'Makefile'
+        - '.github/workflows/install-smoke.yml'
+        - 'scripts/verify-install-smoke-workflow.js'
+        - 'test/verify-clean-room-install.test.ts'
+        - 'docs/goals/bugdrop-board-closed-beta-setup-safety/notes/T003-worker.md'
+        - 'docs/goals/bugdrop-board-closed-beta-setup-safety/state.yaml'
+      summary: 'Fixed version/install-smoke drift and made production deploy/check commands explicit, including an ambiguity guard on plain `npm run deploy`.'
+      commands:
+        - command: 'npm run install:smoke:workflow'
+          status: pass
+          evidence: 'Install Smoke workflow matches the updated contract with default latest.'
+        - command: 'npm run package:workflow:check'
+          status: pass
+          evidence: 'Package Widget workflow contract check passed.'
+        - command: 'npx prettier --check README.md package.json .github/workflows/install-smoke.yml scripts/verify-install-smoke-workflow.js test/verify-clean-room-install.test.ts ...'
+          status: pass
+          evidence: 'All selected files use Prettier style.'
+        - command: 'focused rg scan for stale latest/default claims and unsafe plain production deploy guidance'
+          status: pass
+          evidence: 'No stale current-version/default package claims or risky plain production deploy examples remain in active setup surfaces.'
+        - command: 'npm run validate'
+          status: pass
+          evidence: 'eslint, format check, typecheck, package workflow checker, and 66 Vitest tests passed.'
+      note: 'docs/goals/bugdrop-board-closed-beta-setup-safety/notes/T003-worker.md'
+
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Add closed-beta host-token endpoint and GitHub token setup guidance.'
+    allowed_files:
+      - 'README.md'
+      - 'docs/staging-dogfood.md'
+      - 'docs/production-dogfood.md'
+      - 'docs/goals/bugdrop-board-closed-beta-setup-safety/notes/T004-worker.md'
+      - 'docs/goals/bugdrop-board-closed-beta-setup-safety/state.yaml'
+    acceptance:
+      - 'Docs include copy-pasteable backend-only host token signing examples for common Node-style hosts.'
+      - 'Docs explain that the widget fetches the token endpoint with browser credentials and what that implies for cookies/CORS.'
+      - 'Docs state the closed-beta GitHub issue token recommendation, minimum repo-scoped permissions, and wrong-repo/over-scoped token risk.'
+      - 'Docs do not expose or request real secret values.'
+    verify:
+      - 'npx prettier --check README.md docs/staging-dogfood.md docs/production-dogfood.md'
+      - 'focused rg scan for token names, `GITHUB_` GitHub-secret naming pitfalls, and secret-value placeholders only'
+    receipt:
+      result: done
+      changed_files:
+        - 'README.md'
+        - 'docs/goals/bugdrop-board-closed-beta-setup-safety/notes/T004-worker.md'
+        - 'docs/goals/bugdrop-board-closed-beta-setup-safety/state.yaml'
+      summary: 'Added copy-pasteable backend token endpoint examples, documented `credentials: "include"`, clarified fine-grained GitHub issue-token scope, and tightened production secret commands.'
+      commands:
+        - command: 'npx prettier --check README.md docs/staging-dogfood.md docs/production-dogfood.md ...'
+          status: pass
+          evidence: 'Selected docs and GoalBuddy files use Prettier style.'
+        - command: 'focused token guidance and secret-shape scan'
+          status: pass
+          evidence: 'Only documented placeholders and environment variable names were found; no token-shaped secret values were found.'
+        - command: 'focused remote command scan'
+          status: pass
+          evidence: 'No remaining bare production `wrangler secret put`, remote D1 migration, or remote provisioning examples without `--env production` were found.'
+      note: 'docs/goals/bugdrop-board-closed-beta-setup-safety/notes/T004-worker.md'
+
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Create a closed-beta setup checklist and final installer-trust receipt.'
+    allowed_files:
+      - 'README.md'
+      - 'docs/closed-beta-setup.md'
+      - 'docs/goals/bugdrop-board-closed-beta-setup-safety/notes/T005-worker.md'
+      - 'docs/goals/bugdrop-board-closed-beta-setup-safety/state.yaml'
+    acceptance:
+      - 'Checklist covers preflight, secrets, D1, Wrangler env, board provisioning, deploy smoke, embedded host smoke, and handoff evidence.'
+      - 'Checklist clearly names what remains out of scope for Closed Beta Board 1.'
+      - 'Checklist can be followed without publishing, deploying, rotating secrets, or adding new product behavior during verification.'
+    verify:
+      - 'npx prettier --check README.md docs/closed-beta-setup.md docs/goals/bugdrop-board-closed-beta-setup-safety/state.yaml'
+      - 'focused checklist scan for required setup proof and forbidden-scope exclusions'
+    receipt:
+      result: done
+      changed_files:
+        - 'README.md'
+        - 'docs/closed-beta-setup.md'
+        - 'docs/goals/bugdrop-board-closed-beta-setup-safety/notes/T005-worker.md'
+        - 'docs/goals/bugdrop-board-closed-beta-setup-safety/state.yaml'
+      summary: 'Added and linked an installer-facing closed-beta setup checklist with preflight, D1, secrets, GitHub boundary, host token endpoint, deploy, smoke, handoff evidence, and Board 1 exclusions.'
+      commands:
+        - command: 'npx prettier --check README.md docs/closed-beta-setup.md ...'
+          status: pass
+          evidence: 'Selected docs and GoalBuddy files use Prettier style.'
+        - command: 'focused checklist scan for required setup proof and forbidden-scope exclusions'
+          status: pass
+          evidence: 'Checklist contains the required setup proof sections and explicit Board 1 exclusions.'
+      note: 'docs/goals/bugdrop-board-closed-beta-setup-safety/notes/T005-worker.md'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether Closed Beta Board 1 satisfies the setup-safety oracle.'
+    expected_output: 'A final receipt with pass/fail decision, proof commands, file references, and any carry-forward gaps for later closed-beta conveyor boards.'
+    verify:
+      - 'npm run validate'
+      - 'npm run install:smoke:workflow'
+      - 'npm run package:workflow:check'
+      - 'npx prettier --check README.md docs/closed-beta-setup.md docs/goals/bugdrop-board-closed-beta-setup-safety/goal.md docs/goals/bugdrop-board-closed-beta-setup-safety/state.yaml'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-closed-beta-setup-safety/state.yaml'
+      - 'forbidden-scope scan proving no npm publish, Cloudflare deploy, credential edits, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, status workflow, new throttles, or monitoring implementation were introduced'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: 'Closed Beta Board 1 setup-safety oracle is satisfied: production deploy paths are explicit, stale package defaults are fixed, host-token and GitHub-token setup guidance is installer-ready, and a closed-beta checklist is linked.'
+      evidence:
+        - 'README production setup uses explicit `--env production` commands and `npm run deploy:production`.'
+        - '`npm run deploy` refuses ambiguous deploys.'
+        - 'Install Smoke workflow default is `latest`, and `npm run install:smoke:workflow` passed.'
+        - 'README names `@mean-weasel/bugdrop-board@0.2.0` as current npm latest.'
+        - 'README includes backend-only HMAC token endpoint examples and `credentials: "include"` guidance.'
+        - 'README recommends fine-grained repo-scoped GitHub token with **Issues: Read and write** and documents `ISSUE_ACCESS_TOKEN` mapping.'
+        - '`docs/closed-beta-setup.md` covers setup preflight, D1, secrets, repo boundary, token endpoint, deploy, smoke, handoff proof, and Board 1 exclusions.'
+        - 'Final gates passed: `npm run validate`, `npm run install:smoke:workflow`, `npm run package:workflow:check`, Prettier docs check, GoalBuddy state check before final update, and forbidden-scope diff scan.'
+      note: 'docs/goals/bugdrop-board-closed-beta-setup-safety/notes/T999-judge-final.md'
+
+checks:
+  dirty_fingerprint: 'README.md package.json Makefile .github/workflows/install-smoke.yml scripts/verify-install-smoke-workflow.js test/verify-clean-room-install.test.ts docs/closed-beta-setup.md docs/goals/bugdrop-board-closed-beta-setup-safety/'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'npm run validate'
+      - 'npm run install:smoke:workflow'
+      - 'npm run package:workflow:check'
+      - 'npx prettier --check README.md docs/closed-beta-setup.md docs/goals/bugdrop-board-closed-beta-setup-safety/goal.md docs/goals/bugdrop-board-closed-beta-setup-safety/state.yaml docs/goals/bugdrop-board-closed-beta-setup-safety/notes/*.md'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-closed-beta-setup-safety/state.yaml'
+      - 'git diff --name-only | rg "^(src/|migrations/|wrangler\\.toml|\\.secrets/|\\.dev\\.vars|public/board\\.js)$" && exit 1 || exit 0'

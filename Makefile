@@ -1,4 +1,4 @@
-.PHONY: dev build build-widget build-all deploy deploy-check deploy-smoke pack-check release-smoke release-rehearsal test test-watch lint lint-fix format format-check typecheck knip audit check-actions-node24 check ci clean install help
+.PHONY: dev build build-widget build-all deploy deploy-development deploy-production deploy-check deploy-check-production deploy-smoke pack-check release-smoke release-rehearsal test test-watch lint lint-fix format format-check typecheck knip audit check-actions-node24 check ci clean install help
 
 dev:
 	npm run dev
@@ -14,8 +14,17 @@ build-all: build-widget build
 deploy: build-all
 	npm run deploy
 
+deploy-development:
+	npm run deploy:development
+
+deploy-production:
+	npm run deploy:production
+
 deploy-check:
 	npm run deploy:check
+
+deploy-check-production:
+	npm run deploy:check:production
 
 deploy-smoke:
 	npm run deploy:smoke -- \
@@ -81,6 +90,9 @@ help:
 	@echo "  make check       - lint, format-check, typecheck, knip, audit, Actions guard"
 	@echo "  make ci          - check, unit tests, widget build, TypeScript build"
 	@echo "  make deploy-check - build widget and run wrangler deploy --dry-run"
+	@echo "  make deploy-development - deploy using top-level development Wrangler config"
+	@echo "  make deploy-check-production - build widget and dry-run wrangler deploy --env production"
+	@echo "  make deploy-production - build widget and deploy with wrangler --env production"
 	@echo "  make deploy-smoke URL=https://worker.example.com EXPECT_ENVIRONMENT=production - verify /health and /board.js"
 	@echo "                    add CORS_ORIGIN, CORS_BOARD_ID, and CORS_TOKEN_ENDPOINT to verify browser CORS"
 	@echo "                    or use DEPLOY_SMOKE_URL, DEPLOY_SMOKE_EXPECT_ENVIRONMENT, and DEPLOY_SMOKE_CORS_*"

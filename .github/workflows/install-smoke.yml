@@ -6,7 +6,7 @@ on:
       package_version:
         description: Published package version or dist-tag to verify.
         required: true
-        default: '0.1.2'
+        default: latest
         type: string
       retries:
         description: npm install attempts before failing.

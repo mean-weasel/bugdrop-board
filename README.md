@@ -100,14 +100,14 @@ configuration should be explicit before the first deploy.
    npx wrangler d1 create bugdrop-board-prod
    ```
 
-   Keep the binding name as `DB` in `wrangler.toml`, then replace the placeholder
-   `database_id` with the id returned by Wrangler. Use the same remote D1 database for migrations,
+   Keep the binding name as `DB` in `wrangler.toml`, then put the returned id in the target
+   `[[env.production.d1_databases]]` binding. Use the same remote D1 database for migrations,
    provisioning, deployed API reads, upvotes, and item creation.
 
 3. Set deployed non-secret Worker vars in `wrangler.toml`:
 
    ```toml
-   [vars]
+   [env.production.vars]
    ENVIRONMENT = "production"
    ALLOWED_ORIGINS = "https://app.example.com,https://admin.example.com"
    BOARD_TOKEN_AUDIENCE = "bugdrop-board"
@@ -122,32 +122,34 @@ configuration should be explicit before the first deploy.
 4. Set deployed Worker secrets:
 
    ```bash
-   npx wrangler secret put BOARD_TOKEN_SECRET
-   npx wrangler secret put GITHUB_ISSUE_ACCESS_TOKEN
+   npx wrangler secret put BOARD_TOKEN_SECRET --env production
+   npx wrangler secret put GITHUB_ISSUE_ACCESS_TOKEN --env production
    ```
 
    Do not put these values in `wrangler.toml`, browser code, or the embed script. `.dev.vars` is
    only for local `wrangler dev`.
 
-5. Build and dry-run the Worker bundle:
+5. Build and dry-run the production Worker bundle:
 
    ```bash
-   npm run deploy:check
+   npm run deploy:check:production
    ```
 
-   This builds `public/board.js` and runs `wrangler deploy --dry-run`, which validates the Worker
-   bundle, assets, and bindings without uploading a deployment.
+   This builds `public/board.js` and runs `wrangler deploy --dry-run --env production`, which
+   validates the Worker bundle, assets, and production bindings without uploading a deployment. Do
+   not use the top-level development Wrangler config for closed-beta or production installs; it
+   intentionally defaults to wildcard local CORS and placeholder D1 ids.
 
 6. Apply remote D1 migrations:
 
    ```bash
-   npx wrangler d1 migrations apply DB --remote
+   npx wrangler d1 migrations apply DB --remote --env production
    ```
 
 7. Provision one board for the app's GitHub repo:
 
    ```bash
-   npm run provision:board -- --repo mean-weasel/demo --name "Demo Board" --remote
+   npm run provision:board -- --repo mean-weasel/demo --name "Demo Board" --remote --env production
    ```
 
    Save the printed `board.id`; that value becomes the embed script's `data-board-id`. Running the
@@ -156,7 +158,7 @@ configuration should be explicit before the first deploy.
 8. Deploy the Worker:
 
    ```bash
-   npm run deploy
+   npm run deploy:production
    ```
 
 9. Verify the deployed surface:
@@ -178,8 +180,11 @@ Production readiness checklist:
 - Host token endpoint signs short-lived user tokens with matching secret, audience, issuer, and
   `boardId`.
 - GitHub access token can create issues in the provisioned board repo.
-- `npm run deploy:check`, `npm run validate`, `npm run test:e2e`, and `make check` pass before
-  deploy.
+- `npm run deploy:check:production`, `npm run validate`, `npm run test:e2e`, and `make check` pass
+  before deploy.
+
+For an installer-facing closed-beta sequence, use the
+[Closed Beta Setup Checklist](docs/closed-beta-setup.md).
 
 ## Embed Contract
 
@@ -448,6 +453,11 @@ The host app endpoint must return JSON:
 { "token": "payload.signature" }
 ```
 
+The widget calls this endpoint from the browser with `fetch(tokenEndpoint, { credentials: "include"
+})`, so cookie-based host sessions work as long as the endpoint is same-origin with the host page or
+has the host's normal credentialed-CORS behavior. The endpoint must run on the host app backend; do
+not sign tokens in browser code.
+
 The token is an HMAC-SHA256 signature over a base64url JSON payload. Required claims:
 
 - `boardId`: board id the user may access.
@@ -464,10 +474,80 @@ Optional claims:
 Never expose `BOARD_TOKEN_SECRET` to browser code. Sign tokens in the host app backend. The dummy
 host fixture in `e2e/fixtures/host-app.ts` shows the local test shape.
 
+Minimal Node helper:
+
+```js
+import { createHmac } from 'node:crypto';
+
+function base64url(value) {
+  return Buffer.from(value).toString('base64url');
+}
+
+function signBoardToken(claims, secret) {
+  const payload = base64url(JSON.stringify(claims));
+  const signature = createHmac('sha256', secret).update(payload).digest('base64url');
+  return `${payload}.${signature}`;
+}
+```
+
+Express-style endpoint:
+
+```js
+app.get('/api/bugdrop-board-token', requireSignedInUser, (req, res) => {
+  const token = signBoardToken(
+    {
+      boardId: 'board_owner_repo',
+      externalUserId: req.user.id,
+      displayName: req.user.name,
+      exp: Math.floor(Date.now() / 1000) + 5 * 60,
+      aud: 'bugdrop-board',
+      iss: 'your-host-app',
+    },
+    process.env.BOARD_TOKEN_SECRET
+  );
+
+  res.json({ token });
+});
+```
+
+Next.js App Router route handler:
+
+```js
+export async function GET() {
+  const user = await requireSignedInUser();
+  const token = signBoardToken(
+    {
+      boardId: 'board_owner_repo',
+      externalUserId: user.id,
+      displayName: user.name,
+      exp: Math.floor(Date.now() / 1000) + 5 * 60,
+      aud: 'bugdrop-board',
+      iss: 'your-host-app',
+    },
+    process.env.BOARD_TOKEN_SECRET
+  );
+
+  return Response.json({ token });
+}
+```
+
+Use a short expiry, usually five minutes or less for closed beta, and keep `externalUserId` stable
+for the signed-in host user. If the host page and token endpoint are on different origins, configure
+the host endpoint's own credentialed CORS policy for that request; BugDrop Board's
+`ALLOWED_ORIGINS` controls calls to the board Worker, not calls to your host app token endpoint.
+
 ## GitHub Mirroring
 
 For normal development and deployed use, set `GITHUB_ISSUE_ACCESS_TOKEN` as a Worker secret or in
 local `.dev.vars`. The token must be able to create issues in the repo represented by the board.
+For closed beta, prefer a fine-grained GitHub token scoped only to the provisioned board repo with
+**Issues: Read and write** permission. Avoid broad account or organization tokens; the Worker trusts
+the provisioned board row's repo owner/name when creating issues, so an over-scoped token increases
+the blast radius of a misprovisioned board.
+
+When using GitHub Actions environment secrets for the deploy workflow, store the issue token as
+`ISSUE_ACCESS_TOKEN`; GitHub secret names cannot start with `GITHUB_`. The workflow maps that
+accepted secret name back to the deployed Worker secret variable `GITHUB_ISSUE_ACCESS_TOKEN`.
 
 When a board item is created, BugDrop Board creates a GitHub Issue first. If GitHub issue creation
 fails, the D1 board item is not stored.
@@ -514,20 +594,20 @@ Keep secrets out of `wrangler.toml`. For local development, use `.dev.vars`. For
 environments, set secrets with:
 
 ```bash
-npx wrangler secret put BOARD_TOKEN_SECRET
-npx wrangler secret put GITHUB_ISSUE_ACCESS_TOKEN
+   npx wrangler secret put BOARD_TOKEN_SECRET --env production
+   npx wrangler secret put GITHUB_ISSUE_ACCESS_TOKEN --env production
 ```
 
 For deployed D1 migrations, use:
 
 ```bash
-npx wrangler d1 migrations apply DB --remote
+npx wrangler d1 migrations apply DB --remote --env production
 ```
 
 To check deploy packaging without uploading the Worker, use:
 
 ```bash
-npm run deploy:check
+npm run deploy:check:production
 ```
 
 ## Secret Rotation And Recovery
@@ -553,7 +633,7 @@ Rotate `BOARD_TOKEN_SECRET` when the signing secret may be exposed or as part of
 3. Replace the deployed Worker secret:
 
    ```bash
-   npx wrangler secret put BOARD_TOKEN_SECRET
+   npx wrangler secret put BOARD_TOKEN_SECRET --env production
    ```
 
 4. Restart or redeploy the host app if its runtime requires it.
@@ -573,24 +653,25 @@ uses the new secret. That is expected until the host app issues fresh tokens. If
 errors after the rotation, confirm the host app and Worker use the same secret and that
 `BOARD_TOKEN_AUDIENCE` and `BOARD_TOKEN_ISSUER` still match the host claims.
 
-Rollback: put the previous value back with `npx wrangler secret put BOARD_TOKEN_SECRET`, then
-restore the host app signer to the same previous value.
+Rollback: put the previous value back with
+`npx wrangler secret put BOARD_TOKEN_SECRET --env production`, then restore the host app signer to
+the same previous value.
 
 Rotate `GITHUB_ISSUE_ACCESS_TOKEN` when the GitHub token may be exposed, expires, or repo access
 changes:
 
 1. Create a replacement GitHub token that can create issues in the repo used by the provisioned
-   board. For fine-grained tokens, give the target repo issue-write access.
+   board. For fine-grained tokens, give the target repo **Issues: Read and write** access.
 2. Replace the deployed Worker secret:
 
    ```bash
-   npx wrangler secret put GITHUB_ISSUE_ACCESS_TOKEN
+   npx wrangler secret put GITHUB_ISSUE_ACCESS_TOKEN --env production
    ```
 
 3. Confirm the board still points at the expected repo:
 
    ```bash
-   npm run provision:board -- --repo mean-weasel/demo --name "Demo Board" --remote
+   npm run provision:board -- --repo mean-weasel/demo --name "Demo Board" --remote --env production
    ```
 
 4. Verify the Worker bundle:
@@ -607,8 +688,8 @@ missing, or `Failed to create GitHub issue` when GitHub rejects the token. In bo
 item is not stored because GitHub Issue creation happens before D1 item persistence.
 
 Rollback: put the previous GitHub token back with
-`npx wrangler secret put GITHUB_ISSUE_ACCESS_TOKEN`, then create a test item to confirm GitHub
-mirroring works again.
+`npx wrangler secret put GITHUB_ISSUE_ACCESS_TOKEN --env production`, then create a test item to
+confirm GitHub mirroring works again.
 
 Local recovery uses `.dev.vars` instead of deployed Worker secrets. Update `.dev.vars`, restart
 `wrangler dev`, and rerun:
@@ -661,12 +742,15 @@ The workflow runs:
 ```bash
 npm run validate
 npm run build:widget
-npx wrangler deploy --dry-run [--env staging]
-npx wrangler d1 migrations apply DB --remote
-npm run provision:board -- --repo owner/name --remote
-npx wrangler deploy --secrets-file .deploy.secrets
+npx wrangler deploy --dry-run --env production
+npx wrangler d1 migrations apply DB --remote --env production
+npm run provision:board -- --repo owner/name --remote --env production
+npx wrangler deploy --secrets-file .deploy.secrets --env production
 npm run deploy:smoke -- --url https://bugdrop-board.example.workers.dev --expect-environment production [--cors-origin https://app.example.com --cors-board-id board_owner_repo --cors-token-endpoint https://app.example.com/api/board-token]
 ```
+
+For staging or another target, replace `production` with the matching Wrangler environment. The
+workflow does this when the `wrangler_environment` input is set.
 
 The secrets file is generated inside the workflow runner and removed at the end of the job. Do not
 commit `.deploy.secrets`.
@@ -756,10 +840,10 @@ documented script attributes, mocks the token/items API responses, and verifies 
 inside `data-mount-selector`.
 
 The `Install Smoke` GitHub Actions workflow exposes the same clean-room check as a manual,
-no-secret proof. Dispatch it with a published package version or dist-tag, such as `0.2.0` or
-`latest`, when you want GitHub Actions to verify the installable artifact without running npm
-publish, Cloudflare deploy, or any production credentials. To verify the workflow contract locally,
-run:
+no-secret proof. It defaults to the `latest` dist-tag, currently `0.2.0`, and can also be dispatched
+with an explicit package version. Use it when you want GitHub Actions to verify the installable
+artifact without running npm publish, Cloudflare deploy, or any production credentials. To verify
+the workflow contract locally, run:
 
 ```bash
 npm run install:smoke:workflow
@@ -797,10 +881,10 @@ npm publish --access public --tag "$NPM_TAG"
 npm run release:smoke -- --retries 30 --retry-delay-ms 10000
 ```
 
-The first public package is published as `@mean-weasel/bugdrop-board@0.1.0`. Actual publishing of
-future versions still requires npm ownership or publish rights for the configured package scope.
-When in doubt, keep the workflow in dry-run mode and inspect the package file list before
-publishing.
+The current published package is `@mean-weasel/bugdrop-board@0.2.0`, tagged `latest`. Future
+publishing still requires npm ownership or publish rights for the configured package scope plus
+explicit maintainer approval. When in doubt, keep the workflow in dry-run mode and inspect the
+package file list before publishing.
 
 ## Release Rehearsal
 
@@ -824,9 +908,10 @@ npm run audit
 npm run check:actions-node24
 ```
 
-This proves the local D1 provisioning path, package dry-run, Worker deploy dry-run, embedded widget
-smoke, unit/type/lint checks, knip, critical audit, and GitHub Actions version guard without
-requiring Cloudflare or npm production credentials.
+This proves the local D1 provisioning path, package dry-run, top-level Worker deploy dry-run,
+embedded widget smoke, unit/type/lint checks, knip, critical audit, and GitHub Actions version guard
+without requiring Cloudflare or npm production credentials. For closed-beta production config, also
+run `npm run deploy:check:production` after the production D1 binding and Worker vars are set.
 
 After the local rehearsal passes, configure credentials in GitHub:
 
@@ -857,7 +942,7 @@ npm run release:rehearsal
 npm run provision:board -- --repo mean-weasel/demo --name "Demo Board" --local
 npm run build:widget
 npm run pack:check
-npm run deploy:check
+npm run deploy:check:production
 npm run deploy:smoke -- \
   --url https://board.bugdrop.dev \
   --expect-environment production \
@@ -873,13 +958,13 @@ make check
 ## Current Handoff Notes
 
 This repository is still an early vertical slice. The conveyor PR stack has landed on `main`,
-`@mean-weasel/bugdrop-board@0.1.2` is the currently published npm `latest`, and the production
-Worker is available at `https://board.bugdrop.dev`.
+`@mean-weasel/bugdrop-board@0.2.0` is the currently published npm `latest`, and the production Worker
+is available at `https://board.bugdrop.dev`.
 
-The customization-capable Worker is already dogfooded in production, and package metadata is being
-prepared for `0.2.0`. Do not run the non-dry-run `Package Widget` workflow until the `0.2.0` version
-PR has merged, a main-branch package dry-run passes, and the maintainer explicitly approves
-publishing `@mean-weasel/bugdrop-board@0.2.0` to npm.
+The customization-capable Worker is dogfooded in production, and `0.2.0` has been published and
+install-smoked. Do not run a future non-dry-run `Package Widget` workflow until a version PR has
+merged, a main-branch package dry-run passes, and the maintainer explicitly approves the specific
+package version and dist-tag.
 
 Remaining release actions are operational: keep running the local release rehearsal before
 significant changes, run the GitHub workflows against staging/test credentials when changing deploy
