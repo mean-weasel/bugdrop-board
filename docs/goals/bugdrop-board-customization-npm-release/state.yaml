@@ -57,7 +57,7 @@ visual_board:
     url: 'http://goalbuddy.localhost:41737/bugdrop-board-customization-npm-release/'
     command: 'npx goalbuddy board docs/goals/bugdrop-board-customization-npm-release'
 
-active_task: T003
+active_task: T004
 
 tasks:
   - id: T001
@@ -137,7 +137,7 @@ tasks:
   - id: T003
     type: worker
     assignee: Worker
-    status: active
+    status: done
     reasoning_hint: medium
     objective: 'Prepare and merge the 0.2.0 version PR without publishing.'
     allowed_files:
@@ -155,11 +155,71 @@ tasks:
       - 'gh pr create/open, monitor CI, and merge only when green'
     stop_if:
       - 'Any publish, tag, deploy, credential change, or new product behavior is required.'
+    receipt:
+      result: done
+      task_id: T003
+      changed_files:
+        - 'package.json'
+        - 'package-lock.json'
+        - 'README.md'
+        - 'docs/release-readiness-results/2026-06-06-v0.2.0-customization-release.md'
+        - 'docs/goals/bugdrop-board-customization-npm-release/state.yaml'
+      summary: 'Prepared and merged the 0.2.0 customization version PR without publishing.'
+      evidence:
+        - 'PR #44 merged to main at 4e6ab6c on 2026-06-06T17:33:27Z.'
+        - 'package.json and package-lock.json now declare 0.2.0.'
+        - 'README package verification examples and handoff notes describe the pending 0.2.0 publish gate.'
+        - 'Release-prep receipt records customization release intent, production deploy proof, live A/B dogfood proof, package dry-run proof, and required post-merge publish proof.'
+        - 'Pull-request CI run 27069135627 passed Lint/Typecheck/Knip/Audit and Unit Tests & Build.'
+        - 'Local pre-PR gates passed: npm run pack:check, production deploy:smoke, npm run validate, make check, GoalBuddy state checker, and git diff --check.'
+        - 'Main-branch npm run pack:check passed for @mean-weasel/bugdrop-board@0.2.0 after merge.'
+        - 'npm registry still reports latest as 0.1.2, proving no publish happened during this task.'
+      commands:
+        - command: 'npm version 0.2.0 --no-git-tag-version'
+          result: passed
+          status: pass
+          evidence: 'package.json and package-lock.json were updated to 0.2.0 without creating a git tag.'
+        - command: 'npm run pack:check'
+          result: passed
+          status: pass
+          evidence: 'Dry-ran @mean-weasel/bugdrop-board@0.2.0 tarball with 15 files and rebuilt the widget through prepack.'
+        - command: 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production --cors-origin https://bugdrop.dev --cors-board-id board_mean_weasel_bugdrop_board_production_dogfood --cors-token-endpoint "https://bugdrop.dev/api/bugdrop-board-token?viewer=a"'
+          result: passed
+          status: pass
+          evidence: 'Verified production health, board.js, CORS preflight, authenticated items, and authenticated events.'
+        - command: 'npm run validate'
+          result: passed
+          status: pass
+          evidence: 'Lint, format, typecheck, and 66 Vitest tests passed.'
+        - command: 'make check'
+          result: passed
+          status: pass
+          evidence: 'ESLint, format, typecheck, knip, critical npm audit, and Actions Node guard passed.'
+        - command: 'git diff --check'
+          result: passed
+          status: pass
+          evidence: 'No whitespace errors were reported.'
+        - command: 'gh pr create ... #44'
+          result: passed
+          status: pass
+          evidence: 'Created PR #44 for the 0.2.0 customization release prep.'
+        - command: 'gh pr checks 44 --watch --fail-fast'
+          result: passed
+          status: pass
+          evidence: 'Pull-request CI run 27069135627 passed Lint/Typecheck/Knip/Audit and Unit Tests & Build.'
+        - command: 'gh pr merge 44 --squash --delete-branch'
+          result: passed
+          status: pass
+          evidence: 'Merged PR #44 to main at 4e6ab6c.'
+        - command: 'npm view @mean-weasel/bugdrop-board version dist-tags --json'
+          result: passed
+          status: pass
+          evidence: 'Registry still reported version/latest 0.1.2 after the version PR, proving no npm publish happened.'
 
   - id: T004
     type: judge
     assignee: Judge
-    status: queued
+    status: active
     reasoning_hint: high
     objective: 'Pre-publish gate: decide whether the non-dry-run Package Widget workflow may be dispatched.'
     acceptance:
@@ -208,8 +268,14 @@ tasks:
       - 'git status --short --branch'
 
 checks:
-  dirty_fingerprint: ''
+  dirty_fingerprint: 'docs/goals/bugdrop-board-customization-npm-release/state.yaml'
   last_verification:
-    result: pending
-    task: T001
-    commands: []
+    result: passed
+    task: T003
+    commands:
+      - 'npm run pack:check'
+      - 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production --cors-origin https://bugdrop.dev --cors-board-id board_mean_weasel_bugdrop_board_production_dogfood --cors-token-endpoint "https://bugdrop.dev/api/bugdrop-board-token?viewer=a"'
+      - 'npm run validate'
+      - 'make check'
+      - 'gh pr checks 44 --watch --fail-fast'
+      - 'npm view @mean-weasel/bugdrop-board version dist-tags --json'
