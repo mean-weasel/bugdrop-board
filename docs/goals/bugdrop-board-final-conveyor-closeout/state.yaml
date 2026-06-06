@@ -1,0 +1,133 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Final Conveyor Closeout'
+  slug: 'bugdrop-board-final-conveyor-closeout'
+  kind: audit
+  tranche: 'Final autonomous post-v0.1.2 release-readiness conveyor closeout.'
+  status: done
+  oracle:
+    signal: 'A durable closeout receipt proves current repo, workflow, npm, dogfood, and follow-up state.'
+    cadence: 'after GitHub/npm/workflow checks and final docs verification'
+    final_proof: 'docs/release-readiness-results/2026-06-05-final-conveyor-closeout.md with current-state evidence and scope audit.'
+  intake:
+    original_request: 'ok whats next - can we run the remaining conveyor autonomously?'
+    interpreted_outcome: 'Finish the remaining safe conveyor by closing out release-readiness status after dogfood regression proof.'
+    input_shape: audit
+    audience: 'BugDrop Board maintainers returning to the project after autonomous work'
+    authority: approved_for_safe_docs_pr_work_no_publish_or_deploy
+    proof_type: artifact
+    completion_proof: 'Final receipt and GoalBuddy state prove there are no hidden open repo/CI/package/dogfood blockers.'
+    likely_misfire: 'Declaring the conveyor done while leaving open PRs, failed current workflows, or ambiguous npm/package state.'
+    blind_spots_considered:
+      - 'Historical failed workflow run 27042195381 should remain explained rather than ignored.'
+      - 'Dogfood repo issues are expected mirrored user items, not bugs in the board repo.'
+      - 'No final publish/deploy should happen without explicit user approval.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-final-conveyor-closeout/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-final-conveyor-closeout'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Collect final repo, workflow, npm, and dogfood state.'
+    receipt:
+      result: done
+      summary: 'Main is clean/synced, bugdrop-board has no open PRs/issues, npm latest is 0.1.2, recent workflow state is green except the explained historical Install Smoke failure, and dogfood repo has expected open mirrored dogfood items.'
+      evidence:
+        - 'git status --short --branch returned ## main...origin/main.'
+        - 'gh pr list --state open returned [].'
+        - 'gh issue list --state open returned [].'
+        - 'npm view @mean-weasel/bugdrop-board version dist-tags --json returned version 0.1.2 and latest 0.1.2.'
+        - 'Latest CI for PR #40 passed.'
+        - 'Install Smoke run 27042324248 passed; failed run 27042195381 is explained by missing Chromium and fixed by PR #38.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Write and verify the final conveyor closeout receipt.'
+    allowed_files:
+      - 'docs/release-readiness-results/2026-06-05-final-conveyor-closeout.md'
+      - 'docs/goals/bugdrop-board-final-conveyor-closeout/goal.md'
+      - 'docs/goals/bugdrop-board-final-conveyor-closeout/state.yaml'
+      - 'docs/goals/bugdrop-board-final-conveyor-closeout/notes/.gitkeep'
+    verify:
+      - 'npx prettier --check docs/release-readiness-results/2026-06-05-final-conveyor-closeout.md docs/goals/bugdrop-board-final-conveyor-closeout/goal.md docs/goals/bugdrop-board-final-conveyor-closeout/state.yaml'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-final-conveyor-closeout/state.yaml'
+      - 'git diff --check'
+      - 'npm run format:check'
+    stop_if:
+      - 'Need publish, deploy, credentials, runtime code, or destructive dogfood cleanup.'
+    receipt:
+      result: done
+      task_id: T002
+      changed_files:
+        - 'docs/release-readiness-results/2026-06-05-final-conveyor-closeout.md'
+        - 'docs/goals/bugdrop-board-final-conveyor-closeout/goal.md'
+        - 'docs/goals/bugdrop-board-final-conveyor-closeout/state.yaml'
+        - 'docs/goals/bugdrop-board-final-conveyor-closeout/notes/.gitkeep'
+      summary: 'Recorded final autonomous conveyor state and next optional human decisions.'
+      commands:
+        - command: 'git status --short --branch && gh pr list --state open --json number,title,url,headRefName && gh issue list --state open --limit 20 --json number,title,url,state && gh run list --limit 10 --json databaseId,workflowName,displayTitle,headBranch,status,conclusion,url,createdAt'
+          status: pass
+          evidence: 'main was clean/synced, open PRs/issues were empty, and latest relevant CI runs were successful except the explained historical Install Smoke failure.'
+        - command: 'npm view @mean-weasel/bugdrop-board version dist-tags --json'
+          status: pass
+          evidence: 'npm latest remains 0.1.2.'
+        - command: 'gh issue list --repo mean-weasel/bugdrop-board-production-dogfood --state open --limit 10 --json number,title,url,state'
+          status: pass
+          evidence: 'Dogfood repo open issues are expected mirrored dogfood item artifacts #1 through #5.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether the remaining conveyor is complete.'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'Final closeout receipt exists and records no open board repo PRs/issues, npm 0.1.2 latest, green latest CI, green Install Smoke, merged dogfood regression, and expected dogfood artifact issues.'
+        - 'No publish, deploy, credential, runtime code, or destructive cleanup occurred in this closeout.'
+
+checks:
+  dirty_fingerprint: 'docs/release-readiness-results/2026-06-05-final-conveyor-closeout.md docs/goals/bugdrop-board-final-conveyor-closeout/goal.md docs/goals/bugdrop-board-final-conveyor-closeout/state.yaml'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'git status --short --branch'
+      - 'gh pr list --state open --json number,title,url,headRefName'
+      - 'gh issue list --state open --limit 20 --json number,title,url,state'
+      - 'gh run list --limit 10 --json databaseId,workflowName,displayTitle,headBranch,status,conclusion,url,createdAt'
+      - 'npm view @mean-weasel/bugdrop-board version dist-tags --json'
+      - 'gh issue list --repo mean-weasel/bugdrop-board-production-dogfood --state open --limit 10 --json number,title,url,state'
+      - 'npx prettier --check docs/release-readiness-results/2026-06-05-final-conveyor-closeout.md docs/goals/bugdrop-board-final-conveyor-closeout/goal.md docs/goals/bugdrop-board-final-conveyor-closeout/state.yaml'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-final-conveyor-closeout/state.yaml'
+      - 'git diff --check'
+      - 'npm run format:check'
+      - 'scope scan found only explicit non-goal/prohibition language'
