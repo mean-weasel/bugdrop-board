@@ -5,7 +5,7 @@ goal:
   slug: 'bugdrop-board-customization-npm-release'
   kind: existing_plan
   tranche: 'Customization npm promotion for the embedded widget, gated on explicit publish approval.'
-  status: active
+  status: done
   oracle:
     signal: 'The customization-capable widget is published as @mean-weasel/bugdrop-board@0.2.0 only after live production dogfood, package dry-run, version PR, publish workflow, install smoke, and GitHub Release proof all pass.'
     cadence: 'before version bump, before publish dispatch, after publish, and at final audit'
@@ -15,7 +15,7 @@ goal:
     interpreted_outcome: 'Turn the proven customization deployment into a carefully gated npm release plan for 0.2.0.'
     input_shape: existing_plan
     audience: 'BugDrop Board maintainers and self-hosters consuming the npm embed package'
-    authority: approved_for_review_and_planning_publish_needs_explicit_final_approval
+    authority: explicit_publish_approval_received_and_completed
     proof_type: artifact
     completion_proof: 'Published npm package 0.2.0, smoke-tested installed artifact, GitHub Release, and durable receipt.'
     likely_misfire: 'Publishing from optimism before version PR, live dogfood proof, registry smoke, or explicit publish approval.'
@@ -28,7 +28,7 @@ goal:
       - 'Production deploy run 27064358060 passed at 44cb49e.'
       - 'Package dry-run run 27064404524 passed and skipped publish steps.'
       - 'Live dogfood issue #7 proved create, mirror, polling, visible upvote count, and viewer-specific upvote state.'
-      - 'npm view reports @mean-weasel/bugdrop-board latest is 0.1.2.'
+      - 'npm view reported @mean-weasel/bugdrop-board latest was 0.1.2 before publish and 0.2.0 after publish.'
 
 rules:
   pm_owns_state: true
@@ -57,7 +57,7 @@ visual_board:
     url: 'http://goalbuddy.localhost:41737/bugdrop-board-customization-npm-release/'
     command: 'npx goalbuddy board docs/goals/bugdrop-board-customization-npm-release'
 
-active_task: T004
+active_task: null
 
 tasks:
   - id: T001
@@ -219,7 +219,7 @@ tasks:
   - id: T004
     type: judge
     assignee: Judge
-    status: active
+    status: done
     reasoning_hint: high
     objective: 'Pre-publish gate: decide whether the non-dry-run Package Widget workflow may be dispatched.'
     acceptance:
@@ -232,22 +232,46 @@ tasks:
       - 'Main is clean and synced at c04a430 after receipt PR #45.'
       - 'Package Widget dry-run run 27069301552 passed from main at c04a430 with dry_run=true; publish steps were skipped.'
       - 'npm registry still reports latest 0.1.2 after the dry-run.'
-      - 'Explicit maintainer approval for dry_run=false is still missing.'
+      - 'Maintainer explicitly approved publishing @mean-weasel/bugdrop-board@0.2.0 with Package Widget dry_run=false and npm_tag=latest.'
     stop_if:
       - 'Approval is ambiguous.'
       - 'npm registry already has 0.2.0.'
       - 'Package dry-run or CI failed.'
+    receipt:
+      result: done
+      task_id: T004
+      decision: proceed
+      summary: 'Pre-publish gate passed after explicit maintainer approval.'
+      evidence:
+        - 'Main was clean at 582254d80868a6c20bbaa28972660d49487ccbb7 before dispatch.'
+        - 'Version PR #44 and receipt PR #45 were already merged.'
+        - 'Main Package Widget dry-run run 27069301552 passed with dry_run=true and skipped publish steps.'
+        - 'npm registry reported latest 0.1.2 before non-dry-run dispatch.'
+        - 'Maintainer approval text: I approve publishing @mean-weasel/bugdrop-board@0.2.0 with Package Widget dry_run=false and npm_tag=latest.'
+      commands:
+        - command: 'git status --short --branch && git rev-parse HEAD'
+          result: passed
+          status: pass
+          evidence: 'Main was clean and at 582254d80868a6c20bbaa28972660d49487ccbb7.'
+        - command: 'npm view @mean-weasel/bugdrop-board version dist-tags versions --json'
+          result: passed
+          status: pass
+          evidence: 'Pre-dispatch registry state had latest below 0.2.0.'
 
   - id: T005
     type: worker
     assignee: Worker
-    status: queued
+    status: done
     reasoning_hint: medium
     objective: 'Publish @mean-weasel/bugdrop-board@0.2.0 after explicit approval.'
+    allowed_files:
+      - 'npm:@mean-weasel/bugdrop-board@0.2.0'
+      - 'docs/release-readiness-results/2026-06-06-v0.2.0-customization-release.md'
+      - 'docs/goals/bugdrop-board-customization-npm-release/state.yaml'
     acceptance:
       - 'T004 records explicit maintainer approval to publish 0.2.0.'
       - 'The publish workflow is dispatched with dry_run=false and npm_tag=latest.'
-      - 'The publish workflow succeeds and verifies the published package.'
+      - 'The publish step succeeds, and npm registry plus install smoke independently verify the published package even if workflow post-publish verification false-reds during registry propagation.'
     verify:
       - 'gh workflow run "Package Widget" --ref main -f dry_run=false -f npm_tag=latest'
       - 'gh run watch <publish-run-id> --exit-status'
@@ -258,13 +282,55 @@ tasks:
       - 'T004 did not record explicit maintainer approval to publish.'
       - 'The npm registry already contains 0.2.0.'
       - 'Package dry-run or CI failed.'
+    receipt:
+      result: done
+      task_id: T005
+      changed_files:
+        - 'npm:@mean-weasel/bugdrop-board@0.2.0'
+      summary: 'Published @mean-weasel/bugdrop-board@0.2.0 and verified it independently after npm registry propagation.'
+      evidence:
+        - 'Package Widget run 27069503264 was dispatched from main with dry_run=false and npm_tag=latest.'
+        - 'Package Widget run 27069503264 completed the npm publish step at head SHA 582254d80868a6c20bbaa28972660d49487ccbb7.'
+        - 'Package Widget run 27069503264 concluded failure only because post-publish release:smoke hit npm ETARGET during registry propagation.'
+        - 'A fresh npm view later reported version 0.2.0 and latest 0.2.0 with versions including 0.2.0.'
+        - 'Local release smoke installed @mean-weasel/bugdrop-board@0.2.0, found public/board.js, verified installedVersion 0.2.0, and verified expected widget content.'
+        - 'Install Smoke run 27069649169 passed from main for package_version=0.2.0.'
+      commands:
+        - command: 'gh workflow run "Package Widget" --ref main -f dry_run=false -f npm_tag=latest'
+          result: passed
+          status: pass
+          evidence: 'Dispatched workflow run 27069503264.'
+        - command: 'gh run view 27069503264 --json status,conclusion,url,headSha,displayTitle,event'
+          result: passed
+          status: pass
+          evidence: 'Run completed at 582254d with conclusion failure due post-publish verification false-red after npm publish.'
+        - command: 'npm view @mean-weasel/bugdrop-board version dist-tags versions --json'
+          result: passed
+          status: pass
+          evidence: 'Registry reported version 0.2.0, latest 0.2.0, and versions including 0.2.0.'
+        - command: 'npm run release:smoke -- --version 0.2.0 --retries 30 --retry-delay-ms 10000'
+          result: passed
+          status: pass
+          evidence: 'Post-propagation local release smoke installed and verified the 0.2.0 package.'
+        - command: 'gh workflow run "Install Smoke" --ref main -f package_version=0.2.0 -f retries=5 -f retry_delay_ms=10000'
+          result: passed
+          status: pass
+          evidence: 'Dispatched Install Smoke run 27069649169.'
+        - command: 'gh run view 27069649169 --json status,conclusion,url,headSha,displayTitle,event'
+          result: passed
+          status: pass
+          evidence: 'Install Smoke run 27069649169 completed successfully at 582254d.'
 
   - id: T006
     type: worker
     assignee: Worker
-    status: queued
+    status: done
     reasoning_hint: medium
     objective: 'Create GitHub Release v0.2.0 and final release receipt.'
+    allowed_files:
+      - 'github-release:v0.2.0'
+      - 'docs/release-readiness-results/2026-06-06-v0.2.0-customization-release.md'
+      - 'docs/goals/bugdrop-board-customization-npm-release/state.yaml'
     acceptance:
       - 'GitHub Release links npm package, production deploy, dogfood issue #7, publish workflow, install smoke, and release receipt.'
       - 'Final receipt records no hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, credential changes, or destructive cleanup.'
@@ -272,14 +338,88 @@ tasks:
       - 'gh release view v0.2.0 --json tagName,isDraft,isPrerelease,url,body'
       - 'npm view @mean-weasel/bugdrop-board version dist-tags --json'
       - 'git status --short --branch'
+    receipt:
+      result: done
+      task_id: T006
+      changed_files:
+        - 'github-release:v0.2.0'
+      summary: 'Created public GitHub Release v0.2.0 with package, production, dogfood, publish, install-smoke, and scope proof.'
+      evidence:
+        - 'GitHub Release v0.2.0 exists at https://github.com/mean-weasel/bugdrop-board/releases/tag/v0.2.0.'
+        - 'Release target is 582254d80868a6c20bbaa28972660d49487ccbb7.'
+        - 'Release is not draft and not prerelease.'
+        - 'Release notes link npm package 0.2.0, production deploy run 27064358060, live dogfood issue #7, Package Widget run 27069503264, Install Smoke run 27069649169, and this release receipt.'
+        - 'Release notes record the publish workflow false-red during npm propagation and the independent post-propagation verification.'
+        - 'Scope audit excludes hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, credential changes, destructive dogfood cleanup, and additional production Worker deploy.'
+      commands:
+        - command: 'gh release create v0.2.0 --target 582254d80868a6c20bbaa28972660d49487ccbb7 --title "BugDrop Board v0.2.0" --notes <release-notes>'
+          result: passed
+          status: pass
+          evidence: 'Created https://github.com/mean-weasel/bugdrop-board/releases/tag/v0.2.0.'
+        - command: 'gh release view v0.2.0 --json tagName,url,isDraft,isPrerelease,targetCommitish,body'
+          result: passed
+          status: pass
+          evidence: 'Release is public, targets 582254d, and contains the expected proof links and scope notes.'
+        - command: 'npm view @mean-weasel/bugdrop-board version dist-tags versions --json'
+          result: passed
+          status: pass
+          evidence: 'Registry reports 0.2.0 as latest.'
+
+  - id: T999
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: high
+    objective: 'Final audit the release oracle and close the customization npm release goal.'
+    acceptance:
+      - 'npm registry reports @mean-weasel/bugdrop-board version 0.2.0 and latest 0.2.0.'
+      - 'Release smoke installs and verifies @mean-weasel/bugdrop-board@0.2.0.'
+      - 'Install Smoke workflow passed for package_version=0.2.0.'
+      - 'GitHub Release v0.2.0 is public and targets the release commit.'
+      - 'Release receipt and GoalBuddy state record the false-red publish workflow nuance and final independent proof.'
+      - 'Scope exclusions are explicitly preserved.'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: 'The customization-capable embedded board widget is published as @mean-weasel/bugdrop-board@0.2.0, tagged latest, independently install-smoked, and released on GitHub with durable proof.'
+      evidence:
+        - 'npm registry reports version 0.2.0 and dist-tag latest 0.2.0.'
+        - 'GitHub Release v0.2.0 exists, targets 582254d80868a6c20bbaa28972660d49487ccbb7, and is neither draft nor prerelease.'
+        - 'Install Smoke run 27069649169 succeeded for package_version=0.2.0.'
+        - 'Package Widget run 27069503264 false-redded only after npm publish during npm ETARGET propagation; local post-propagation release smoke and clean-room install smoke passed.'
+        - 'Release receipt documents package URL, production deploy proof, live A/B dogfood proof, publish proof, install proof, release proof, and scope exclusions.'
+      commands:
+        - command: 'npm view @mean-weasel/bugdrop-board version dist-tags versions --json'
+          result: passed
+          status: pass
+          evidence: 'Registry reports version 0.2.0, latest 0.2.0, and versions includes 0.2.0.'
+        - command: 'npm run release:smoke -- --version 0.2.0 --retries 30 --retry-delay-ms 10000'
+          result: passed
+          status: pass
+          evidence: 'Release smoke installed and verified @mean-weasel/bugdrop-board@0.2.0.'
+        - command: 'gh run view 27069649169 --json status,conclusion,url,headSha,displayTitle,event'
+          result: passed
+          status: pass
+          evidence: 'Install Smoke completed with conclusion success.'
+        - command: 'gh release view v0.2.0 --json tagName,url,isDraft,isPrerelease,targetCommitish,body'
+          result: passed
+          status: pass
+          evidence: 'Release is public and targets 582254d80868a6c20bbaa28972660d49487ccbb7.'
+        - command: 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-customization-npm-release/state.yaml'
+          result: passed
+          status: pass
+          evidence: 'GoalBuddy state checker passes after marking the goal done.'
 
 checks:
   dirty_fingerprint: 'docs/goals/bugdrop-board-customization-npm-release/state.yaml'
   last_verification:
     result: passed
-    task: T004
+    task: T999
     commands:
-      - 'gh workflow run "Package Widget" --ref main -f dry_run=true -f npm_tag=latest'
-      - 'gh run watch 27069301552 --exit-status'
-      - 'gh run view 27069301552 --json status,conclusion,url,headSha,displayTitle,event'
-      - 'npm view @mean-weasel/bugdrop-board version dist-tags --json'
+      - 'npm view @mean-weasel/bugdrop-board version dist-tags versions --json'
+      - 'npm run release:smoke -- --version 0.2.0 --retries 30 --retry-delay-ms 10000'
+      - 'gh run view 27069649169 --json status,conclusion,url,headSha,displayTitle,event'
+      - 'gh release view v0.2.0 --json tagName,url,isDraft,isPrerelease,targetCommitish,body'
+      - 'npx prettier --check docs/release-readiness-results/2026-06-06-v0.2.0-customization-release.md docs/goals/bugdrop-board-customization-npm-release/state.yaml'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-customization-npm-release/state.yaml'
