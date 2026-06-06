@@ -1,0 +1,175 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Customization npm Release'
+  slug: 'bugdrop-board-customization-npm-release'
+  kind: existing_plan
+  tranche: 'Customization npm promotion for the embedded widget, gated on explicit publish approval.'
+  status: active
+  oracle:
+    signal: 'The customization-capable widget is published as @mean-weasel/bugdrop-board@0.2.0 only after live production dogfood, package dry-run, version PR, publish workflow, install smoke, and GitHub Release proof all pass.'
+    cadence: 'before version bump, before publish dispatch, after publish, and at final audit'
+    final_proof: 'Release receipt links production deploy run, live A/B dogfood issue, package publish run, npm registry metadata, release/install smoke runs, GitHub Release v0.2.0, and scope audit.'
+  intake:
+    original_request: 'Review the live board and then proceed toward the release decision.'
+    interpreted_outcome: 'Turn the proven customization deployment into a carefully gated npm release plan for 0.2.0.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers and self-hosters consuming the npm embed package'
+    authority: approved_for_review_and_planning_publish_needs_explicit_final_approval
+    proof_type: artifact
+    completion_proof: 'Published npm package 0.2.0, smoke-tested installed artifact, GitHub Release, and durable receipt.'
+    likely_misfire: 'Publishing from optimism before version PR, live dogfood proof, registry smoke, or explicit publish approval.'
+    blind_spots_considered:
+      - 'The production Worker already has customization support, but npm latest is still 0.1.2.'
+      - 'Customization expands the public widget contract, so 0.2.0 is clearer than 0.1.3.'
+      - 'The first live A/B script accidentally used unsupported viewer aliases; rerun with exact viewer=a and viewer=b passed.'
+      - 'Publishing must remain explicitly gated even though package dry-run passed.'
+    existing_plan_facts:
+      - 'Production deploy run 27064358060 passed at 44cb49e.'
+      - 'Package dry-run run 27064404524 passed and skipped publish steps.'
+      - 'Live dogfood issue #7 proved create, mirror, polling, visible upvote count, and viewer-specific upvote state.'
+      - 'npm view reports @mean-weasel/bugdrop-board latest is 0.1.2.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  explicit_publish_approval_required: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-customization-npm-release/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-customization-npm-release'
+
+active_task: T001
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: active
+    reasoning_hint: medium
+    objective: 'Reconfirm release baseline before any version bump.'
+    acceptance:
+      - 'git status is clean on a branch created for the release prep or version PR.'
+      - 'npm registry still reports latest lower than 0.2.0.'
+      - 'Production Worker health and board.js customization hook are present.'
+      - 'Live dogfood proof issue #7 remains visible in the production dogfood repo.'
+      - 'No open PR or failed latest workflow blocks the release.'
+    verify:
+      - 'git status --short --branch'
+      - 'npm view @mean-weasel/bugdrop-board version dist-tags --json'
+      - 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production --cors-origin https://bugdrop.dev --cors-board-id board_mean_weasel_bugdrop_board_production_dogfood --cors-token-endpoint "https://bugdrop.dev/api/bugdrop-board-token?viewer=a"'
+      - 'gh issue view 7 --repo mean-weasel/bugdrop-board-production-dogfood --json number,title,state,url'
+      - 'gh pr list --state open --json number,title,headRefName,isDraft,mergeStateStatus,url'
+      - 'gh run list --branch main --limit 8 --json databaseId,workflowName,status,conclusion,url,headSha'
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: 'Authorize the version/documentation PR scope.'
+    acceptance:
+      - 'Version is approved as 0.2.0 because customization is a public embed contract expansion.'
+      - 'Allowed files are limited to package metadata, release docs/receipts, and GoalBuddy state.'
+      - 'Publish remains blocked until after the version PR merges and the maintainer explicitly approves the non-dry-run workflow.'
+    stop_if:
+      - 'Maintainer chooses a version other than 0.2.0.'
+      - 'Baseline proof shows production or package workflow drift.'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: medium
+    objective: 'Prepare and merge the 0.2.0 version PR without publishing.'
+    allowed_files:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'README.md'
+      - 'docs/release-readiness-results/2026-06-06-v0.2.0-customization-release.md'
+      - 'docs/goals/bugdrop-board-customization-npm-release/goal.md'
+      - 'docs/goals/bugdrop-board-customization-npm-release/state.yaml'
+    verify:
+      - 'npm run pack:check'
+      - 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production --cors-origin https://bugdrop.dev --cors-board-id board_mean_weasel_bugdrop_board_production_dogfood --cors-token-endpoint "https://bugdrop.dev/api/bugdrop-board-token?viewer=a"'
+      - 'npm run validate'
+      - 'make check'
+      - 'gh pr create/open, monitor CI, and merge only when green'
+    stop_if:
+      - 'Any publish, tag, deploy, credential change, or new product behavior is required.'
+
+  - id: T004
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: 'Pre-publish gate: decide whether the non-dry-run Package Widget workflow may be dispatched.'
+    acceptance:
+      - 'Version PR is merged to main.'
+      - 'main is clean and synced locally.'
+      - 'Package dry-run passed from main for package version 0.2.0.'
+      - 'Maintainer has explicitly approved publishing 0.2.0.'
+    stop_if:
+      - 'Approval is ambiguous.'
+      - 'npm registry already has 0.2.0.'
+      - 'Package dry-run or CI failed.'
+
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: medium
+    objective: 'Publish @mean-weasel/bugdrop-board@0.2.0 after explicit approval.'
+    acceptance:
+      - 'T004 records explicit maintainer approval to publish 0.2.0.'
+      - 'The publish workflow is dispatched with dry_run=false and npm_tag=latest.'
+      - 'The publish workflow succeeds and verifies the published package.'
+    verify:
+      - 'gh workflow run "Package Widget" --ref main -f dry_run=false -f npm_tag=latest'
+      - 'gh run watch <publish-run-id> --exit-status'
+      - 'npm view @mean-weasel/bugdrop-board version dist-tags --json'
+      - 'npm run release:smoke -- --version 0.2.0 --retries 30 --retry-delay-ms 10000'
+      - 'gh workflow run "Install Smoke" --ref main -f package_version=0.2.0 -f retries=5 -f retry_delay_ms=10000'
+    stop_if:
+      - 'T004 did not record explicit maintainer approval to publish.'
+      - 'The npm registry already contains 0.2.0.'
+      - 'Package dry-run or CI failed.'
+
+  - id: T006
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: medium
+    objective: 'Create GitHub Release v0.2.0 and final release receipt.'
+    acceptance:
+      - 'GitHub Release links npm package, production deploy, dogfood issue #7, publish workflow, install smoke, and release receipt.'
+      - 'Final receipt records no hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, credential changes, or destructive cleanup.'
+    verify:
+      - 'gh release view v0.2.0 --json tagName,isDraft,isPrerelease,url,body'
+      - 'npm view @mean-weasel/bugdrop-board version dist-tags --json'
+      - 'git status --short --branch'
+
+checks:
+  dirty_fingerprint: ''
+  last_verification:
+    result: pending
+    task: T001
+    commands: []
