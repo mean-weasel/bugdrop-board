@@ -237,27 +237,208 @@ Attributes:
   widget. The widget throws a clear setup error if the selector does not match.
 - `data-poll-interval`: optional polling interval in milliseconds. Values below `500` are ignored.
 - `data-color`: optional accent color for widget controls. Defaults to `#2563eb`.
+- `data-layout`: optional layout mode, `inline` or `panel`. Defaults to `inline`.
+- `data-density`: optional density mode, `compact`, `comfortable`, or `spacious`. Defaults to
+  `comfortable`.
+- `data-config-selector`: optional CSS selector for an `application/json` config element that
+  provides deeper `copy`, `layout`, `density`, and `theme` customization.
 
 The widget runs in an open Shadow DOM root. By default, when the script is in the page body, it
 inserts its generated root immediately after the script tag, which keeps the board near the install
 snippet. If the script is outside body content, it falls back to appending to the body. When
-`data-mount-selector` is provided, the generated root is appended inside that target element. Host
-CSS does not style internals directly, but self-hosters can set a small custom-property surface on
-the generated root:
+`data-mount-selector` is provided, the generated root is appended inside that target element.
+
+Host CSS does not style internals directly. That keeps the embedded board from accidentally
+breaking when it is installed in a user's app. Use the stable customization contract instead:
+
+```html
+<section id="feedback-board"></section>
+<script type="application/json" id="bugdrop-board-config">
+  {
+    "layout": "panel",
+    "density": "compact",
+    "copy": {
+      "heading": "Roadmap queue",
+      "titleLabel": "Request",
+      "titlePlaceholder": "Short operational request",
+      "descriptionLabel": "Business context",
+      "descriptionPlaceholder": "Who needs this and why?",
+      "submitLabel": "Add request",
+      "emptyLabel": "No requests yet.",
+      "upvoteLabel": "Prioritize",
+      "upvotedLabel": "Prioritized"
+    },
+    "theme": {
+      "accent": "#0f766e",
+      "accentSoft": "#ccfbf1",
+      "background": "#ffffff",
+      "border": "#cbd5e1",
+      "buttonRadius": "4px",
+      "fieldRadius": "4px",
+      "fontSize": "13px",
+      "headingSize": "18px",
+      "itemRadius": "4px",
+      "maxWidth": "640px",
+      "muted": "#475569",
+      "radius": "4px",
+      "surfaceAlt": "#f8fafc",
+      "text": "#0f172a"
+    }
+  }
+</script>
+<script
+  src="https://your-worker.example.com/board.js"
+  data-board-id="board_mean_weasel_demo"
+  data-api-url="https://your-worker.example.com"
+  data-token-endpoint="/api/bugdrop-board-token"
+  data-mount-selector="#feedback-board"
+  data-config-selector="#bugdrop-board-config"
+></script>
+```
+
+`data-color` remains the easiest accent path for script-tag installs and maps to
+`theme.accent`. Existing embeds do not need to add `data-config-selector`.
+
+Stable copy keys:
+
+- `heading`
+- `titleLabel`
+- `titlePlaceholder`
+- `descriptionLabel`
+- `descriptionPlaceholder`
+- `submitLabel`
+- `submittingLabel`
+- `loadingLabel`
+- `emptyLabel`
+- `errorTitle`
+- `retryLabel`
+- `issuePrefix`
+- `upvoteLabel`
+- `upvotedLabel`
+
+Stable theme keys:
 
 ```css
 [data-bugdrop-board-root] {
   --bugdrop-board-accent: #1f883d;
+  --bugdrop-board-accent-text: #ffffff;
+  --bugdrop-board-accent-soft: #e6f4ea;
+  --bugdrop-board-background: transparent;
   --bugdrop-board-surface: #ffffff;
+  --bugdrop-board-surface-alt: #f6f8fa;
   --bugdrop-board-text: #172026;
   --bugdrop-board-muted: #57606a;
   --bugdrop-board-border: #d0d7de;
   --bugdrop-board-danger: #b42318;
+  --bugdrop-board-focus: #0969da;
+  --bugdrop-board-font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  --bugdrop-board-font-size: 14px;
+  --bugdrop-board-heading-size: 20px;
+  --bugdrop-board-line-height: 1.4;
+  --bugdrop-board-max-width: 760px;
+  --bugdrop-board-radius: 8px;
+  --bugdrop-board-item-radius: 8px;
+  --bugdrop-board-field-radius: 6px;
+  --bugdrop-board-button-radius: 6px;
+  --bugdrop-board-border-width: 1px;
+  --bugdrop-board-gap: 10px;
+  --bugdrop-board-padding: 0;
+  --bugdrop-board-item-padding: 12px;
+  --bugdrop-board-field-padding: 8px 10px;
+  --bugdrop-board-button-padding: 8px 10px;
+  --bugdrop-board-shadow: none;
+  --bugdrop-board-item-shadow: none;
+  --bugdrop-board-button-background: #1f883d;
+  --bugdrop-board-button-text: #ffffff;
+  --bugdrop-board-button-border: transparent;
+  --bugdrop-board-upvote-background: #1f883d;
+  --bugdrop-board-upvote-text: #ffffff;
+  --bugdrop-board-upvote-border: transparent;
+  --bugdrop-board-field-background: #ffffff;
+  --bugdrop-board-field-text: #172026;
 }
 ```
 
-`data-color` remains the easiest accent path for script-tag installs. CSS custom properties are for
-hosts that need the board to match an existing app theme without piercing the Shadow DOM.
+The JSON `theme` object uses the camelCase names above without the `--bugdrop-board-` prefix. For
+example, `buttonRadius` maps to `--bugdrop-board-button-radius`. Values are only applied for known
+keys and are ignored if they contain stylesheet-breaking characters such as `{`, `}`, `<`, `>`, or
+`;`.
+
+### Customization Examples
+
+Compact SaaS:
+
+```json
+{
+  "layout": "panel",
+  "density": "compact",
+  "copy": {
+    "heading": "Roadmap queue",
+    "submitLabel": "Add request",
+    "upvoteLabel": "Prioritize",
+    "upvotedLabel": "Prioritized"
+  },
+  "theme": {
+    "accent": "#0f766e",
+    "border": "#cbd5e1",
+    "radius": "4px",
+    "itemRadius": "4px",
+    "maxWidth": "640px"
+  }
+}
+```
+
+Soft community:
+
+```json
+{
+  "layout": "panel",
+  "density": "comfortable",
+  "copy": {
+    "heading": "Community ideas",
+    "submitLabel": "Share idea",
+    "issuePrefix": "Tracked as #",
+    "upvoteLabel": "Cheer",
+    "upvotedLabel": "Cheered"
+  },
+  "theme": {
+    "accent": "#9f1239",
+    "accentSoft": "#ffe4e6",
+    "background": "#fffaf5",
+    "fontFamily": "Georgia, serif",
+    "itemRadius": "16px",
+    "shadow": "0 18px 50px rgba(79, 46, 19, 0.12)"
+  }
+}
+```
+
+High contrast:
+
+```json
+{
+  "layout": "panel",
+  "density": "spacious",
+  "copy": {
+    "heading": "Accessibility requests",
+    "submitLabel": "Submit access request",
+    "retryLabel": "Try loading again",
+    "upvoteLabel": "Support",
+    "upvotedLabel": "Supported"
+  },
+  "theme": {
+    "accent": "#ffd400",
+    "accentText": "#000000",
+    "background": "#000000",
+    "border": "#ffffff",
+    "borderWidth": "2px",
+    "fieldBackground": "#000000",
+    "fieldText": "#ffffff",
+    "focus": "#00ffff",
+    "surface": "#000000",
+    "text": "#ffffff"
+  }
+}
+```
 
 ## Host Token Endpoint
 

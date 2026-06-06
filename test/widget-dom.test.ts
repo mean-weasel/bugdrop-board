@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { applyCustomization, DEFAULT_COPY, readCustomization } from '../src/widget/config';
 import { renderBoard } from '../src/widget/dom';
 import { injectTheme } from '../src/widget/theme';
-import type { BoardState } from '../src/widget/types';
+import type { BoardState, BoardWidgetCustomization } from '../src/widget/types';
 
 describe('widget DOM rendering', () => {
   beforeEach(() => {
@@ -71,24 +72,117 @@ describe('widget DOM rendering', () => {
     const host = document.createElement('div');
     const shadow = host.attachShadow({ mode: 'open' });
 
-    injectTheme(shadow, '#1f883d');
+    injectTheme(shadow);
+    applyCustomization(host, customization({ theme: { accent: '#1f883d' } }));
 
     const css = shadow.querySelector('style')?.textContent ?? '';
-    expect(css).toContain('--bugdrop-board-accent: #1f883d');
+    expect(host.style.getPropertyValue('--bugdrop-board-accent')).toBe('#1f883d');
     expect(css).toContain('var(--bugdrop-board-accent)');
     expect(css).toContain('var(--bugdrop-board-surface)');
     expect(css).toContain('var(--bugdrop-board-danger)');
+    expect(css).toContain(':host([data-bugdrop-board-layout="panel"])');
+  });
+
+  it('renders configurable copy while preserving accessible upvote labels', () => {
+    const root = render(
+      state({
+        loading: false,
+        items: [
+          {
+            id: 'item_1',
+            title: 'Export roadmap',
+            description: 'CSV export would help planning.',
+            status: 'open',
+            githubIssueNumber: 42,
+            githubIssueUrl: 'https://github.test/issues/42',
+            upvoteCount: 1,
+            viewerHasUpvoted: false,
+          },
+        ],
+      }),
+      {},
+      {
+        ...DEFAULT_COPY,
+        heading: 'Roadmap requests',
+        titleLabel: 'Request',
+        titlePlaceholder: 'Short request',
+        descriptionLabel: 'Why it matters',
+        descriptionPlaceholder: 'Add context',
+        submitLabel: 'Send request',
+        issuePrefix: 'GH-',
+        upvoteLabel: 'Boost',
+        upvotedLabel: 'Boosted',
+      }
+    );
+
+    expect(root.querySelector('h2')?.textContent).toBe('Roadmap requests');
+    expect(root.querySelector('label')?.textContent).toContain('Request');
+    expect(root.querySelector<HTMLInputElement>('input')?.placeholder).toBe('Short request');
+    expect(root.querySelector<HTMLTextAreaElement>('textarea')?.placeholder).toBe('Add context');
+    expect(root.querySelector('a')?.textContent).toBe('GH-42');
+    expect(root.querySelector<HTMLButtonElement>('.bugdrop-board__upvote')?.textContent).toBe(
+      'Boost 1'
+    );
+    expect(
+      root.querySelector<HTMLButtonElement>('.bugdrop-board__upvote')?.getAttribute('aria-label')
+    ).toBe('Boost Export roadmap. 1 upvote.');
+  });
+
+  it('reads JSON customization from a selected config element with data-color compatibility', () => {
+    const config = readCustomization(
+      {
+        dataset: {
+          color: '#1f883d',
+          configSelector: '#bugdrop-board-config',
+          density: 'compact',
+        },
+      } as unknown as HTMLScriptElement,
+      {
+        querySelector: selector => {
+          expect(selector).toBe('#bugdrop-board-config');
+          const element = new MiniElement('script');
+          element.textContent = JSON.stringify({
+            layout: 'panel',
+            density: 'spacious',
+            copy: { heading: 'Ideas', submitLabel: 'Add idea' },
+            theme: {
+              accent: '#111111',
+              radius: '2px',
+              ignored: 'nope',
+              danger: 'red; color: blue',
+            },
+          });
+          return element as unknown as Element;
+        },
+      }
+    );
+
+    const host = document.createElement('div');
+    applyCustomization(host, config);
+
+    expect(config.copy.heading).toBe('Ideas');
+    expect(config.copy.submitLabel).toBe('Add idea');
+    expect(config.layout).toBe('panel');
+    expect(config.density).toBe('compact');
+    expect(host.style.getPropertyValue('--bugdrop-board-accent')).toBe('#1f883d');
+    expect(host.style.getPropertyValue('--bugdrop-board-radius')).toBe('2px');
+    expect(host.style.getPropertyValue('--bugdrop-board-danger')).toBe('');
   });
 });
 
-function render(overrides: BoardState, handlers = {}) {
+function render(overrides: BoardState, handlers = {}, copy = DEFAULT_COPY) {
   const root = document.createElement('div');
-  renderBoard(root, overrides, {
-    onCreate: vi.fn(),
-    onUpvote: vi.fn(),
-    onRetry: vi.fn(),
-    ...handlers,
-  });
+  renderBoard(
+    root,
+    overrides,
+    {
+      onCreate: vi.fn(),
+      onUpvote: vi.fn(),
+      onRetry: vi.fn(),
+      ...handlers,
+    },
+    copy
+  );
   return root;
 }
 
@@ -97,6 +191,18 @@ function state(overrides: Partial<BoardState> = {}): BoardState {
     items: [],
     cursor: 0,
     loading: false,
+    ...overrides,
+  };
+}
+
+function customization(
+  overrides: Partial<BoardWidgetCustomization> = {}
+): BoardWidgetCustomization {
+  return {
+    copy: DEFAULT_COPY,
+    density: 'comfortable',
+    layout: 'inline',
+    theme: {},
     ...overrides,
   };
 }
@@ -113,9 +219,12 @@ class MiniElement {
   href = '';
   maxLength = 0;
   name = '';
+  placeholder = '';
   rel = '';
   required = false;
   rows = 0;
+  readonly dataset: Record<string, string> = {};
+  readonly style = new MiniStyle();
   target = '';
   type = '';
   private readonly attributes = new Map<string, string>();
@@ -196,5 +305,17 @@ class MiniElement {
       return this.getAttribute(attributeMatch[1]) === attributeMatch[2];
     }
     return this.tagName === selector;
+  }
+}
+
+class MiniStyle {
+  private readonly values = new Map<string, string>();
+
+  setProperty(name: string, value: string) {
+    this.values.set(name, value);
+  }
+
+  getPropertyValue(name: string) {
+    return this.values.get(name) ?? '';
   }
 }

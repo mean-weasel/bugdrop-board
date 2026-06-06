@@ -148,6 +148,8 @@ export async function runInstallSmoke(options) {
     const boardPath = smokeRequire.resolve(`${options.packageName}/board.js`);
     const boardAliasPath = smokeRequire.resolve(`${options.packageName}/board`);
     const board = await readFile(boardPath, 'utf8');
+    const boardSupportsCustomization =
+      board.includes('configSelector') && board.includes('bugdropBoardLayout');
     const npmTree = JSON.parse(run('npm', ['ls', options.packageName, '--json'], tempDir));
     const installedVersion = npmTree.dependencies?.[options.packageName]?.version;
 
@@ -185,11 +187,13 @@ export async function runInstallSmoke(options) {
         slotHasHost: Boolean(slot?.querySelector('[data-bugdrop-board-root]')),
         rootCountInSlot: slot?.querySelectorAll('[data-bugdrop-board-root]').length ?? 0,
         rootCountInBody: document.body.querySelectorAll('[data-bugdrop-board-root]').length,
+        hasCustomHeading: rootText.includes('Clean-room board'),
         hasTitle: rootText.includes('Clean room install proof'),
-        hasUpvote: rootText.includes('Upvote 2'),
-        hasIssueLink: rootText.includes('Issue #12'),
+        hasUpvote: rootText.includes('Vote 2') || rootText.includes('Upvote 2'),
+        hasIssueLink: rootText.includes('Ticket #12') || rootText.includes('Issue #12'),
       };
     });
+    domProof.hasCustomHeading = !boardSupportsCustomization || domProof.hasCustomHeading;
 
     const checks = {
       installedVersion: installedVersion === options.version || options.version === 'latest',
@@ -198,6 +202,7 @@ export async function runInstallSmoke(options) {
       boardPathEndsCorrectly: boardPath.endsWith('/public/board.js'),
       boardHasBundleContent: board.includes('bugdrop-board') && board.includes('fetch('),
       boardHasMountSelectorSupport: board.includes('mountSelector'),
+      customizationConfigCompatible: !boardSupportsCustomization || domProof.hasCustomHeading,
       domProof,
       tokenEndpointRequested: cleanRoom.requests.some(
         req => req.path === DEFAULT_HOST_CONFIG.tokenEndpoint

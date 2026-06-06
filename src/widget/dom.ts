@@ -1,4 +1,5 @@
-import type { BoardItemView, BoardState } from './types';
+import { DEFAULT_COPY } from './config';
+import type { BoardItemView, BoardState, BoardWidgetCopy } from './types';
 
 interface BoardDomHandlers {
   onCreate(input: { title: string; description: string }): void;
@@ -9,7 +10,8 @@ interface BoardDomHandlers {
 export function renderBoard(
   root: HTMLElement,
   state: BoardState,
-  handlers: BoardDomHandlers
+  handlers: BoardDomHandlers,
+  copy: BoardWidgetCopy = DEFAULT_COPY
 ): void {
   root.replaceChildren();
 
@@ -21,10 +23,10 @@ export function renderBoard(
   header.className = 'bugdrop-board__header';
 
   const heading = document.createElement('h2');
-  heading.textContent = 'Feedback';
+  heading.textContent = copy.heading;
   header.append(heading);
 
-  const form = createForm(handlers, Boolean(state.submitting));
+  const form = createForm(handlers, Boolean(state.submitting), copy);
   const list = document.createElement('div');
   list.className = 'bugdrop-board__list';
   list.setAttribute('aria-live', 'polite');
@@ -33,15 +35,15 @@ export function renderBoard(
     const loading = document.createElement('p');
     loading.className = 'bugdrop-board__loading';
     loading.setAttribute('role', 'status');
-    loading.textContent = 'Loading feedback...';
+    loading.textContent = copy.loadingLabel;
     list.append(loading);
   } else if (state.items.length === 0) {
     const empty = document.createElement('p');
     empty.className = 'bugdrop-board__empty';
-    empty.textContent = 'No feedback yet. Share the first idea to help prioritize what comes next.';
+    empty.textContent = copy.emptyLabel;
     list.append(empty);
   } else {
-    state.items.forEach(item => list.append(renderItem(item, handlers)));
+    state.items.forEach(item => list.append(renderItem(item, handlers, copy)));
   }
 
   shell.append(header, form);
@@ -51,14 +53,14 @@ export function renderBoard(
     error.setAttribute('role', 'alert');
     const title = document.createElement('span');
     title.className = 'bugdrop-board__error-title';
-    title.textContent = "We couldn't load feedback.";
+    title.textContent = copy.errorTitle;
     const detail = document.createElement('span');
     detail.className = 'bugdrop-board__error-detail';
     detail.textContent = state.error;
     const retry = document.createElement('button');
     retry.type = 'button';
     retry.className = 'bugdrop-board__retry';
-    retry.textContent = 'Retry';
+    retry.textContent = copy.retryLabel;
     retry.addEventListener('click', () => handlers.onRetry());
     error.append(title, detail, retry);
     shell.append(error);
@@ -67,26 +69,32 @@ export function renderBoard(
   root.append(shell);
 }
 
-function createForm(handlers: BoardDomHandlers, disabled: boolean): HTMLFormElement {
+function createForm(
+  handlers: BoardDomHandlers,
+  disabled: boolean,
+  copy: BoardWidgetCopy
+): HTMLFormElement {
   const form = document.createElement('form');
   form.className = 'bugdrop-board__form';
 
   const titleLabel = document.createElement('label');
   const titleText = document.createElement('span');
-  titleText.textContent = 'Idea title';
+  titleText.textContent = copy.titleLabel;
   const titleInput = document.createElement('input');
   titleInput.name = 'title';
   titleInput.maxLength = 120;
+  titleInput.placeholder = copy.titlePlaceholder;
   titleInput.required = true;
   titleInput.disabled = disabled;
   titleLabel.append(titleText, titleInput);
 
   const descriptionLabel = document.createElement('label');
   const descriptionText = document.createElement('span');
-  descriptionText.textContent = 'Context';
+  descriptionText.textContent = copy.descriptionLabel;
   const descriptionInput = document.createElement('textarea');
   descriptionInput.name = 'description';
   descriptionInput.maxLength = 4000;
+  descriptionInput.placeholder = copy.descriptionPlaceholder;
   descriptionInput.rows = 3;
   descriptionInput.disabled = disabled;
   descriptionLabel.append(descriptionText, descriptionInput);
@@ -94,7 +102,7 @@ function createForm(handlers: BoardDomHandlers, disabled: boolean): HTMLFormElem
   const submit = document.createElement('button');
   submit.type = 'submit';
   submit.disabled = disabled;
-  submit.textContent = disabled ? 'Working...' : 'Submit';
+  submit.textContent = disabled ? copy.submittingLabel : copy.submitLabel;
 
   form.append(titleLabel, descriptionLabel, submit);
   form.addEventListener('submit', event => {
@@ -110,16 +118,22 @@ function createForm(handlers: BoardDomHandlers, disabled: boolean): HTMLFormElem
   return form;
 }
 
-function renderItem(item: BoardItemView, handlers: BoardDomHandlers): HTMLElement {
+function renderItem(
+  item: BoardItemView,
+  handlers: BoardDomHandlers,
+  copy: BoardWidgetCopy
+): HTMLElement {
   const article = document.createElement('article');
   article.className = 'bugdrop-board__item';
 
   const vote = document.createElement('button');
   vote.type = 'button';
   vote.className = 'bugdrop-board__upvote';
-  vote.textContent = `${item.viewerHasUpvoted ? 'Upvoted' : 'Upvote'} ${item.upvoteCount}`;
+  vote.textContent = `${item.viewerHasUpvoted ? copy.upvotedLabel : copy.upvoteLabel} ${
+    item.upvoteCount
+  }`;
   vote.setAttribute('aria-pressed', String(Boolean(item.viewerHasUpvoted)));
-  vote.setAttribute('aria-label', voteLabel(item));
+  vote.setAttribute('aria-label', voteLabel(item, copy));
   vote.addEventListener('click', () => handlers.onUpvote(item.id));
 
   const content = document.createElement('div');
@@ -141,7 +155,7 @@ function renderItem(item: BoardItemView, handlers: BoardDomHandlers): HTMLElemen
     issue.href = item.githubIssueUrl;
     issue.target = '_blank';
     issue.rel = 'noreferrer';
-    issue.textContent = `Issue #${item.githubIssueNumber}`;
+    issue.textContent = `${copy.issuePrefix}${item.githubIssueNumber}`;
     meta.append(issue);
   }
 
@@ -153,10 +167,10 @@ function renderItem(item: BoardItemView, handlers: BoardDomHandlers): HTMLElemen
   return article;
 }
 
-function voteLabel(item: BoardItemView): string {
+function voteLabel(item: BoardItemView, copy: BoardWidgetCopy): string {
   const count = `${item.upvoteCount} ${item.upvoteCount === 1 ? 'upvote' : 'upvotes'}`;
   if (item.viewerHasUpvoted) {
-    return `Remove upvote from ${item.title}. ${count}.`;
+    return `Remove ${copy.upvoteLabel.toLowerCase()} from ${item.title}. ${count}.`;
   }
-  return `Upvote ${item.title}. ${count}.`;
+  return `${copy.upvoteLabel} ${item.title}. ${count}.`;
 }
