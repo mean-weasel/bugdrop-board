@@ -184,7 +184,11 @@ Production readiness checklist:
   before deploy.
 
 For an installer-facing closed-beta sequence, use the
-[Closed Beta Setup Checklist](docs/closed-beta-setup.md).
+[Closed Beta Setup Checklist](docs/closed-beta-setup.md). Before inviting a beta user, walk through
+the [Closed Beta Runbook](docs/closed-beta-runbook.md), complete the
+[Closed Beta Dogfood Script](docs/closed-beta-dogfood-script.md), check
+[Closed Beta Readiness](docs/closed-beta-readiness.md), and share the
+[Closed Beta Risks](docs/closed-beta-risks.md).
 
 ## Embed Contract
 
@@ -942,6 +946,8 @@ Then run the GitHub workflows in dry-run or test mode before production:
 
 For the full staging sequence, use [Staging Dogfood](docs/staging-dogfood.md). For the real
 `bugdrop.dev` embedded-host proof, use [Production Dogfood](docs/production-dogfood.md).
+For closed-beta handoff, use [Closed Beta Runbook](docs/closed-beta-runbook.md) and record proof
+with [Closed Beta Dogfood Script](docs/closed-beta-dogfood-script.md).
 
 Do not publish to npm or deploy to production until the version, npm package ownership, Cloudflare
 account, GitHub token scope, host app origins, and token issuer/audience values are final.
@@ -984,3 +990,11 @@ significant changes, run the GitHub workflows against staging/test credentials w
 or package release paths, dogfood the embedded widget in the real signed-token host app at
 `https://bugdrop.dev` against the board Worker at `https://board.bugdrop.dev`, and keep publish
 approval explicit before any future npm publish.
+
+Closed-beta handoff artifacts:
+
+- [Closed Beta Setup Checklist](docs/closed-beta-setup.md)
+- [Closed Beta Runbook](docs/closed-beta-runbook.md)
+- [Closed Beta Dogfood Script](docs/closed-beta-dogfood-script.md)
+- [Closed Beta Readiness](docs/closed-beta-readiness.md)
+- [Closed Beta Risks](docs/closed-beta-risks.md)

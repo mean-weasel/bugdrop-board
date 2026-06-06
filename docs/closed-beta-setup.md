@@ -127,7 +127,12 @@ Record these before calling the beta install ready:
 - live embedded create/upvote/GitHub mirror proof;
 - known limitations and excluded features communicated to the beta user.
 
-## Out Of Scope For Board 1
+Use [Closed Beta Runbook](closed-beta-runbook.md) for the full operator flow, record the manual proof
+with [Closed Beta Dogfood Script](closed-beta-dogfood-script.md), check
+[Closed Beta Readiness](closed-beta-readiness.md), and share [Closed Beta Risks](closed-beta-risks.md)
+before inviting the beta user.
+
+## Out Of Scope For This Checklist
 
 This checklist does not add or prove hosted control plane, billing, realtime, comments, downvotes,
 GitHub Projects, status workflow, token replay prevention, monitoring, incident response,

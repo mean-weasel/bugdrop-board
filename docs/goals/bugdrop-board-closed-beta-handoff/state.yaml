@@ -1,0 +1,262 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Closed Beta Handoff And Dogfood Readiness'
+  slug: 'bugdrop-board-closed-beta-handoff'
+  kind: existing_plan
+  tranche: 'Closed-beta beta handoff and dogfood readiness only.'
+  status: done
+  oracle:
+    signal: 'Maintainers have closed-beta runbook, manual dogfood script, readiness matrix, and remaining-risk handoff grounded in Boards 1-2 evidence.'
+    cadence: 'after each Worker tranche and final Judge audit'
+    final_proof: 'Docs diff inspection, targeted doc scans, GoalBuddy receipts, Prettier check, standard lightweight verification, and forbidden-scope scan.'
+  intake:
+    original_request: 'Build BugDrop Board Closed Beta Board 3: beta handoff and dogfood readiness only.'
+    interpreted_outcome: 'Prepare the third closed-beta conveyor board to create maintainer-facing handoff docs and dogfood proof surfaces using completed Boards 1-2 foundations.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers and closed-beta self-host operators'
+    authority: requested
+    proof_type: artifact
+    completion_proof: 'Runbook, dogfood script, readiness matrix, and remaining-risk handoff exist, are internally consistent, and avoid excluded product/deploy/credential/ops work.'
+    likely_misfire: 'Turning handoff docs into new product behavior, deploy operations, publishing, credentials, monitoring implementation, or restating Boards 1-2 without producing beta-operating artifacts.'
+    blind_spots_considered:
+      - 'A beta runbook can look complete while lacking concrete dogfood steps or evidence slots.'
+      - 'A readiness matrix can overstate readiness if it does not separate blockers from accepted beta limitations.'
+      - 'Docs can accidentally imply live deploy, npm publish, or credential work is required from this board.'
+      - 'Manual dogfood can skip security spot checks such as CORS negative proof, token TTL, and throttling expectations.'
+      - 'Handoff artifacts can drift from existing release/package/customization/security receipts unless Scout maps evidence first.'
+    hard_constraints:
+      - 'Preserve current product behavior.'
+      - 'No hosted control plane, billing, realtime, comments, downvotes, or GitHub Projects.'
+      - 'No npm publishing, package version bump, Cloudflare deploy, credential changes, secret rotation, or secret file edits.'
+      - 'No ops monitoring, alerting, incident response, backup/export/restore implementation.'
+      - 'Do not redo setup-safety or security-hardening work from Boards 1-2.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: active
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-closed-beta-handoff/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-closed-beta-handoff'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Map existing Boards 1-2 evidence and current release/dogfood docs before writing handoff artifacts.'
+    allowed_files:
+      - 'README.md'
+      - 'docs/closed-beta-setup.md'
+      - 'docs/staging-dogfood.md'
+      - 'docs/production-dogfood.md'
+      - 'docs/production-dogfood-results/'
+      - 'docs/release-readiness-results/'
+      - 'docs/goals/bugdrop-board-closed-beta-setup-safety/'
+      - 'docs/goals/bugdrop-board-closed-beta-security-abuse/'
+      - 'docs/goals/bugdrop-board-closed-beta-handoff/notes/T001-handoff-scout.md'
+      - 'docs/goals/bugdrop-board-closed-beta-handoff/state.yaml'
+    expected_output: 'A compact evidence note listing existing proof sources, missing handoff surfaces, dogfood evidence gaps, readiness dimensions, and a smallest safe docs plan.'
+    verify:
+      - 'git status --short --branch'
+      - 'focused rg scans for closed-beta setup/security/customization/package/deploy/dogfood proof surfaces'
+      - 'focused scan for existing beta runbook/readiness/risk handoff artifacts'
+    stop_if:
+      - 'Scout finds the oracle requires npm publishing, Cloudflare deploys, credential changes, live beta-user activity, monitoring implementation, or product behavior changes.'
+    receipt:
+      result: done
+      summary: 'Mapped existing setup, security, dogfood, package, customization, and deploy proof surfaces; identified missing beta runbook, manual dogfood script, readiness matrix, and risk handoff.'
+      evidence:
+        - '`docs/closed-beta-setup.md` covers setup safety and installer trust.'
+        - '`docs/goals/bugdrop-board-closed-beta-security-abuse/` contains Board 2 security receipts.'
+        - '`docs/production-dogfood.md` and `docs/production-dogfood-results/` contain production dogfood guidance and receipts.'
+        - '`docs/release-readiness-results/2026-06-06-v0.2.0-consumer-install-review.md` records package install proof.'
+        - 'No existing `closed-beta-runbook`, `closed-beta-dogfood-script`, `closed-beta-readiness`, or `closed-beta-risks` docs were present.'
+      note: 'docs/goals/bugdrop-board-closed-beta-handoff/notes/T001-handoff-scout.md'
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Validate the Scout plan and split safe documentation Worker tranches.'
+    expected_output: 'A decision note confirming the plan is inside Board 3 scope and sequencing the docs artifacts.'
+    verify:
+      - 'Scout note exists and cites concrete files or commands.'
+      - 'No Worker task requires excluded deploy, credential, publishing, monitoring, or product work.'
+    receipt:
+      result: done
+      decision: proceed
+      summary: 'Validated the Scout plan and approved the three documentation Worker tranches: runbook/dogfood, readiness/risks, and link/consistency wiring.'
+      evidence:
+        - 'T001 note cites concrete existing docs and missing artifacts.'
+        - 'No approved Worker requires product behavior changes, npm publishing, Cloudflare deploys, credential changes, secret edits, live beta-user activity, or ops monitoring implementation.'
+      note: 'docs/goals/bugdrop-board-closed-beta-handoff/notes/T002-judge.md'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Create the closed-beta runbook and manual dogfood script.'
+    allowed_files:
+      - 'README.md'
+      - 'docs/closed-beta-runbook.md'
+      - 'docs/closed-beta-dogfood-script.md'
+      - 'docs/closed-beta-setup.md'
+      - 'docs/goals/bugdrop-board-closed-beta-handoff/notes/T003-worker.md'
+      - 'docs/goals/bugdrop-board-closed-beta-handoff/state.yaml'
+    acceptance:
+      - 'Runbook explains beta operator flow, prerequisites, evidence capture, support path, rollback-by-operator guidance, and known boundaries.'
+      - 'Dogfood script covers host load, token fetch, item create, GitHub Issue mirror, second-viewer upvote, polling update, CORS/token/security spot checks, and evidence slots.'
+      - 'Docs link to, rather than duplicate, Boards 1-2 setup/security guidance where appropriate.'
+      - 'No live deploy, credential, npm publish, product, or monitoring implementation is introduced.'
+    verify:
+      - 'npx prettier --check README.md docs/closed-beta-runbook.md docs/closed-beta-dogfood-script.md docs/closed-beta-setup.md docs/goals/bugdrop-board-closed-beta-handoff/notes/T003-worker.md docs/goals/bugdrop-board-closed-beta-handoff/state.yaml'
+      - 'focused rg scan for required dogfood flow terms and excluded live-operation terms'
+    receipt:
+      result: done
+      changed_files:
+        - 'docs/closed-beta-runbook.md'
+        - 'docs/closed-beta-dogfood-script.md'
+        - 'docs/goals/bugdrop-board-closed-beta-handoff/notes/T003-worker.md'
+        - 'docs/goals/bugdrop-board-closed-beta-handoff/state.yaml'
+      summary: 'Created the closed-beta runbook and manual dogfood script with evidence slots and security/setup references.'
+      commands:
+        - command: 'rg -n "host page|token fetch|GitHub Issue|upvote|polling|CORS|BOARD_TOKEN_MAX_TTL_SECONDS|throttle|Evidence|Go:|No-go|Conditional go|viewer" docs/closed-beta-runbook.md docs/closed-beta-dogfood-script.md'
+          status: pass
+          evidence: 'Required dogfood flow, security spot-check, and decision terms are present.'
+        - command: 'rg -n "npm publish|package version bump|Cloudflare deploy|credential changes|secret edits|hosted control plane|billing|realtime|comments|downvotes|GitHub Projects|monitoring implementation" docs/closed-beta-runbook.md docs/closed-beta-dogfood-script.md || true'
+          status: pass
+          evidence: 'Matches are explicit limitation/exclusion text, not implementation work.'
+      note: 'docs/goals/bugdrop-board-closed-beta-handoff/notes/T003-worker.md'
+
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Create the readiness matrix and remaining-risk handoff.'
+    allowed_files:
+      - 'README.md'
+      - 'docs/closed-beta-readiness.md'
+      - 'docs/closed-beta-risks.md'
+      - 'docs/closed-beta-runbook.md'
+      - 'docs/goals/bugdrop-board-closed-beta-handoff/notes/T004-worker.md'
+      - 'docs/goals/bugdrop-board-closed-beta-handoff/state.yaml'
+    acceptance:
+      - 'Readiness matrix covers setup safety, security/abuse controls, customization, deploy proof, package proof, dogfood proof, docs proof, and go/no-go criteria.'
+      - 'Risk handoff separates beta blockers, accepted closed-beta limitations, deferred product work, and operator-owned actions.'
+      - 'Each readiness claim points to a concrete evidence source or marks the proof as pending operator action.'
+      - 'No excluded product behavior, deploy, publishing, credential, or ops-monitoring implementation is added.'
+    verify:
+      - 'npx prettier --check README.md docs/closed-beta-readiness.md docs/closed-beta-risks.md docs/closed-beta-runbook.md docs/goals/bugdrop-board-closed-beta-handoff/notes/T004-worker.md docs/goals/bugdrop-board-closed-beta-handoff/state.yaml'
+      - 'focused rg scan for readiness dimensions, blocker/accepted/deferred/operator categories, and evidence references'
+    receipt:
+      result: done
+      changed_files:
+        - 'docs/closed-beta-readiness.md'
+        - 'docs/closed-beta-risks.md'
+        - 'docs/goals/bugdrop-board-closed-beta-handoff/notes/T004-worker.md'
+        - 'docs/goals/bugdrop-board-closed-beta-handoff/state.yaml'
+      summary: 'Created readiness matrix and remaining-risk handoff with evidence references, go/no-go criteria, blockers, accepted limitations, deferred product work, and operator-owned actions.'
+      commands:
+        - command: 'rg -n "Setup safety|Security and abuse controls|Customization|Worker deploy proof|Package proof|dogfood proof|Go Criteria|No-Go Criteria|Beta Blockers|Accepted Closed-Beta Limitations|Deferred Product Work|Operator-Owned Actions|Evidence source|Operator-pending" docs/closed-beta-readiness.md docs/closed-beta-risks.md'
+          status: pass
+          evidence: 'Required readiness dimensions and risk categories are present.'
+        - command: 'rg -n "npm publish|package version bump|Cloudflare deploy|credential change|secret edit|hosted control plane|billing|realtime|comments|downvotes|GitHub Projects|ops monitoring implementation" docs/closed-beta-readiness.md docs/closed-beta-risks.md || true'
+          status: pass
+          evidence: 'Matches are explicit limitation, blocker, or deferred-work text.'
+      note: 'docs/goals/bugdrop-board-closed-beta-handoff/notes/T004-worker.md'
+
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Wire handoff docs into existing README/setup surfaces and add final docs consistency proof.'
+    allowed_files:
+      - 'README.md'
+      - 'docs/closed-beta-setup.md'
+      - 'docs/closed-beta-runbook.md'
+      - 'docs/closed-beta-dogfood-script.md'
+      - 'docs/closed-beta-readiness.md'
+      - 'docs/closed-beta-risks.md'
+      - 'docs/goals/bugdrop-board-closed-beta-handoff/notes/T005-worker.md'
+      - 'docs/goals/bugdrop-board-closed-beta-handoff/state.yaml'
+    acceptance:
+      - 'README and setup docs point maintainers to the closed-beta runbook, dogfood script, readiness matrix, and risk handoff.'
+      - 'Docs remain concise and avoid contradictory beta readiness claims.'
+      - 'Forbidden scope remains explicitly excluded and no implementation files are changed.'
+    verify:
+      - 'npx prettier --check README.md docs/closed-beta-setup.md docs/closed-beta-runbook.md docs/closed-beta-dogfood-script.md docs/closed-beta-readiness.md docs/closed-beta-risks.md docs/goals/bugdrop-board-closed-beta-handoff/notes/T005-worker.md docs/goals/bugdrop-board-closed-beta-handoff/state.yaml'
+      - 'focused docs-link scan proving all handoff artifacts are reachable'
+    receipt:
+      result: done
+      changed_files:
+        - 'README.md'
+        - 'docs/closed-beta-setup.md'
+        - 'docs/goals/bugdrop-board-closed-beta-handoff/notes/T005-worker.md'
+        - 'docs/goals/bugdrop-board-closed-beta-handoff/state.yaml'
+      summary: 'Wired closed-beta handoff artifacts into README and setup docs, making the runbook, dogfood script, readiness matrix, and risk handoff reachable from normal maintainer paths.'
+      commands:
+        - command: 'rg -n "Closed Beta Runbook|Closed Beta Dogfood Script|Closed Beta Readiness|Closed Beta Risks|closed-beta-runbook|closed-beta-dogfood-script|closed-beta-readiness|closed-beta-risks" README.md docs/closed-beta-setup.md docs/closed-beta-runbook.md docs/closed-beta-dogfood-script.md docs/closed-beta-readiness.md docs/closed-beta-risks.md'
+          status: pass
+          evidence: 'All handoff artifacts are linked from README/setup and cross-linked from the handoff docs.'
+      note: 'docs/goals/bugdrop-board-closed-beta-handoff/notes/T005-worker.md'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether Closed Beta Board 3 satisfies the beta handoff and dogfood readiness oracle.'
+    expected_output: 'Final receipt with pass/fail decision, proof commands, file references, and carry-forward gaps for later boards.'
+    verify:
+      - 'npm run format:check'
+      - 'npx prettier --check docs/goals/bugdrop-board-closed-beta-handoff/goal.md docs/goals/bugdrop-board-closed-beta-handoff/state.yaml docs/goals/bugdrop-board-closed-beta-handoff/notes/*.md'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-closed-beta-handoff/state.yaml'
+      - 'focused artifact scan proving runbook, dogfood script, readiness matrix, and risk handoff exist and contain evidence slots'
+      - 'forbidden-scope scan proving no product behavior, npm publish, Cloudflare deploy, credential edit, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or ops monitoring implementation was introduced'
+    receipt:
+      result: done
+      decision: complete
+      summary: 'Closed Beta Board 3 satisfies the beta handoff and dogfood readiness oracle with a runbook, manual dogfood script, readiness matrix, risk handoff, README/setup links, and passing docs gates.'
+      commands:
+        - command: 'npm run format:check'
+          status: pass
+          evidence: 'Repo-wide Prettier check passed.'
+        - command: 'npx prettier --check docs/goals/bugdrop-board-closed-beta-handoff/goal.md docs/goals/bugdrop-board-closed-beta-handoff/state.yaml docs/goals/bugdrop-board-closed-beta-handoff/notes/*.md README.md docs/closed-beta-setup.md docs/closed-beta-runbook.md docs/closed-beta-dogfood-script.md docs/closed-beta-readiness.md docs/closed-beta-risks.md'
+          status: pass
+          evidence: 'Goal files, notes, README, setup checklist, and handoff docs use Prettier style.'
+        - command: 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-closed-beta-handoff/state.yaml'
+          status: pass
+          evidence: 'GoalBuddy state checker passed before final closeout.'
+        - command: 'rg -n "Evidence To Capture|Evidence:|Readiness Matrix|Beta Blockers|Accepted Closed-Beta Limitations|Deferred Product Work|Operator-Owned Actions|Go Criteria|No-Go Criteria|Conditional Go|Closed Beta Handoff|Risk Review" docs/closed-beta-runbook.md docs/closed-beta-dogfood-script.md docs/closed-beta-readiness.md docs/closed-beta-risks.md'
+          status: pass
+          evidence: 'Required artifacts and evidence slots are present.'
+        - command: 'git status --short --branch'
+          status: pass
+          evidence: 'Changed files are documentation and GoalBuddy receipts only.'
+      note: 'docs/goals/bugdrop-board-closed-beta-handoff/notes/T999-judge-final.md'
+
+checks:
+  dirty_fingerprint: null
+  last_verification:
+    result: pass
+    task: T999
+    commands:
+      - 'npm run format:check'
+      - 'npx prettier --check docs/goals/bugdrop-board-closed-beta-handoff/goal.md docs/goals/bugdrop-board-closed-beta-handoff/state.yaml docs/goals/bugdrop-board-closed-beta-handoff/notes/*.md README.md docs/closed-beta-setup.md docs/closed-beta-runbook.md docs/closed-beta-dogfood-script.md docs/closed-beta-readiness.md docs/closed-beta-risks.md'
+      - 'rg -n "Evidence To Capture|Evidence:|Readiness Matrix|Beta Blockers|Accepted Closed-Beta Limitations|Deferred Product Work|Operator-Owned Actions|Go Criteria|No-Go Criteria|Conditional Go|Closed Beta Handoff|Risk Review" docs/closed-beta-runbook.md docs/closed-beta-dogfood-script.md docs/closed-beta-readiness.md docs/closed-beta-risks.md'
