@@ -227,6 +227,12 @@ tasks:
       - 'main is clean and synced locally.'
       - 'Package dry-run passed from main for package version 0.2.0.'
       - 'Maintainer has explicitly approved publishing 0.2.0.'
+    progress:
+      - 'Version PR #44 merged to main at 4e6ab6c.'
+      - 'Main is clean and synced at c04a430 after receipt PR #45.'
+      - 'Package Widget dry-run run 27069301552 passed from main at c04a430 with dry_run=true; publish steps were skipped.'
+      - 'npm registry still reports latest 0.1.2 after the dry-run.'
+      - 'Explicit maintainer approval for dry_run=false is still missing.'
     stop_if:
       - 'Approval is ambiguous.'
       - 'npm registry already has 0.2.0.'
@@ -271,11 +277,9 @@ checks:
   dirty_fingerprint: 'docs/goals/bugdrop-board-customization-npm-release/state.yaml'
   last_verification:
     result: passed
-    task: T003
+    task: T004
     commands:
-      - 'npm run pack:check'
-      - 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production --cors-origin https://bugdrop.dev --cors-board-id board_mean_weasel_bugdrop_board_production_dogfood --cors-token-endpoint "https://bugdrop.dev/api/bugdrop-board-token?viewer=a"'
-      - 'npm run validate'
-      - 'make check'
-      - 'gh pr checks 44 --watch --fail-fast'
+      - 'gh workflow run "Package Widget" --ref main -f dry_run=true -f npm_tag=latest'
+      - 'gh run watch 27069301552 --exit-status'
+      - 'gh run view 27069301552 --json status,conclusion,url,headSha,displayTitle,event'
       - 'npm view @mean-weasel/bugdrop-board version dist-tags --json'
