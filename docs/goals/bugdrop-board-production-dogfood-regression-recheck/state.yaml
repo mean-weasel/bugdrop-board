@@ -1,0 +1,135 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Production Dogfood Regression Recheck'
+  slug: 'bugdrop-board-production-dogfood-regression-recheck'
+  kind: audit
+  tranche: 'Post-v0.1.2 release-readiness conveyor board 3: live dogfood regression recheck.'
+  status: done
+  oracle:
+    signal: 'The real bugdrop.dev embedded host and board.bugdrop.dev Worker still pass create, GitHub mirror, polling, upvote, refresh, API, and event proof.'
+    cadence: 'after production smoke, browser dogfood, GitHub/API corroboration, and final audit'
+    final_proof: 'docs/production-dogfood-results/2026-06-05-regression-recheck.md with browser/API/GitHub evidence and scope audit.'
+  intake:
+    original_request: 'ok whats next - can we run the remaining conveyor autonomously?'
+    interpreted_outcome: 'Execute the remaining safe conveyor board by rechecking the live production dogfood path autonomously.'
+    input_shape: specific
+    audience: 'BugDrop Board maintainers deciding whether release-readiness work introduced regressions'
+    authority: approved_for_safe_dogfood_write_and_docs_pr_work_no_publish_or_deploy
+    proof_type: demo
+    completion_proof: 'A dated receipt proves a live two-viewer dogfood item, GitHub mirror, upvote, polling, refresh, API/event agreement, and no excluded-scope changes.'
+    likely_misfire: 'Only running non-mutating smoke and missing create/upvote regressions in the embedded host path.'
+    blind_spots_considered:
+      - 'Cloudflare RUM beacon failures can appear in browser request logs but are unrelated to board API correctness.'
+      - 'Previous Chrome dogfood proof exists, so this board should prove current regression status with a unique item rather than duplicate old receipts.'
+      - 'Dogfood writes should be minimal and non-destructive.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-production-dogfood-regression-recheck/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-production-dogfood-regression-recheck'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Confirm existing dogfood proof and current live targets before mutation.'
+    receipt:
+      result: done
+      summary: 'Existing Chrome dogfood audit board is complete, and the current live targets match the production dogfood runbook.'
+      evidence:
+        - 'docs/goals/bugdrop-board-chrome-dogfood-audit/state.yaml is done and records prior two-viewer Chrome proof.'
+        - 'docs/production-dogfood.md fixes host https://bugdrop.dev, Worker https://board.bugdrop.dev, board id board_mean_weasel_bugdrop_board_production_dogfood, and repo mean-weasel/bugdrop-board-production-dogfood.'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Run production dogfood regression proof and record the receipt.'
+    allowed_files:
+      - 'docs/production-dogfood-results/2026-06-05-regression-recheck.md'
+      - 'docs/goals/bugdrop-board-production-dogfood-regression-recheck/goal.md'
+      - 'docs/goals/bugdrop-board-production-dogfood-regression-recheck/state.yaml'
+      - 'docs/goals/bugdrop-board-production-dogfood-regression-recheck/notes/.gitkeep'
+    verify:
+      - 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production --cors-origin https://bugdrop.dev --cors-board-id board_mean_weasel_bugdrop_board_production_dogfood --cors-token-endpoint "https://bugdrop.dev/api/bugdrop-board-token?viewer=a"'
+      - 'two-viewer Playwright dogfood against https://bugdrop.dev/board-dogfood?viewer=a and ?viewer=b'
+      - 'gh issue view 5 --repo mean-weasel/bugdrop-board-production-dogfood --json number,title,state,url,createdAt,body'
+      - 'authenticated API readback for viewers a/b and events since 0'
+      - 'npx prettier --check docs/production-dogfood-results/2026-06-05-regression-recheck.md docs/goals/bugdrop-board-production-dogfood-regression-recheck/goal.md docs/goals/bugdrop-board-production-dogfood-regression-recheck/state.yaml'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-production-dogfood-regression-recheck/state.yaml'
+      - 'git diff --check'
+    stop_if:
+      - 'Need to publish, deploy, rotate secrets, inspect secret values, or clean production dogfood data.'
+      - 'The live host or Worker fails before a unique dogfood item can be safely created.'
+    receipt:
+      result: done
+      task_id: T002
+      changed_files:
+        - 'docs/production-dogfood-results/2026-06-05-regression-recheck.md'
+        - 'docs/goals/bugdrop-board-production-dogfood-regression-recheck/goal.md'
+        - 'docs/goals/bugdrop-board-production-dogfood-regression-recheck/state.yaml'
+        - 'docs/goals/bugdrop-board-production-dogfood-regression-recheck/notes/.gitkeep'
+      summary: 'Production dogfood regression recheck passed with one unique item, GitHub issue #5, one Viewer B upvote, polling visibility, refresh persistence, API readback, and event agreement.'
+      commands:
+        - command: 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production --cors-origin https://bugdrop.dev --cors-board-id board_mean_weasel_bugdrop_board_production_dogfood --cors-token-endpoint "https://bugdrop.dev/api/bugdrop-board-token?viewer=a"'
+          status: pass
+          evidence: 'Health returned production; /board.js returned 200 text/javascript; CORS preflight/items/events returned allow-origin https://bugdrop.dev.'
+        - command: 'two-viewer Playwright dogfood'
+          status: pass
+          evidence: 'Viewer A created Regression dogfood item 20260606T001457Z, Viewer B saw it through polling, Viewer B upvoted it, Viewer A saw Upvote 1, and refresh preserved item/issue/upvote state. Only failed requests were Cloudflare RUM beacons to /cdn-cgi/rum.'
+        - command: 'gh issue view 5 --repo mean-weasel/bugdrop-board-production-dogfood --json number,title,state,url,createdAt,body'
+          status: pass
+          evidence: 'Issue #5 is open with matching title, item id item_5ed09b77053bb5f252410790, and matching body.'
+        - command: 'authenticated API readback for viewers a/b and events since 0'
+          status: pass
+          evidence: 'Viewer A read item with upvoteCount 1 and viewerHasUpvoted false; Viewer B read same item with viewerHasUpvoted true; events include item_created id 9 and upvote_added id 10.'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether production dogfood regression recheck satisfies the oracle.'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      evidence:
+        - 'Production dogfood receipt records Worker smoke, browser proof, GitHub issue, API readback, event proof, RUM-only failed request caveat, and scope audit.'
+        - 'No package publish, version bump, Cloudflare deploy, secret rotation/inspection, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, destructive cleanup, or runtime code change occurred.'
+      next_starter_board: 'bugdrop-board-final-conveyor-closeout'
+
+checks:
+  dirty_fingerprint: 'docs/production-dogfood-results/2026-06-05-regression-recheck.md docs/goals/bugdrop-board-production-dogfood-regression-recheck/goal.md docs/goals/bugdrop-board-production-dogfood-regression-recheck/state.yaml'
+  last_verification:
+    result: passed
+    task: T999
+    commands:
+      - 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production --cors-origin https://bugdrop.dev --cors-board-id board_mean_weasel_bugdrop_board_production_dogfood --cors-token-endpoint "https://bugdrop.dev/api/bugdrop-board-token?viewer=a"'
+      - 'two-viewer Playwright dogfood against https://bugdrop.dev/board-dogfood?viewer=a and ?viewer=b'
+      - 'gh issue view 5 --repo mean-weasel/bugdrop-board-production-dogfood --json number,title,state,url,createdAt,body'
+      - 'authenticated API readback for viewers a/b and events since 0'
+      - 'npx prettier --check docs/production-dogfood-results/2026-06-05-regression-recheck.md docs/goals/bugdrop-board-production-dogfood-regression-recheck/goal.md docs/goals/bugdrop-board-production-dogfood-regression-recheck/state.yaml'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-production-dogfood-regression-recheck/state.yaml'
+      - 'git diff --check'
+      - 'npm run format:check'
+      - 'scope scan found only explicit non-goal/prohibition language'
