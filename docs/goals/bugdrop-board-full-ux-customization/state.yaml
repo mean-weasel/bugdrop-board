@@ -1,0 +1,330 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Full UX Customization'
+  slug: 'bugdrop-board-full-ux-customization'
+  kind: specific
+  tranche: 'Make the embedded widget deeply customizable so it can fit aesthetically inside a user app.'
+  status: done
+  oracle:
+    signal: 'Three materially different host-app presentations render from documented configuration alone while preserving existing board behavior, accessibility, and install compatibility.'
+    cadence: 'after Scout/Judge contract design, after implementation, after visual/manual review proof, and before PR handoff'
+    final_proof: 'A receipt with commands, screenshots or visual artifacts, docs links, and compatibility checks proving compact SaaS, soft/community, and high-contrast accessible variants.'
+  intake:
+    original_request: "yes lets do that - the ux should be completely customizable so it fits in ashtetically with a user's app - make a detailed goalbuddy prep plan"
+    interpreted_outcome: 'Prepare a rigorous GoalBuddy board to design and implement a deep customization contract for the embedded BugDrop Board widget.'
+    input_shape: specific
+    audience: 'Self-hosters embedding BugDrop Board inside their own authenticated app'
+    authority: requested_for_goal_prep_only
+    proof_type: demo
+    completion_proof: 'Automated gates plus visual/manual proof show multiple configurable themes/layouts with preserved create, GitHub mirror, polling, and upvote behavior.'
+    likely_misfire: 'Adding a few more color variables and calling it complete while hosts still cannot make the board feel native without forking or styling private internals.'
+    blind_spots_considered:
+      - 'Full customization can become an unbounded design-system project; this board must define a stable v1 customization contract rather than chase every possible visual override.'
+      - 'Shadow DOM protects embeddability, so customization should flow through deliberate attributes, JSON config, CSS custom properties, or parts rather than brittle host selectors.'
+      - 'Customization can break accessibility if focus, contrast, button state, or status messaging are left to the host without guardrails.'
+      - 'Backward compatibility matters because the widget is already published and dogfooded.'
+      - 'The visual proof must compare meaningfully different host aesthetics, not just three accent colors.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-full-ux-customization/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-full-ux-customization'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Map the current widget customization surface, host embed contract, styles, DOM boundaries, docs, tests, and dogfood harness before proposing changes.'
+    allowed_files:
+      - 'README.md'
+      - 'package.json'
+      - 'public/board.js'
+      - 'src/widget/**'
+      - 'src/routes/**'
+      - 'src/lib/**'
+      - 'test/**'
+      - 'e2e/**'
+      - 'docs/**'
+      - 'wrangler.toml'
+    verify:
+      - 'rg -n "data-color|data-mount-selector|custom propert|Shadow DOM|upvote|aria|poll|token" README.md src/widget test e2e docs'
+      - 'sed -n "1,260p" src/widget/index.ts'
+      - 'sed -n "1,260p" src/widget/dom.ts'
+      - 'sed -n "1,260p" src/widget/theme.ts'
+      - 'sed -n "186,290p" README.md'
+    acceptance:
+      - 'Inventory existing public customization hooks and private implementation details separately.'
+      - 'Identify all visible widget states that must remain customizable: loading, empty, error, list, item, create form, GitHub issue link, upvote, disabled/submitting, and polling refresh.'
+      - 'Identify which tests currently protect accessibility and widget rendering.'
+      - 'Name at least three host aesthetics to use as proof targets.'
+      - 'Recommend the smallest compatible customization architecture for the Worker package.'
+    stop_if:
+      - 'The current widget shape cannot be inspected.'
+      - 'The desired scope would require hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, package publish, deploy, or credentials.'
+    receipt:
+      result: done
+      summary: 'Mapped the current widget surface. Public hooks are data-board-id/data-repo, data-api-url, data-token-endpoint, data-mount-selector, data-poll-interval, data-color, and a small root CSS custom-property surface. Private internals currently hard-code copy, one inline layout, and most style decisions inside the Shadow DOM stylesheet.'
+      evidence:
+        - 'src/widget/index.ts reads the current script attributes and injects the theme with only accentColor.'
+        - 'src/widget/dom.ts renders loading, empty, retryable error, create form, item list, GitHub issue link, and upvote count/state with fixed copy.'
+        - 'src/widget/theme.ts defines the current Shadow DOM stylesheet and only a small set of CSS custom properties.'
+        - 'test/widget-dom.test.ts protects loading, empty, retry error, upvote aria/text, and current theme hooks.'
+        - 'e2e/fixtures/host-app.ts and e2e/board-widget.spec.ts provide the local host, signed token, create, issue link, upvote, and polling proof path.'
+      recommendation: 'Use a backward-compatible customization contract with optional JSON config via data-config-selector, fixed theme token names applied as host CSS custom properties, copy overrides, layout/density attributes, and review variants in the dummy host.'
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Approve a bounded v1 customization contract before implementation.'
+    needs:
+      - T001
+    acceptance:
+      - 'Choose the customization mechanism, such as script attributes, JSON config script, CSS custom properties, CSS Shadow Parts, or a compatible combination.'
+      - 'Reject any plan that relies on users styling unstable internal selectors.'
+      - 'Define the stable public contract for colors, typography, spacing, density, radius, borders/surfaces, buttons, fields, item treatment, layout mode, and copy.'
+      - 'Define compatibility rules for existing `data-color` and current script attributes.'
+      - 'Define accessibility requirements for contrast, focus, labels, aria state, reduced motion if applicable, and error/status messaging.'
+      - 'Define verification artifacts: tests, clean install/package proof, and three visual review variants.'
+    stop_if:
+      - 'The proposed contract is too broad to finish in one safe tranche.'
+      - 'The proposed contract would force a breaking install change.'
+    receipt:
+      result: done
+      decision: approved
+      summary: 'Approved a bounded v1 customization contract: existing data attributes remain valid; data-color maps into the new accent token; advanced customization is provided by an optional JSON config element selected by data-config-selector; values are constrained to fixed theme/copy/layout/density keys; Shadow DOM remains open and isolated; no host styling of private internals is required.'
+      required_contract:
+        - 'theme tokens for colors, typography, spacing/density, radii, borders/surfaces, buttons, fields, item treatment, focus, and max width'
+        - 'copy overrides for heading, form labels/placeholders/buttons, loading, empty, error/retry, issue prefix, and upvote/upvoted labels'
+        - 'layout modes inline and panel plus density modes compact, comfortable, and spacious'
+        - 'three proof variants: compact SaaS, soft/community, and high-contrast accessible'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Implement the approved customization contract in the embedded widget with backward compatibility.'
+    needs:
+      - T002
+    allowed_files:
+      - 'src/widget/**'
+      - 'test/**'
+      - 'e2e/**'
+      - 'scripts/**'
+      - 'public/board.js'
+      - 'package.json'
+      - 'README.md'
+      - 'docs/**'
+      - 'Makefile'
+    verify:
+      - 'npm run build:widget'
+      - 'npm run typecheck'
+      - 'npm run test -- --runInBand'
+      - 'npm run test:e2e'
+      - 'npm run install:smoke'
+      - 'npm run pack:check'
+    acceptance:
+      - 'Existing basic embed snippets continue to render without new required attributes.'
+      - '`data-color` still works and maps cleanly into the richer customization system.'
+      - 'New customization options can be supplied declaratively from the host page.'
+      - 'The widget applies customization only inside its own mount/root and does not leak global CSS.'
+      - 'The widget sanitizes or constrains customization values enough to avoid script injection or broken markup.'
+      - 'All visible states use the customization surface rather than hard-coded one-off styling where avoidable.'
+      - 'Upvote count and viewer-specific upvote state remain visible and accessible.'
+      - 'Polling, item creation, GitHub issue links, token fetching, and error handling behavior remain functionally unchanged.'
+    stop_if:
+      - 'Implementation requires changing backend auth, D1 schema, GitHub mirroring semantics, publish/deploy, or secret configuration.'
+    receipt:
+      result: done
+      changed_files:
+        - 'src/widget/config.ts'
+        - 'src/widget/types.ts'
+        - 'src/widget/index.ts'
+        - 'src/widget/dom.ts'
+        - 'src/widget/theme.ts'
+        - 'test/widget-dom.test.ts'
+        - 'scripts/verify-clean-room-install-core.js'
+        - 'scripts/verify-clean-room-install.js'
+        - 'test/verify-clean-room-install.test.ts'
+      summary: 'Implemented the approved customization contract. The widget now supports optional JSON config via data-config-selector, layout/density modes, stable copy overrides, fixed theme tokens applied as host CSS custom properties, data-color compatibility, and safe known-key/value filtering.'
+      commands:
+        - command: 'npm run typecheck'
+          status: pass
+          evidence: 'tsc and tsconfig.widget.json typechecks passed.'
+        - command: 'npx vitest run test/widget-dom.test.ts test/verify-clean-room-install.test.ts'
+          status: pass
+          evidence: '2 focused files passed with 9 tests.'
+        - command: 'npm run test'
+          status: pass
+          evidence: '11 test files and 66 tests passed.'
+        - command: 'npm run build:widget'
+          status: pass
+          evidence: 'Built BugDrop Board bundle 0.1.2.'
+      evidence:
+        - 'npm run typecheck passed.'
+        - 'npx vitest run test/widget-dom.test.ts test/verify-clean-room-install.test.ts passed with 9 tests.'
+        - 'npm run test passed with 66 tests.'
+        - 'npm run build:widget passed.'
+
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Add a local review harness or extend the dummy host to demonstrate three distinct host-app presentations.'
+    needs:
+      - T003
+    allowed_files:
+      - 'e2e/**'
+      - 'examples/**'
+      - 'public/**'
+      - 'scripts/**'
+      - 'README.md'
+      - 'docs/**'
+      - 'test/**'
+    verify:
+      - 'npm run build:widget'
+      - 'npm run test:e2e'
+      - 'npm run install:smoke'
+    acceptance:
+      - 'Compact SaaS variant demonstrates restrained, dense, operational styling.'
+      - 'Soft/community variant demonstrates friendlier surfaces, copy, and spacing.'
+      - 'High-contrast variant demonstrates accessible contrast, clear focus, and legible controls.'
+      - 'Each variant exercises loading, empty, create, list, GitHub issue link, upvote count/state, and error state where practical.'
+      - 'Screenshots or equivalent artifacts are produced or documented for reviewer inspection.'
+      - 'The harness does not depend on production secrets or Cloudflare deploys.'
+    stop_if:
+      - 'The harness would require destructive dogfood cleanup, production deploy, package publish, or credential changes.'
+    receipt:
+      result: done
+      changed_files:
+        - 'e2e/fixtures/host-app.ts'
+        - 'e2e/customization-widget.spec.ts'
+      summary: 'Extended the dummy host with compact SaaS, soft/community, and high-contrast variants. Added Playwright coverage that loads each variant from JSON config, creates an item, verifies the issue link, toggles an upvote, checks aria-pressed state, and writes screenshots.'
+      commands:
+        - command: 'npx playwright test e2e/customization-widget.spec.ts'
+          status: pass
+          evidence: '3 customization variant tests passed.'
+        - command: 'npm run test:e2e'
+          status: pass
+          evidence: '5 Playwright tests passed, including the existing default embed and inline mount flows.'
+        - command: 'find test-results -path "*customization-variants*" -type f -name "*.png" -print | sort'
+          status: pass
+          evidence: 'Found compact-saas.png, soft-community.png, and high-contrast.png screenshot artifacts.'
+      evidence:
+        - 'npx playwright test e2e/customization-widget.spec.ts passed with 3 tests.'
+        - 'npm run test:e2e passed with 5 tests, including existing default and inline mount flows.'
+        - 'Screenshot artifacts were written under test-results/*/customization-variants/*.png.'
+
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Document the customization contract and install ergonomics for self-hosters.'
+    needs:
+      - T003
+      - T004
+    allowed_files:
+      - 'README.md'
+      - 'docs/**'
+      - '.dev.vars.example'
+    verify:
+      - 'npm run format:check'
+      - 'rg -n "customization|theme|copy|layout|data-color|data-mount-selector|Shadow DOM|CSS custom" README.md docs'
+    acceptance:
+      - 'README includes copy-pasteable snippets for default, compact SaaS, soft/community, and high-contrast variants.'
+      - 'Docs clearly distinguish stable public hooks from private internals.'
+      - 'Docs explain how customization interacts with Shadow DOM isolation.'
+      - 'Docs include accessibility guidance and note which customizations are constrained or unsupported.'
+      - 'Docs preserve self-host install constraints and do not imply a hosted control plane.'
+      - 'Docs include migration/backward-compatibility notes for existing `data-color` users.'
+    receipt:
+      result: done
+      changed_files:
+        - 'README.md'
+        - 'docs/release-readiness-results/2026-06-06-full-ux-customization.md'
+      summary: 'Documented the customization contract, stable copy keys, stable theme keys, JSON config usage, Shadow DOM boundary, data-color compatibility, and compact SaaS/soft community/high-contrast examples.'
+      commands:
+        - command: 'npm run format:check'
+          status: pass
+          evidence: 'All matched files use Prettier code style.'
+        - command: 'rg -n "data-config-selector|Stable copy keys|Stable theme keys|Compact SaaS|Soft community|High contrast" README.md docs/release-readiness-results/2026-06-06-full-ux-customization.md'
+          status: pass
+          evidence: 'Docs contain the customization contract and example variants.'
+      evidence:
+        - 'README.md includes data-config-selector, layout/density attributes, copy keys, theme keys, and three customization examples.'
+        - 'docs/release-readiness-results/2026-06-06-full-ux-customization.md records the local proof and scope audit.'
+
+  - id: T006
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Run the final burden-of-proof audit against behavior, accessibility, visual variety, docs, packaging, and excluded-scope constraints.'
+    needs:
+      - T005
+    verify:
+      - 'npm run validate'
+      - 'npm run test:e2e'
+      - 'npm run install:smoke'
+      - 'npm run pack:check'
+      - 'npm run knip'
+      - 'npm run audit'
+      - 'npm run check:actions-node24'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-full-ux-customization/state.yaml'
+      - 'git diff --check'
+    acceptance:
+      - 'Three visual variants are demonstrably different and all still usable.'
+      - 'At least one automated or manual check explicitly tries to disprove accessibility safety, such as keyboard/focus/aria/contrast inspection.'
+      - 'A compatibility check proves the old minimal embed path still works.'
+      - 'Package dry-run includes the rebuilt widget and no unexpected files.'
+      - 'Scope audit confirms no hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, package publish, deploy, credential change, or unrelated backend behavior.'
+      - 'A dated receipt records commands, screenshots/artifacts, known limitations, and follow-up recommendations.'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: 'The customization oracle is satisfied locally: three materially different variants render from configuration alone; existing default behavior still passes; package and install smoke gates pass; scope audit found no forbidden drift.'
+      evidence:
+        - 'npm run validate passed: lint, format, typecheck, and 66 Vitest tests.'
+        - 'npm run test:e2e passed: 5 Playwright tests.'
+        - 'npm run install:smoke passed against published 0.1.2.'
+        - 'npm run pack:check passed and included the rebuilt widget plus src/widget/config.ts.'
+        - 'npm run knip, npm run audit, and npm run check:actions-node24 passed.'
+        - 'git diff --check passed.'
+        - 'Diff-only forbidden-scope scan returned no matches.'
+        - 'Receipt: docs/release-readiness-results/2026-06-06-full-ux-customization.md.'
+
+checks:
+  dirty_fingerprint: 'README.md e2e/customization-widget.spec.ts e2e/fixtures/host-app.ts scripts/verify-clean-room-install-core.js scripts/verify-clean-room-install.js src/widget/config.ts src/widget/dom.ts src/widget/index.ts src/widget/theme.ts src/widget/types.ts test/verify-clean-room-install.test.ts test/widget-dom.test.ts docs/goals/bugdrop-board-full-ux-customization/goal.md docs/goals/bugdrop-board-full-ux-customization/state.yaml docs/release-readiness-results/2026-06-06-full-ux-customization.md'
+  last_verification:
+    result: passed
+    task: T006
+    commands:
+      - 'npm run validate'
+      - 'npm run test:e2e'
+      - 'npm run install:smoke'
+      - 'npm run pack:check'
+      - 'npm run knip'
+      - 'npm run audit'
+      - 'npm run check:actions-node24'
+      - 'git diff --check'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-full-ux-customization/state.yaml'

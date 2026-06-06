@@ -1,4 +1,5 @@
 import { BoardApi } from './api';
+import { applyCustomization, readCustomization } from './config';
 import { renderBoard } from './dom';
 import { appendWidgetHost } from './mount';
 import { injectTheme } from './theme';
@@ -25,7 +26,7 @@ function readConfig(): BoardWidgetConfig {
     apiUrl: script.dataset.apiUrl || new URL(script.src).origin,
     boardId,
     tokenEndpoint,
-    accentColor: script.dataset.color || '#2563eb',
+    customization: readCustomization(script),
     mountSelector: script.dataset.mountSelector,
     pollIntervalMs: parsePollInterval(script.dataset.pollInterval),
   };
@@ -78,9 +79,10 @@ function mount(config: BoardWidgetConfig): void {
 
   const host = document.createElement('div');
   host.setAttribute('data-bugdrop-board-root', '');
+  applyCustomization(host, config.customization);
   const shadow = host.attachShadow({ mode: 'open' });
   const root = document.createElement('div');
-  injectTheme(shadow, config.accentColor);
+  injectTheme(shadow);
   shadow.append(root);
   appendWidgetHost(host, { document, script, mountSelector: config.mountSelector });
 
@@ -109,38 +111,43 @@ function mount(config: BoardWidgetConfig): void {
   };
 
   const rerender = () =>
-    renderBoard(root, state, {
-      onCreate: async input => {
-        state = { ...state, submitting: true, error: undefined };
-        rerender();
-        try {
-          const item = await api.createItem(input);
-          state = { ...state, items: upsertItem(state.items, item), submitting: false };
+    renderBoard(
+      root,
+      state,
+      {
+        onCreate: async input => {
+          state = { ...state, submitting: true, error: undefined };
           rerender();
-        } catch (error) {
-          state = {
-            ...state,
-            submitting: false,
-            error: error instanceof Error ? error.message : 'Create failed',
-          };
-          rerender();
-        }
+          try {
+            const item = await api.createItem(input);
+            state = { ...state, items: upsertItem(state.items, item), submitting: false };
+            rerender();
+          } catch (error) {
+            state = {
+              ...state,
+              submitting: false,
+              error: error instanceof Error ? error.message : 'Create failed',
+            };
+            rerender();
+          }
+        },
+        onUpvote: async itemId => {
+          try {
+            const item = await api.toggleUpvote(itemId);
+            state = { ...state, items: upsertItem(state.items, item), error: undefined };
+            rerender();
+          } catch (error) {
+            state = {
+              ...state,
+              error: error instanceof Error ? error.message : 'Upvote failed',
+            };
+            rerender();
+          }
+        },
+        onRetry: retryRefresh,
       },
-      onUpvote: async itemId => {
-        try {
-          const item = await api.toggleUpvote(itemId);
-          state = { ...state, items: upsertItem(state.items, item), error: undefined };
-          rerender();
-        } catch (error) {
-          state = {
-            ...state,
-            error: error instanceof Error ? error.message : 'Upvote failed',
-          };
-          rerender();
-        }
-      },
-      onRetry: retryRefresh,
-    });
+      config.customization.copy
+    );
 
   rerender();
   refreshItems().catch(error => {

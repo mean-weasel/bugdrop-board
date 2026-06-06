@@ -6,6 +6,25 @@ export const DEFAULT_HOST_CONFIG = {
   mountSelector: '#feedback-board',
   pollIntervalMs: 600000,
   color: '#1f883d',
+  configSelector: '#bugdrop-board-config',
+  customization: {
+    copy: {
+      heading: 'Clean-room board',
+      issuePrefix: 'Ticket #',
+      submitLabel: 'Add proof',
+      upvoteLabel: 'Vote',
+      upvotedLabel: 'Voted',
+    },
+    density: 'compact',
+    layout: 'panel',
+    theme: {
+      accent: '#1f883d',
+      border: '#b7d8c2',
+      buttonRadius: '4px',
+      maxWidth: '640px',
+      radius: '6px',
+    },
+  },
 };
 
 export function parseArgs(
@@ -89,6 +108,9 @@ export function buildHostHtml(config = {}) {
     <main>
       <h1>Host App</h1>
       <section id="feedback-board"></section>
+      <script type="application/json" id="${escapeAttribute(
+        merged.configSelector.replace(/^#/, '')
+      )}">${escapeScriptJson(merged.customization)}</script>
       <script
         src="${escapeAttribute(merged.scriptSrc ?? merged.scriptPath)}"
         data-board-id="${escapeAttribute(merged.boardId)}"
@@ -97,6 +119,7 @@ export function buildHostHtml(config = {}) {
         data-mount-selector="${escapeAttribute(merged.mountSelector)}"
         data-poll-interval="${escapeAttribute(String(merged.pollIntervalMs))}"
         data-color="${escapeAttribute(merged.color)}"
+        data-config-selector="${escapeAttribute(merged.configSelector)}"
       ></script>
     </main>
   </body>
@@ -109,4 +132,8 @@ function escapeAttribute(value) {
     .replaceAll('"', '&quot;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;');
+}
+
+function escapeScriptJson(value) {
+  return JSON.stringify(value).replaceAll('</', '<\\/');
 }
