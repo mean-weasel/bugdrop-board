@@ -82,6 +82,45 @@ describe('board tokens', () => {
     ).rejects.toThrow('expired');
   });
 
+  it('rejects tokens that expire beyond the closed-beta max TTL', async () => {
+    const token = await createBoardToken(
+      {
+        boardId: 'board_mean_weasel_demo',
+        externalUserId: 'user_1',
+        exp: Math.floor(now.getTime() / 1000) + 301,
+      },
+      secret
+    );
+
+    await expect(
+      verifyBoardToken(token, {
+        secret,
+        expectedBoardId: 'board_mean_weasel_demo',
+        now,
+      })
+    ).rejects.toThrow('maximum TTL');
+  });
+
+  it('accepts an explicit max TTL override', async () => {
+    const token = await createBoardToken(
+      {
+        boardId: 'board_mean_weasel_demo',
+        externalUserId: 'user_1',
+        exp: Math.floor(now.getTime() / 1000) + 600,
+      },
+      secret
+    );
+
+    await expect(
+      verifyBoardToken(token, {
+        secret,
+        expectedBoardId: 'board_mean_weasel_demo',
+        maxTtlSeconds: 600,
+        now,
+      })
+    ).resolves.toMatchObject({ externalUserId: 'user_1' });
+  });
+
   it('rejects wrong board scope', async () => {
     const token = await createBoardToken(
       {

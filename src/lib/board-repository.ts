@@ -186,7 +186,7 @@ export class BoardRepository {
       .first<{ id: string }>();
 
     if (existing) {
-      await this.removeUpvote(boardId, itemId, existing.id, externalUserId);
+      await this.removeUpvote(boardId, itemId, existing.id);
     } else {
       await this.addUpvote(boardId, itemId, externalUserId);
     }
@@ -209,7 +209,7 @@ export class BoardRepository {
       boardId: row.board_id,
       eventType: row.event_type,
       itemId: row.item_id,
-      payload: JSON.parse(row.payload_json) as unknown,
+      payload: publicEventPayload(JSON.parse(row.payload_json) as unknown),
       createdAt: row.created_at,
     }));
   }
@@ -235,16 +235,11 @@ export class BoardRepository {
           `INSERT INTO board_events (board_id, event_type, item_id, payload_json)
            VALUES (?, 'upvote_added', ?, ?)`
         )
-        .bind(boardId, itemId, JSON.stringify({ itemId, externalUserId })),
+        .bind(boardId, itemId, JSON.stringify({ itemId })),
     ]);
   }
 
-  private async removeUpvote(
-    boardId: string,
-    itemId: string,
-    voteId: string,
-    externalUserId: string
-  ): Promise<void> {
+  private async removeUpvote(boardId: string, itemId: string, voteId: string): Promise<void> {
     await this.db.batch([
       this.db.prepare('DELETE FROM board_votes WHERE id = ?').bind(voteId),
       this.db
@@ -260,7 +255,7 @@ export class BoardRepository {
           `INSERT INTO board_events (board_id, event_type, item_id, payload_json)
            VALUES (?, 'upvote_removed', ?, ?)`
         )
-        .bind(boardId, itemId, JSON.stringify({ itemId, externalUserId })),
+        .bind(boardId, itemId, JSON.stringify({ itemId })),
     ]);
   }
 
@@ -289,4 +284,12 @@ export class BoardRepository {
       updatedAt: row.updated_at,
     };
   }
+}
+
+function publicEventPayload(payload: unknown): unknown {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return payload;
+  }
+  const { externalUserId: _externalUserId, ...publicPayload } = payload as Record<string, unknown>;
+  return publicPayload;
 }

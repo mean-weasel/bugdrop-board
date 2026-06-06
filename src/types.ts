@@ -6,10 +6,13 @@ export interface Env {
   BOARD_TOKEN_SECRET: string;
   BOARD_TOKEN_AUDIENCE?: string;
   BOARD_TOKEN_ISSUER?: string;
+  BOARD_TOKEN_MAX_TTL_SECONDS?: string;
   GITHUB_ISSUE_ACCESS_TOKEN?: string;
   REQUEST_THROTTLE_WINDOW_SECONDS?: string;
   ITEM_CREATE_RATE_LIMIT?: string;
   UPVOTE_RATE_LIMIT?: string;
+  ITEM_READ_RATE_LIMIT?: string;
+  EVENTS_POLL_RATE_LIMIT?: string;
 }
 
 export type BoardStatus = 'open' | 'planned' | 'in_progress' | 'shipped' | 'closed';

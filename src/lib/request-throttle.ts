@@ -1,6 +1,6 @@
 import type { Env } from '../types';
 
-export type ThrottleAction = 'create_item' | 'toggle_upvote';
+export type ThrottleAction = 'create_item' | 'toggle_upvote' | 'list_items' | 'list_events';
 
 interface ThrottleInput {
   action: ThrottleAction;
@@ -29,6 +29,8 @@ interface ThrottleRow {
 const DEFAULT_WINDOW_SECONDS = 60;
 const DEFAULT_CREATE_ITEM_LIMIT = 5;
 const DEFAULT_UPVOTE_LIMIT = 60;
+const DEFAULT_LIST_ITEMS_LIMIT = 120;
+const DEFAULT_LIST_EVENTS_LIMIT = 180;
 
 export class RequestThrottle {
   constructor(private readonly db: D1Database) {}
@@ -82,12 +84,31 @@ export class RequestThrottle {
 }
 
 function throttleConfig(env: Env, action: ThrottleAction): ThrottleConfig {
+  const windowSeconds = positiveInteger(
+    env.REQUEST_THROTTLE_WINDOW_SECONDS,
+    DEFAULT_WINDOW_SECONDS
+  );
+  if (action === 'create_item') {
+    return {
+      limit: positiveInteger(env.ITEM_CREATE_RATE_LIMIT, DEFAULT_CREATE_ITEM_LIMIT),
+      windowSeconds,
+    };
+  }
+  if (action === 'toggle_upvote') {
+    return {
+      limit: positiveInteger(env.UPVOTE_RATE_LIMIT, DEFAULT_UPVOTE_LIMIT),
+      windowSeconds,
+    };
+  }
+  if (action === 'list_items') {
+    return {
+      limit: positiveInteger(env.ITEM_READ_RATE_LIMIT, DEFAULT_LIST_ITEMS_LIMIT),
+      windowSeconds,
+    };
+  }
   return {
-    limit:
-      action === 'create_item'
-        ? positiveInteger(env.ITEM_CREATE_RATE_LIMIT, DEFAULT_CREATE_ITEM_LIMIT)
-        : positiveInteger(env.UPVOTE_RATE_LIMIT, DEFAULT_UPVOTE_LIMIT),
-    windowSeconds: positiveInteger(env.REQUEST_THROTTLE_WINDOW_SECONDS, DEFAULT_WINDOW_SECONDS),
+    limit: positiveInteger(env.EVENTS_POLL_RATE_LIMIT, DEFAULT_LIST_EVENTS_LIMIT),
+    windowSeconds,
   };
 }
 

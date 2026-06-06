@@ -535,6 +535,8 @@ Use a short expiry, usually five minutes or less for closed beta, and keep `exte
 for the signed-in host user. If the host page and token endpoint are on different origins, configure
 the host endpoint's own credentialed CORS policy for that request; BugDrop Board's
 `ALLOWED_ORIGINS` controls calls to the board Worker, not calls to your host app token endpoint.
+The Worker rejects tokens whose `exp` is more than `BOARD_TOKEN_MAX_TTL_SECONDS` in the future; the
+closed-beta default is `300` seconds.
 
 ## GitHub Mirroring
 
@@ -554,11 +556,13 @@ fails, the D1 board item is not stored.
 
 ## Request Throttling
 
-BugDrop Board includes D1-backed write throttling for the embedded board APIs. The default limits
-are per board, per signed host user, per action:
+BugDrop Board includes D1-backed throttling for the embedded board APIs. The default limits are per
+board, per signed host user, per action:
 
 - item creation: `5` requests per window;
 - upvote toggling: `60` requests per window;
+- item reads: `120` requests per window;
+- event polls: `180` requests per window;
 - window size: `60` seconds.
 
 Configure these non-secret Worker vars in `wrangler.toml`:
@@ -567,15 +571,21 @@ Configure these non-secret Worker vars in `wrangler.toml`:
 REQUEST_THROTTLE_WINDOW_SECONDS = "60"
 ITEM_CREATE_RATE_LIMIT = "5"
 UPVOTE_RATE_LIMIT = "60"
+ITEM_READ_RATE_LIMIT = "120"
+EVENTS_POLL_RATE_LIMIT = "180"
 ```
 
-When a user exceeds a write limit, the API returns `429` with a `Retry-After` header and does not
-run the write side effect. Item creation is throttled before GitHub Issue creation, so over-limit
-requests do not create GitHub Issues.
+When a user exceeds a limit, the API returns `429` with a `Retry-After` header. Read and event
+limits return no board data. Write limits do not run the write side effect. Item creation is
+throttled before GitHub Issue creation, so over-limit requests do not create GitHub Issues.
 
 Use positive integer values. Invalid or missing values fall back to the safe defaults above. Higher
 limits are useful for trusted internal testing; lower limits are useful for public boards that need
-more conservative write protection.
+more conservative protection.
+
+Event payloads returned by the polling API intentionally omit stable host user ids. The Worker still
+uses `externalUserId` internally for per-user upvote uniqueness and throttling, but other board
+viewers should not receive that stable id through `/events`.
 
 ## Cloudflare Configuration
 
@@ -585,10 +595,10 @@ more conservative write protection.
 - Static asset binding: `ASSETS` from `public`
 - D1 binding: `DB`
 - Local database name: `bugdrop-board-dev`
-- Worker defaults: `ENVIRONMENT`, `ALLOWED_ORIGINS`, `BOARD_TOKEN_AUDIENCE`, and
-  `BOARD_TOKEN_ISSUER`
-- Request throttling defaults: `REQUEST_THROTTLE_WINDOW_SECONDS`, `ITEM_CREATE_RATE_LIMIT`, and
-  `UPVOTE_RATE_LIMIT`
+- Worker defaults: `ENVIRONMENT`, `ALLOWED_ORIGINS`, `BOARD_TOKEN_AUDIENCE`,
+  `BOARD_TOKEN_ISSUER`, and `BOARD_TOKEN_MAX_TTL_SECONDS`
+- Request throttling defaults: `REQUEST_THROTTLE_WINDOW_SECONDS`, `ITEM_CREATE_RATE_LIMIT`,
+  `UPVOTE_RATE_LIMIT`, `ITEM_READ_RATE_LIMIT`, and `EVENTS_POLL_RATE_LIMIT`
 
 Keep secrets out of `wrangler.toml`. For local development, use `.dev.vars`. For deployed
 environments, set secrets with:
@@ -768,12 +778,15 @@ npm run deploy:smoke -- \
   --url https://bugdrop-board.example.workers.dev \
   --expect-environment production \
   --cors-origin https://app.example.com \
+  --cors-disallowed-origin https://evil.example \
   --cors-board-id board_owner_repo \
   --cors-token-endpoint https://app.example.com/api/board-token
 ```
 
 Then open a signed-in host app page, create a test item, confirm the matching GitHub Issue appears,
 and confirm another viewer can read or upvote the item.
+The disallowed-origin smoke proves browser containment only. Bearer token verification remains the
+authorization boundary for Worker API access.
 
 Rollback is operator-controlled: rerun the workflow from the previous known-good commit or restore
 the previous Worker secrets with `wrangler secret put`, then run the deployed smoke checks again.

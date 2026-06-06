@@ -74,7 +74,11 @@ describe('BoardRepository', () => {
   });
 
   it('toggles one upvote per external user', async () => {
-    const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName: 'demo' });
+    repoSequence += 1;
+    const board = await repo.upsertBoard({
+      repoOwner: 'mean-weasel',
+      repoName: `upvotes-${repoSequence}`,
+    });
     const item = await repo.createItem({
       boardId: board.id,
       title: 'Add exports',
@@ -89,6 +93,14 @@ describe('BoardRepository', () => {
     const removed = await repo.toggleUpvote(board.id, item.id, 'user_2');
     expect(removed.upvoteCount).toBe(0);
     expect(removed.viewerHasUpvoted).toBe(false);
+
+    const events = await repo.listEvents(board.id, 0);
+    expect(events.map(event => event.payload)).toEqual([
+      { itemId: item.id },
+      { itemId: item.id },
+      { itemId: item.id },
+    ]);
+    expect(JSON.stringify(events)).not.toContain('user_2');
   });
 
   it('lists items with viewer-specific upvote state', async () => {
@@ -159,5 +171,30 @@ describe('BoardRepository', () => {
 
     expect(await repo.listEvents(boardB.id, 0)).toHaveLength(0);
     expect(await repo.listItems(boardB.id)).toHaveLength(0);
+  });
+
+  it('scrubs stable external user ids from legacy event payloads on read', async () => {
+    repoSequence += 1;
+    const board = await repo.upsertBoard({
+      repoOwner: 'mean-weasel',
+      repoName: `legacy-events-${repoSequence}`,
+    });
+    const item = await repo.createItem({
+      boardId: board.id,
+      title: 'Add exports',
+      description: 'CSV export would help admins.',
+      externalUserId: 'user_1',
+    });
+    await env.DB.prepare(
+      `INSERT INTO board_events (board_id, event_type, item_id, payload_json)
+       VALUES (?, 'upvote_added', ?, ?)`
+    )
+      .bind(board.id, item.id, JSON.stringify({ itemId: item.id, externalUserId: 'user_2' }))
+      .run();
+
+    const events = await repo.listEvents(board.id, 0);
+
+    expect(events.at(-1)).toMatchObject({ payload: { itemId: item.id } });
+    expect(JSON.stringify(events)).not.toContain('user_2');
   });
 });

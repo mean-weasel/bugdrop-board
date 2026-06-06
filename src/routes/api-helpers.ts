@@ -98,8 +98,17 @@ async function verifyToken(token: string, env: Env, boardId: string) {
       expectedBoardId: boardId,
       expectedAudience: env.BOARD_TOKEN_AUDIENCE,
       expectedIssuer: env.BOARD_TOKEN_ISSUER,
+      maxTtlSeconds: positiveInteger(env.BOARD_TOKEN_MAX_TTL_SECONDS),
     });
   } catch {
     return null;
   }
+}
+
+function positiveInteger(value: string | undefined): number | undefined {
+  if (!value) {
+    return undefined;
+  }
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined;
 }

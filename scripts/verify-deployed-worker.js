@@ -8,6 +8,7 @@ export function parseArgs(argv) {
     url: process.env.DEPLOY_SMOKE_URL,
     expectEnvironment: process.env.DEPLOY_SMOKE_EXPECT_ENVIRONMENT,
     corsOrigin: process.env.DEPLOY_SMOKE_CORS_ORIGIN,
+    corsDisallowedOrigin: process.env.DEPLOY_SMOKE_CORS_DISALLOWED_ORIGIN,
     corsBoardId: process.env.DEPLOY_SMOKE_CORS_BOARD_ID,
     corsTokenEndpoint: process.env.DEPLOY_SMOKE_CORS_TOKEN_ENDPOINT,
   };
@@ -28,6 +29,11 @@ export function parseArgs(argv) {
     }
     if (arg === '--cors-origin') {
       options.corsOrigin = requireValue(arg, next);
+      index += 1;
+      continue;
+    }
+    if (arg === '--cors-disallowed-origin') {
+      options.corsDisallowedOrigin = requireValue(arg, next);
       index += 1;
       continue;
     }
@@ -69,6 +75,7 @@ Options:
   --url <url>                       Worker base URL. Can also use DEPLOY_SMOKE_URL.
   --expect-environment <name>       Optional expected /health environment value. Can also use DEPLOY_SMOKE_EXPECT_ENVIRONMENT.
   --cors-origin <origin>            Browser origin expected in Access-Control-Allow-Origin. Can also use DEPLOY_SMOKE_CORS_ORIGIN.
+  --cors-disallowed-origin <origin> Browser origin expected not to receive Access-Control-Allow-Origin. Can also use DEPLOY_SMOKE_CORS_DISALLOWED_ORIGIN.
   --cors-board-id <id>              Board id used for authenticated /items and /events checks. Can also use DEPLOY_SMOKE_CORS_BOARD_ID.
   --cors-token-endpoint <url>       Endpoint returning { "token": "payload.signature" }. Can also use DEPLOY_SMOKE_CORS_TOKEN_ENDPOINT.`);
 }
@@ -146,7 +153,12 @@ export async function runSmoke(options, fetchImpl = fetch) {
 }
 
 function hasAnyCorsOption(options) {
-  return Boolean(options.corsOrigin || options.corsBoardId || options.corsTokenEndpoint);
+  return Boolean(
+    options.corsOrigin ||
+    options.corsDisallowedOrigin ||
+    options.corsBoardId ||
+    options.corsTokenEndpoint
+  );
 }
 
 async function verifyCors(baseUrl, options, fetchImpl) {
@@ -182,7 +194,7 @@ async function verifyCors(baseUrl, options, fetchImpl) {
   const events = await fetchJson(eventsUrl, fetchImpl, { headers });
   assertAllowOrigin(eventsUrl, events.response, origin);
 
-  return {
+  const result = {
     origin,
     boardId,
     tokenShape: token
@@ -193,6 +205,16 @@ async function verifyCors(baseUrl, options, fetchImpl) {
     items: corsResponseSummary(items.response),
     events: corsResponseSummary(events.response),
   };
+  if (options.corsDisallowedOrigin) {
+    result.disallowed = await verifyDisallowedCors(
+      baseUrl,
+      boardId,
+      token,
+      options.corsDisallowedOrigin,
+      fetchImpl
+    );
+  }
+  return result;
 }
 
 function requireCorsOptions(options) {
@@ -210,6 +232,42 @@ function assertAllowOrigin(url, response, expectedOrigin) {
   if (actual !== expectedOrigin) {
     throw new Error(
       `${url} returned Access-Control-Allow-Origin ${actual ?? '<missing>'}, expected ${expectedOrigin}`
+    );
+  }
+}
+
+async function verifyDisallowedCors(baseUrl, boardId, token, origin, fetchImpl) {
+  const itemsUrl = new URL(`/boards/${boardId}/items`, baseUrl);
+  const eventsUrl = new URL(`/boards/${boardId}/events?since=0`, baseUrl);
+  const preflight = await fetchImpl(itemsUrl, {
+    method: 'OPTIONS',
+    headers: {
+      Origin: origin,
+      'Access-Control-Request-Method': 'GET',
+      'Access-Control-Request-Headers': 'Authorization',
+    },
+  });
+  assertDisallowedOrigin(itemsUrl, preflight, origin);
+
+  const headers = { Authorization: `Bearer ${token}`, Origin: origin };
+  const items = await fetchJson(itemsUrl, fetchImpl, { headers });
+  assertDisallowedOrigin(itemsUrl, items.response, origin);
+  const events = await fetchJson(eventsUrl, fetchImpl, { headers });
+  assertDisallowedOrigin(eventsUrl, events.response, origin);
+
+  return {
+    origin,
+    preflight: corsResponseSummary(preflight),
+    items: corsResponseSummary(items.response),
+    events: corsResponseSummary(events.response),
+  };
+}
+
+function assertDisallowedOrigin(url, response, disallowedOrigin) {
+  const actual = response.headers.get('access-control-allow-origin');
+  if (actual === disallowedOrigin || actual === '*') {
+    throw new Error(
+      `${url} returned Access-Control-Allow-Origin ${actual}, expected no CORS access for ${disallowedOrigin}`
     );
   }
 }

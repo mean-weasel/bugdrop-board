@@ -23,6 +23,8 @@ function env(overrides: Partial<Env> = {}): Env {
     REQUEST_THROTTLE_WINDOW_SECONDS: '60',
     ITEM_CREATE_RATE_LIMIT: '2',
     UPVOTE_RATE_LIMIT: '2',
+    ITEM_READ_RATE_LIMIT: '2',
+    EVENTS_POLL_RATE_LIMIT: '2',
     ...overrides,
   };
 }
@@ -149,6 +151,57 @@ describe('request throttling', () => {
 
     await expect(toggleUpvote(api, boardB.id, itemB.id, userB)).resolves.toBe(200);
   });
+
+  it('throttles authenticated item reads without changing board data', async () => {
+    const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName });
+    await repo.createItem({
+      boardId: board.id,
+      title: 'Add exports',
+      description: 'CSV export would help admins.',
+      externalUserId: 'user_1',
+    });
+    const api = createApi();
+    const headers = { Authorization: `Bearer ${await boardToken(board.id, 'user_2')}` };
+
+    await expect(listItems(api, board.id, headers)).resolves.toBe(200);
+    await expect(listItems(api, board.id, headers)).resolves.toBe(200);
+
+    const limited = await requestListItems(api, board.id, headers);
+
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get('Retry-After')).toBeTruthy();
+    await expect(limited.json()).resolves.toMatchObject({
+      error: 'Rate limit exceeded',
+      limit: 2,
+      windowSeconds: 60,
+    });
+    await expect(repo.listItems(board.id)).resolves.toHaveLength(1);
+  });
+
+  it('throttles event polling while keeping read limits isolated', async () => {
+    const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName });
+    await repo.createItem({
+      boardId: board.id,
+      title: 'Add exports',
+      description: 'CSV export would help admins.',
+      externalUserId: 'user_1',
+    });
+    const api = createApi();
+    const headers = { Authorization: `Bearer ${await boardToken(board.id, 'user_2')}` };
+
+    await expect(listEvents(api, board.id, headers)).resolves.toBe(200);
+    await expect(listEvents(api, board.id, headers)).resolves.toBe(200);
+
+    const limited = await requestListEvents(api, board.id, headers);
+
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get('Retry-After')).toBeTruthy();
+    await expect(limited.json()).resolves.toMatchObject({
+      error: 'Rate limit exceeded',
+      limit: 2,
+    });
+    await expect(listItems(api, board.id, headers)).resolves.toBe(200);
+  });
 });
 
 function issueResponse() {
@@ -203,4 +256,38 @@ function requestToggleUpvote(
     { method: 'POST', headers },
     env()
   );
+}
+
+async function listItems(
+  api: ReturnType<typeof createApi>,
+  boardId: string,
+  headers: Record<string, string>
+) {
+  const res = await requestListItems(api, boardId, headers);
+  return res.status;
+}
+
+function requestListItems(
+  api: ReturnType<typeof createApi>,
+  boardId: string,
+  headers: Record<string, string>
+) {
+  return api.request(`/boards/${boardId}/items`, { headers }, env());
+}
+
+async function listEvents(
+  api: ReturnType<typeof createApi>,
+  boardId: string,
+  headers: Record<string, string>
+) {
+  const res = await requestListEvents(api, boardId, headers);
+  return res.status;
+}
+
+function requestListEvents(
+  api: ReturnType<typeof createApi>,
+  boardId: string,
+  headers: Record<string, string>
+) {
+  return api.request(`/boards/${boardId}/events?since=0`, { headers }, env());
 }
