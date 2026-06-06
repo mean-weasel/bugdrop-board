@@ -57,13 +57,13 @@ visual_board:
     url: 'http://goalbuddy.localhost:41737/bugdrop-board-customization-npm-release/'
     command: 'npx goalbuddy board docs/goals/bugdrop-board-customization-npm-release'
 
-active_task: T001
+active_task: T003
 
 tasks:
   - id: T001
     type: scout
     assignee: Scout
-    status: active
+    status: done
     reasoning_hint: medium
     objective: 'Reconfirm release baseline before any version bump.'
     acceptance:
@@ -79,11 +79,31 @@ tasks:
       - 'gh issue view 7 --repo mean-weasel/bugdrop-board-production-dogfood --json number,title,state,url'
       - 'gh pr list --state open --json number,title,headRefName,isDraft,mergeStateStatus,url'
       - 'gh run list --branch main --limit 8 --json databaseId,workflowName,status,conclusion,url,headSha'
+    receipt:
+      result: done
+      task_id: T001
+      summary: 'Release baseline is healthy enough to prepare the 0.2.0 version PR.'
+      evidence:
+        - 'Local repo started clean on main at 66ee29a, then branched to codex/customization-0.2.0-release.'
+        - 'npm registry still reports @mean-weasel/bugdrop-board latest as 0.1.2.'
+        - 'No open pull requests were listed before version work.'
+        - 'Latest main Deploy Worker run 27064358060 and Package Widget dry-run 27064404524 both succeeded at customization SHA 44cb49e.'
+        - 'Production deploy smoke against https://board.bugdrop.dev passed with environment production, board.js 200, and CORS/items/events checks from https://bugdrop.dev.'
+        - 'Live board.js contains data-config-selector handling and the BugDrop host page contains the matching config selector and custom heading.'
+        - 'Production dogfood issue #7 is open and records the live A/B customization review item.'
+      commands:
+        - 'git status --short --branch && git log -3 --oneline --decorate'
+        - 'npm view @mean-weasel/bugdrop-board version dist-tags --json'
+        - 'gh pr list --state open --json number,title,headRefName,isDraft,mergeStateStatus,url'
+        - 'gh run list --branch main --limit 8 --json databaseId,workflowName,status,conclusion,url,headSha,createdAt'
+        - 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production --cors-origin https://bugdrop.dev --cors-board-id board_mean_weasel_bugdrop_board_production_dogfood --cors-token-endpoint "https://bugdrop.dev/api/bugdrop-board-token?viewer=a"'
+        - 'gh issue view 7 --repo mean-weasel/bugdrop-board-production-dogfood --json number,title,state,url,body'
+        - 'node live bundle/host config hook check'
 
   - id: T002
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
     objective: 'Authorize the version/documentation PR scope.'
     acceptance:
@@ -93,11 +113,31 @@ tasks:
     stop_if:
       - 'Maintainer chooses a version other than 0.2.0.'
       - 'Baseline proof shows production or package workflow drift.'
+    receipt:
+      result: done
+      decision: proceed
+      worker_objective: 'Prepare a 0.2.0 version/docs PR without publishing, tagging, deploying, changing credentials, or adding product behavior.'
+      allowed_files:
+        - 'package.json'
+        - 'package-lock.json'
+        - 'README.md'
+        - 'docs/release-readiness-results/2026-06-06-v0.2.0-customization-release.md'
+        - 'docs/goals/bugdrop-board-customization-npm-release/goal.md'
+        - 'docs/goals/bugdrop-board-customization-npm-release/state.yaml'
+      verify:
+        - 'npm run pack:check'
+        - 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production --cors-origin https://bugdrop.dev --cors-board-id board_mean_weasel_bugdrop_board_production_dogfood --cors-token-endpoint "https://bugdrop.dev/api/bugdrop-board-token?viewer=a"'
+        - 'npm run validate'
+        - 'make check'
+        - 'GitHub pull-request CI passes before merge'
+      evidence:
+        - '0.2.0 is appropriate because data-config-selector, copy/layout/density/theme config, and stable host styling hooks expand the public embed contract while remaining backward-compatible.'
+        - 'Publishing remains blocked until the version PR is merged, a main package dry-run passes for 0.2.0, and the maintainer explicitly approves dry_run=false.'
 
   - id: T003
     type: worker
     assignee: Worker
-    status: queued
+    status: active
     reasoning_hint: medium
     objective: 'Prepare and merge the 0.2.0 version PR without publishing.'
     allowed_files:
