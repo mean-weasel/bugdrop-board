@@ -740,8 +740,8 @@ After a publish, verify the registry artifact by installing it into a temporary 
 
 ```bash
 npm run release:smoke
-npm run release:smoke -- --version 0.1.2
-npm run install:smoke -- --version 0.1.2
+npm run release:smoke -- --version 0.2.0
+npm run install:smoke -- --version 0.2.0
 make release-smoke
 ```
 
@@ -756,7 +756,7 @@ documented script attributes, mocks the token/items API responses, and verifies 
 inside `data-mount-selector`.
 
 The `Install Smoke` GitHub Actions workflow exposes the same clean-room check as a manual,
-no-secret proof. Dispatch it with a published package version or dist-tag, such as `0.1.2` or
+no-secret proof. Dispatch it with a published package version or dist-tag, such as `0.2.0` or
 `latest`, when you want GitHub Actions to verify the installable artifact without running npm
 publish, Cloudflare deploy, or any production credentials. To verify the workflow contract locally,
 run:
@@ -771,7 +771,7 @@ To verify the package from a completely separate project, run:
 tmpdir=$(mktemp -d)
 cd "$tmpdir"
 npm init -y
-npm install @mean-weasel/bugdrop-board@0.1.2
+npm install @mean-weasel/bugdrop-board@0.2.0
 test -f node_modules/@mean-weasel/bugdrop-board/public/board.js
 node -e "require.resolve('@mean-weasel/bugdrop-board/board.js'); require.resolve('@mean-weasel/bugdrop-board/board')"
 ```
@@ -873,11 +873,16 @@ make check
 ## Current Handoff Notes
 
 This repository is still an early vertical slice. The conveyor PR stack has landed on `main`,
-`@mean-weasel/bugdrop-board@0.1.2` is published on npm, and the production Worker is available at
-`https://board.bugdrop.dev`.
+`@mean-weasel/bugdrop-board@0.1.2` is the currently published npm `latest`, and the production
+Worker is available at `https://board.bugdrop.dev`.
+
+The customization-capable Worker is already dogfooded in production, and package metadata is being
+prepared for `0.2.0`. Do not run the non-dry-run `Package Widget` workflow until the `0.2.0` version
+PR has merged, a main-branch package dry-run passes, and the maintainer explicitly approves
+publishing `@mean-weasel/bugdrop-board@0.2.0` to npm.
 
 Remaining release actions are operational: keep running the local release rehearsal before
 significant changes, run the GitHub workflows against staging/test credentials when changing deploy
 or package release paths, dogfood the embedded widget in the real signed-token host app at
-`https://bugdrop.dev` against the board Worker at `https://board.bugdrop.dev`, and decide the next
-version before any future npm publish.
+`https://bugdrop.dev` against the board Worker at `https://board.bugdrop.dev`, and keep publish
+approval explicit before any future npm publish.
