@@ -58,4 +58,5 @@ jobs:
 
       - name: Verify published package
         if: ${{ !inputs.dry_run }}
-        run: npm run release:smoke -- --retries 30 --retry-delay-ms 10000
+        timeout-minutes: 25
+        run: npm run release:smoke -- --retries 90 --retry-delay-ms 10000
