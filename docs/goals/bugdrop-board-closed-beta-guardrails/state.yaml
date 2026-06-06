@@ -1,0 +1,362 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Closed Beta Guardrails'
+  slug: 'bugdrop-board-closed-beta-guardrails'
+  kind: audit
+  tranche: 'Critique-driven closed-beta privacy, deploy, CORS, secret-file, and setup-trust guardrails only.'
+  status: done
+  oracle:
+    signal: 'The highest-risk safe gaps from three independent closed-beta critiques are fixed or explicitly deferred with proof.'
+    cadence: 'after each Scout/Judge/Worker tranche and final Judge audit'
+    final_proof: 'Focused privacy/deploy/setup tests, workflow/source inspection, repo gates, GoalBuddy receipts, and forbidden-scope scan.'
+  intake:
+    original_request: 'Use three independent agents to critically analyze the app for closed beta and set up a conveyor of GoalBuddy boards if sufficient gaps remain.'
+    interpreted_outcome: 'Turn the independent critique findings into a safe autonomous conveyor, starting with the highest-value closed-beta guardrails that do not require excluded product or production operations.'
+    input_shape: audit
+    audience: 'BugDrop Board maintainers and closed-beta self-host operators'
+    authority: approved
+    proof_type: test
+    completion_proof: 'Privacy-minimized item reads, safer deploy workflow, disallowed-origin deploy smoke wiring, local secret-file ignore, runtime/package metadata hygiene, and final verification receipts.'
+    likely_misfire: 'Implementing broad product features such as status/admin workflow, hosted installer/control plane, billing, realtime, comments, downvotes, GitHub Projects, npm publishing, Cloudflare deploys, or secret changes under the banner of beta readiness.'
+    blind_spots_considered:
+      - 'Docs can say closed-beta safe while the API still leaks unnecessary stable host user ids.'
+      - 'Production GitHub environment secrets can be paired with a blank Wrangler env and hit top-level development config.'
+      - 'CORS negative proof can exist in a helper but be skipped in the deploy workflow.'
+      - 'A deploy secret temp file can become a local commit footgun if not ignored.'
+      - 'Beta installers can lose trust when runtime/package requirements and artifact posture are implicit.'
+      - 'Status/admin workflow is a real beta gap but conflicts with standing exclusions and needs explicit user override.'
+    hard_constraints:
+      - 'No npm publish or package version bump.'
+      - 'No Cloudflare deploy, credential change, secret rotation, or secret file edit.'
+      - 'No hosted control plane, billing, realtime, comments, downvotes, or GitHub Projects.'
+      - 'No status/admin workflow unless the user explicitly overrides the standing exclusion.'
+      - 'No unrelated product behavior.'
+    critique_disposition:
+      board_4_fixes:
+        - 'Privacy/API response minimization: remove unnecessary stable creator ids from authenticated viewer item responses.'
+        - 'Production deploy guardrails: prevent production GitHub Environment secrets from running against top-level development Wrangler config.'
+        - 'Deploy workflow CORS negative proof: expose and forward disallowed-origin smoke input.'
+        - 'Local deployment secret hygiene: ignore `.deploy.secrets` and verify cleanup remains present.'
+        - 'Runtime/package/setup trust: make supported Node/npm/Wrangler and widget-only package posture explicit without publishing or bumping.'
+      deferred_boards:
+        - 'Board 5: self-host doctor/setup diagnosis, including Cloudflare/Wrangler/D1/token endpoint preflight and self-host template diagnosis.'
+        - 'Board 6: host token signer helpers/templates and local verifier, without moving auth ownership away from the host app.'
+        - 'Board 7: sorting/prioritization, accessibility proof, and limited host JS integration API if accepted as product polish.'
+        - 'Later security/ops board: GitHub token blast-radius reduction, abuse tier 2, token replay/circuit breaker posture, monitoring, and backup/export/restore runbooks.'
+      explicit_user_override_required:
+        - 'Status/admin workflow.'
+        - 'Admin portal.'
+        - 'Issue workflow automation.'
+        - 'Any hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, production credential change, Cloudflare deploy, npm publish, or package version bump.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-closed-beta-guardrails/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-closed-beta-guardrails'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Validate the critique synthesis and choose the first safe Worker package for closed-beta guardrails.'
+    expected_output: 'A decision receipt confirming which critique findings are blockers, which are safe Board 4 fixes, which are deferred boards, and which require explicit user override.'
+    verify:
+      - 'git status --short --branch'
+      - 'direct inspection of `src/routes/api.ts`, `src/lib/board-repository.ts`, `.github/workflows/deploy.yml`, `.gitignore`, `package.json`, `README.md`, and closed-beta docs'
+      - 'confirm no first Worker requires npm publish, Cloudflare deploy, credential changes, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, status/admin workflow, or unrelated product behavior'
+    stop_if:
+      - 'The Judge decides the privacy/deploy/setup-trust fixes cannot be done safely without excluded production operations or product decisions.'
+    receipt:
+      result: done
+      decision: rejected
+      summary: 'Initial Board 4 scope was directionally right but not yet safe for Worker execution because Worker tasks lacked stop_if, critique disposition was incomplete, and T002 implementation was already dirty before a receipt.'
+      evidence:
+        - '`git status --short --branch` showed branch `codex/closed-beta-gap-conveyor` with modified `src/routes/api.ts` and `test/routes.test.ts`, plus the untracked guardrails goal directory.'
+        - '`src/routes/api.ts` already contained `publicBoardItem`; `test/routes.test.ts` already asserted creator id absence.'
+        - 'Worker tasks lacked stop_if fields in the first draft.'
+      note: 'docs/goals/bugdrop-board-closed-beta-guardrails/notes/T001-judge.md'
+
+  - id: T006
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Re-validate the repaired Board 4 handoff after adding stop_if clauses, critique disposition, and a T002 dirty-change receipt requirement.'
+    expected_output: 'A proceed/reject receipt confirming whether Board 4 is now safe to continue from the already-dirty T002 privacy slice.'
+    verify:
+      - 'git status --short --branch'
+      - 'state.yaml has exactly one active task and T002-T004 include stop_if fields'
+      - 'state.yaml classifies Board 4 fixes, deferred boards, and explicit user overrides'
+      - 'T002 acceptance requires inspecting and receipting already-dirty privacy changes before further writes'
+    stop_if:
+      - 'The repaired board still leaves Workers without clear stop conditions or asks for excluded product/production work.'
+    receipt:
+      result: done
+      decision: rejected
+      summary: 'Second Judge confirmed stop_if and critique disposition repairs, but rejected continuation because T003/T004-scope files were already dirty without matching dirty-change ownership requirements.'
+      evidence:
+        - 'T002, T003, and T004 had stop_if clauses.'
+        - 'critique_disposition classified Board 4 fixes, deferred boards, and explicit override work.'
+        - '`git status --short --branch` showed dirty deploy/setup files in addition to T002 privacy files.'
+      note: 'docs/goals/bugdrop-board-closed-beta-guardrails/notes/T006-judge.md'
+
+  - id: T007
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Re-validate Board 4 after T002, T003, and T004 all explicitly own already-dirty changes from this session.'
+    expected_output: 'A proceed/reject receipt confirming whether the board can continue by verifying and receipting the dirty T002-T004 slices.'
+    verify:
+      - 'git status --short --branch'
+      - 'state.yaml has exactly one active task and T002-T004 each include dirty-change ownership acceptance plus stop_if'
+      - 'state.yaml classifies Board 4 fixes, deferred boards, and explicit user overrides'
+      - 'No queued Worker asks for npm publish/version bump, Cloudflare deploy, credential/secret changes, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, status/admin workflow, or unrelated product behavior'
+    stop_if:
+      - 'The repaired board still leaves already-dirty work unowned or asks for excluded product/production work.'
+    receipt:
+      result: done
+      decision: proceed
+      summary: 'Board 4 now safely owns dirty T002-T004 slices and can continue by verifying and receipting those bounded changes.'
+      evidence:
+        - 'GoalBuddy checker passed for the repaired state file.'
+        - 'T002, T003, and T004 each include dirty-change ownership acceptance criteria and stop_if clauses.'
+        - 'critique_disposition classifies Board 4 fixes, deferred boards, and explicit override work.'
+      note: 'docs/goals/bugdrop-board-closed-beta-guardrails/notes/T007-judge.md'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Implement privacy/API response minimization for authenticated board item reads.'
+    allowed_files:
+      - 'src/routes/api.ts'
+      - 'src/lib/board-repository.ts'
+      - 'src/types.ts'
+      - 'test/routes.test.ts'
+      - 'test/board-repository.test.ts'
+      - 'docs/goals/bugdrop-board-closed-beta-guardrails/notes/T002-worker.md'
+      - 'docs/goals/bugdrop-board-closed-beta-guardrails/state.yaml'
+    acceptance:
+      - 'Worker first inspects the already-dirty `src/routes/api.ts` and `test/routes.test.ts` changes from this session and either keeps them with proof or revises them inside this T002 scope.'
+      - 'Authenticated viewer item reads no longer expose `createdByExternalUserId`.'
+      - 'The widget-visible item contract still includes id, title, description, status, GitHub issue metadata, upvote count, and viewer upvote state.'
+      - 'Tests prove browser-supplied user ids are still ignored and stable creator ids are absent from viewer responses.'
+      - 'No GitHub mirror, token auth, polling, upvote, or widget behavior regresses.'
+    verify:
+      - 'npm run test -- test/routes.test.ts test/board-repository.test.ts'
+      - 'npm run typecheck'
+      - 'focused source scan for `createdByExternalUserId` exposure in route JSON responses'
+    stop_if:
+      - 'The privacy fix requires a schema migration, product behavior change, admin/status workflow, npm publish/version bump, Cloudflare deploy, credential/secret change, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or unrelated product behavior.'
+    receipt:
+      result: done
+      changed_files:
+        - 'src/routes/api.ts'
+        - 'test/routes.test.ts'
+      summary: 'API responses for create/list/upvote now use a public item projection that omits stable creator identifiers while preserving widget-visible item fields.'
+      commands:
+        - command: 'npm run test -- test/routes.test.ts test/board-repository.test.ts'
+          status: pass
+          evidence: '20 focused route/repository tests passed.'
+        - command: 'npm run test -- test/routes.test.ts test/board-repository.test.ts test/verify-clean-room-install.test.ts'
+          status: pass
+          evidence: '22 focused tests passed after all Board 4 edits.'
+        - command: 'npm run typecheck'
+          status: pass
+          evidence: 'Worker and widget TypeScript typecheck passed.'
+        - command: 'rg -n "createdByExternalUserId|created_by_external_user_id" src/routes src/widget test/routes.test.ts'
+          status: pass
+          evidence: 'Matches are negative route tests and repository-storage assertions only, not route response projection.'
+      note: 'docs/goals/bugdrop-board-closed-beta-guardrails/notes/T002-worker.md'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Harden production deploy workflow guardrails and local deploy-secret hygiene.'
+    allowed_files:
+      - '.github/workflows/deploy.yml'
+      - '.gitignore'
+      - 'package.json'
+      - 'scripts/verify-deploy-workflow.js'
+      - 'scripts/verify-install-smoke-workflow.js'
+      - 'scripts/verify-package-workflow.js'
+      - 'test/'
+      - 'README.md'
+      - 'docs/closed-beta-setup.md'
+      - 'docs/closed-beta-runbook.md'
+      - 'docs/production-dogfood.md'
+      - 'docs/goals/bugdrop-board-closed-beta-guardrails/notes/T003-worker.md'
+      - 'docs/goals/bugdrop-board-closed-beta-guardrails/state.yaml'
+    acceptance:
+      - 'Worker first inspects the already-dirty `.github/workflows/deploy.yml`, `.gitignore`, `package.json`, and `scripts/verify-deploy-workflow.js` changes from this session and either keeps them with proof or revises them inside this T003 scope.'
+      - 'Deploy workflow refuses or safely defaults production GitHub Environment runs that omit the intended Wrangler environment.'
+      - 'Dry-run, remote migrations, provisioning, and deploy commands cannot silently fall back to the top-level development Wrangler config for production.'
+      - 'Workflow exposes and forwards a disallowed-origin smoke input to `npm run deploy:smoke`.'
+      - '`.deploy.secrets` is ignored by git and still removed by the workflow.'
+      - 'Existing package/install workflow verifiers are updated or extended if needed to prove the workflow contract.'
+    verify:
+      - 'npm run package:workflow:check'
+      - 'npm run install:smoke:workflow'
+      - 'npm run check:actions-node24'
+      - 'git check-ignore -v .deploy.secrets'
+      - 'focused workflow scan for `wrangler_environment`, `--env`, `smoke_cors_disallowed_origin`, and `.deploy.secrets` cleanup'
+    stop_if:
+      - 'Workflow hardening requires live Cloudflare deploys, production secret changes, credential rotation, npm publish/version bump, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, status/admin workflow, or unrelated product behavior.'
+    receipt:
+      result: done
+      changed_files:
+        - '.github/workflows/deploy.yml'
+        - '.gitignore'
+        - 'package.json'
+        - 'scripts/verify-deploy-workflow.js'
+        - 'README.md'
+        - 'docs/production-dogfood.md'
+      summary: 'Production deploy workflow now resolves blank Wrangler env safely, rejects production env mismatches, requires production smoke, forwards disallowed-origin CORS smoke, and ignores `.deploy.secrets`.'
+      commands:
+        - command: 'npm run deploy:workflow:check'
+          status: pass
+          evidence: 'Deploy workflow guardrail verifier passed.'
+        - command: 'npm run package:workflow:check'
+          status: pass
+          evidence: 'Package workflow verifier still passed.'
+        - command: 'npm run install:smoke:workflow'
+          status: pass
+          evidence: 'Install smoke workflow verifier still passed.'
+        - command: 'npm run check:actions-node24'
+          status: pass
+          evidence: 'GitHub Actions scan found no old Node 20 action versions.'
+        - command: 'git check-ignore -v .deploy.secrets'
+          status: pass
+          evidence: '`.deploy.secrets` is ignored by `.gitignore`.'
+      note: 'docs/goals/bugdrop-board-closed-beta-guardrails/notes/T003-worker.md'
+
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Tighten runtime/package/setup trust metadata without publishing or changing package version.'
+    allowed_files:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'README.md'
+      - 'docs/closed-beta-setup.md'
+      - 'docs/closed-beta-runbook.md'
+      - 'scripts/verify-clean-room-install.js'
+      - 'scripts/verify-clean-room-install-core.js'
+      - 'scripts/verify-package-install.js'
+      - 'test/verify-clean-room-install.test.ts'
+      - 'docs/goals/bugdrop-board-closed-beta-guardrails/notes/T004-worker.md'
+      - 'docs/goals/bugdrop-board-closed-beta-guardrails/state.yaml'
+    acceptance:
+      - 'Worker first inspects the already-dirty `package.json`, `package-lock.json`, README, closed-beta docs, and install/package smoke helper changes from this session and either keeps them with proof or revises them inside this T004 scope.'
+      - 'Supported Node/npm/Wrangler expectations are explicit for closed-beta installers.'
+      - 'Package metadata includes appropriate runtime/package manager hints if compatible with the repo.'
+      - 'Install/package smoke help and docs do not reference stale package examples.'
+      - 'Docs clearly state that npm is widget-only and self-hosting still requires the Worker/D1 repo deployment path.'
+      - 'No npm publish, version bump, or artifact release is performed.'
+    verify:
+      - 'npm run install:smoke:workflow'
+      - 'npm run package:workflow:check'
+      - 'npm run test -- test/verify-clean-room-install.test.ts'
+      - 'npm run format:check'
+      - 'focused scan for stale `0.1.2` package examples and implicit runtime claims'
+    stop_if:
+      - 'Metadata/docs hardening requires package version bump, npm publish, Cloudflare deploy, credential/secret change, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, status/admin workflow, or unrelated product behavior.'
+    receipt:
+      result: done
+      changed_files:
+        - 'package.json'
+        - 'package-lock.json'
+        - 'README.md'
+        - 'docs/closed-beta-setup.md'
+        - 'docs/closed-beta-runbook.md'
+        - 'scripts/verify-clean-room-install.js'
+        - 'scripts/verify-package-install.js'
+      summary: 'Runtime/package manager expectations and widget-only package posture are explicit; smoke helper help text no longer uses stale 0.1.x examples.'
+      commands:
+        - command: 'node --version && npm --version && npx wrangler --version'
+          status: pass
+          evidence: 'Local proof used Node v22.22.3, npm 10.9.8, and Wrangler 4.97.0.'
+        - command: 'npm install --package-lock-only --ignore-scripts'
+          status: pass
+          evidence: 'Lockfile metadata updated without dependency changes or lifecycle scripts.'
+        - command: 'npm run install:smoke:workflow && npm run package:workflow:check'
+          status: pass
+          evidence: 'Install/package workflow contracts passed.'
+        - command: 'npm run test -- test/routes.test.ts test/board-repository.test.ts test/verify-clean-room-install.test.ts'
+          status: pass
+          evidence: '22 focused tests passed.'
+        - command: 'npm run format:check'
+          status: pass
+          evidence: 'Repo-wide Prettier check passed after formatting docs.'
+      note: 'docs/goals/bugdrop-board-closed-beta-guardrails/notes/T004-worker.md'
+
+  - id: T005
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether Board 4 satisfies the closed-beta guardrails oracle and queue the next board.'
+    expected_output: 'Final receipt with pass/fail decision, proof commands, file references, residual risks, and one recommended next GoalBuddy board.'
+    verify:
+      - 'npm run validate'
+      - 'npm run knip'
+      - 'npm run audit'
+      - 'npm run check:actions-node24'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-closed-beta-guardrails/state.yaml'
+      - 'forbidden-scope scan for npm publish/version bump, Cloudflare deploy, credential changes, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, status/admin workflow, and unrelated product behavior'
+    stop_if:
+      - 'Any guardrail claim lacks command, test, diff, source inspection, or documented operator-owned proof.'
+    receipt:
+      result: done
+      decision: complete
+      summary: 'Board 4 satisfies the closed-beta guardrails oracle with privacy-minimized item responses, deploy workflow guardrails, disallowed-origin smoke wiring, `.deploy.secrets` ignore, runtime/package setup metadata, and passing repo gates.'
+      commands:
+        - command: 'npm run validate'
+          status: pass
+          evidence: 'lint, format, typecheck, package workflow check, deploy workflow check, and 72 tests passed.'
+        - command: 'npm run knip'
+          status: pass
+          evidence: 'Knip completed without findings.'
+        - command: 'npm run audit'
+          status: pass
+          evidence: '0 critical vulnerabilities.'
+        - command: 'npm run check:actions-node24'
+          status: pass
+          evidence: 'GitHub Actions scan found no old Node 20 action versions.'
+        - command: 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-closed-beta-guardrails/state.yaml'
+          status: pass
+          evidence: 'GoalBuddy state checker passed before final closeout.'
+      next_recommended_board: 'Board 5: self-host doctor and setup diagnosis only.'
+      note: 'docs/goals/bugdrop-board-closed-beta-guardrails/notes/T005-judge-final.md'
+
+checks:
+  dirty_fingerprint: null
+  last_verification:
+    result: pass
+    task: T005
+    commands:
+      - 'npm run validate'
+      - 'npm run knip'
+      - 'npm run audit'
+      - 'npm run check:actions-node24'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-closed-beta-guardrails/state.yaml'

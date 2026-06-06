@@ -21,15 +21,17 @@ Closed beta is ready for a specific app only when a maintainer can show:
 ## Before Inviting A Beta User
 
 1. Start from a clean repository checkout.
-2. Complete [Closed Beta Setup Checklist](closed-beta-setup.md).
-3. Confirm package/install proof:
+2. Use the supported closed-beta toolchain: Node 22, npm 10, and the repo's Wrangler 4.x dev
+   dependency through `npx wrangler`.
+3. Complete [Closed Beta Setup Checklist](closed-beta-setup.md).
+4. Confirm package/install proof:
 
    ```bash
    npm view @mean-weasel/bugdrop-board version dist-tags --json
    npm run install:smoke -- --version latest --retries 3 --retry-delay-ms 5000
    ```
 
-4. Confirm local gates before touching any deployment credentials:
+5. Confirm local gates before touching any deployment credentials:
 
    ```bash
    npm run validate
@@ -37,9 +39,9 @@ Closed beta is ready for a specific app only when a maintainer can show:
    npm run deploy:check:production
    ```
 
-5. Complete [Closed Beta Dogfood Script](closed-beta-dogfood-script.md) for the target app.
-6. Check [Closed Beta Readiness](closed-beta-readiness.md) and record any pending operator proof.
-7. Review [Closed Beta Risks](closed-beta-risks.md) with the beta user.
+6. Complete [Closed Beta Dogfood Script](closed-beta-dogfood-script.md) for the target app.
+7. Check [Closed Beta Readiness](closed-beta-readiness.md) and record any pending operator proof.
+8. Review [Closed Beta Risks](closed-beta-risks.md) with the beta user.
 
 ## Evidence To Capture
 

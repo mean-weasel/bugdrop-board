@@ -74,7 +74,7 @@ function parseInteger(flag, value) {
 }
 
 function printHelp() {
-  console.log(`Usage: npm run release:smoke -- [--version 0.1.0] [--package @scope/name]
+  console.log(`Usage: npm run release:smoke -- [--version ${localPackage.version}] [--package @scope/name]
 
 Installs the published npm package into a temporary project and verifies the public entrypoints.
 

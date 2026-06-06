@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 .dev.vars
+.deploy.secrets
 .secrets/
 .wrangler/
 .superpowers/

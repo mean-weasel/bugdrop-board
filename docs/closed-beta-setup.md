@@ -6,6 +6,17 @@ dogfood-style setup in a new app. It is intentionally limited to setup safety an
 ## 1. Preflight
 
 - Confirm the repository checkout is clean or that unrelated local changes are understood.
+- Confirm the local runtime matches the supported closed-beta toolchain:
+
+  ```bash
+  node --version # expected: 22.x, at least 22.12.0
+  npm --version  # expected: 10.x
+  npx wrangler --version
+  ```
+
+  Use `npm ci` with the committed lockfile. The npm package is the embeddable widget artifact only;
+  self-hosting still uses this repo's Worker, D1 migrations, provisioning, and deploy path.
+
 - Confirm the intended package artifact:
 
   ```bash
