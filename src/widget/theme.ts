@@ -110,6 +110,9 @@ function shellCss(): string {
       grid-template-columns: repeat(4, minmax(180px, 1fr));
       overflow-x: auto;
     }
+    :host([data-bugdrop-board-empty-lane-display="hidden"]) .bugdrop-board__kanban {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
     .bugdrop-board__lane {
       background: var(--bugdrop-board-surface-alt);
       border: var(--bugdrop-board-border-width) solid var(--bugdrop-board-border);
@@ -119,9 +122,12 @@ function shellCss(): string {
       min-width: 180px;
       padding: var(--bugdrop-board-item-padding);
     }
+    .bugdrop-board__lane--compact-empty {
+      align-content: start;
+      min-height: 0;
+    }
     .bugdrop-board__lane-header {
-      align-items: center;
-      display: flex;
+      align-items: center; display: flex;
       justify-content: space-between;
     }
     .bugdrop-board__lane-title {
@@ -129,9 +135,7 @@ function shellCss(): string {
       margin: 0;
     }
     .bugdrop-board__lane-count {
-      color: var(--bugdrop-board-muted);
-      font-size: 12px;
-      font-weight: 700;
+      color: var(--bugdrop-board-muted); font-size: 12px; font-weight: 700;
     }
   `;
 }
@@ -139,24 +143,35 @@ function shellCss(): string {
 function formCss(): string {
   return `
     .bugdrop-board__form {
-      display: grid;
-      gap: var(--bugdrop-board-gap);
+      display: grid; gap: var(--bugdrop-board-gap);
       margin-bottom: 16px;
     }
+    .bugdrop-board__composer {
+      margin-bottom: 16px;
+    }
+    .bugdrop-board__composer-summary {
+      background: var(--bugdrop-board-button-background);
+      border: var(--bugdrop-board-border-width) solid var(--bugdrop-board-button-border);
+      border-radius: var(--bugdrop-board-button-radius);
+      color: var(--bugdrop-board-button-text); cursor: pointer; display: inline-flex;
+      font-weight: 700; list-style: none; min-height: 36px;
+      padding: var(--bugdrop-board-button-padding);
+    }
+    .bugdrop-board__composer-summary::-webkit-details-marker {
+      display: none;
+    }
+    .bugdrop-board__composer[open] .bugdrop-board__composer-summary {
+      margin-bottom: var(--bugdrop-board-gap);
+    }
     .bugdrop-board__form label {
-      display: grid;
-      gap: 5px;
-      font-size: 13px;
-      font-weight: 600;
+      display: grid; gap: 5px; font-size: 13px; font-weight: 600;
     }
     .bugdrop-board__form input,
     .bugdrop-board__form textarea {
       background: var(--bugdrop-board-field-background);
       border: var(--bugdrop-board-border-width) solid var(--bugdrop-board-border);
       border-radius: var(--bugdrop-board-field-radius);
-      box-sizing: border-box;
-      color: var(--bugdrop-board-field-text);
-      font: inherit;
+      box-sizing: border-box; color: var(--bugdrop-board-field-text); font: inherit;
       padding: var(--bugdrop-board-field-padding);
       width: 100%;
     }
@@ -171,11 +186,8 @@ function formCss(): string {
       background: var(--bugdrop-board-button-background);
       border: var(--bugdrop-board-border-width) solid var(--bugdrop-board-button-border);
       border-radius: var(--bugdrop-board-button-radius);
-      color: var(--bugdrop-board-button-text);
-      cursor: pointer;
-      font: inherit;
-      font-weight: 700;
-      min-height: 36px;
+      color: var(--bugdrop-board-button-text); cursor: pointer; font: inherit;
+      font-weight: 700; min-height: 36px;
       padding: var(--bugdrop-board-button-padding);
     }
     .bugdrop-board__form button:disabled {
@@ -192,9 +204,7 @@ function itemCss(): string {
       background: var(--bugdrop-board-surface);
       border: var(--bugdrop-board-border-width) solid var(--bugdrop-board-border);
       border-radius: var(--bugdrop-board-item-radius);
-      box-shadow: var(--bugdrop-board-item-shadow);
-      display: grid;
-      gap: 12px;
+      box-shadow: var(--bugdrop-board-item-shadow); display: grid; gap: 12px;
       grid-template-columns: auto 1fr;
       padding: var(--bugdrop-board-item-padding);
     }
@@ -208,19 +218,22 @@ function itemCss(): string {
       justify-self: start;
     }
     .bugdrop-board__item h3 {
-      font-size: 16px;
-      line-height: 1.25;
+      font-size: 16px; line-height: 1.25;
       margin: 0 0 6px;
     }
     .bugdrop-board__item p {
-      font-size: 14px;
-      line-height: 1.4;
+      font-size: 14px; line-height: 1.4;
       margin: 8px 0 0;
+      overflow-wrap: anywhere;
+    }
+    :host([data-bugdrop-board-layout="kanban"]) .bugdrop-board__item p {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      overflow: hidden;
     }
     .bugdrop-board__meta {
-      align-items: center;
-      display: flex;
-      flex-wrap: wrap;
+      align-items: center; display: flex; flex-wrap: wrap;
       gap: 8px;
     }
     .bugdrop-board__meta a,
@@ -237,6 +250,7 @@ function itemCss(): string {
 function stateCss(): string {
   return `
     .bugdrop-board__form button:focus-visible,
+    .bugdrop-board__composer-summary:focus-visible,
     .bugdrop-board__upvote:focus-visible,
     .bugdrop-board__retry:focus-visible,
     .bugdrop-board__form input:focus-visible,

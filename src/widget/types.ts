@@ -8,13 +8,22 @@ export interface BoardWidgetConfig {
 }
 
 export interface BoardWidgetCustomization {
+  composer: BoardWidgetComposer;
   copy: BoardWidgetCopy;
   density: BoardWidgetDensity;
+  emptyLaneDisplay: BoardWidgetEmptyLaneDisplay;
+  issueLinks: BoardWidgetIssueLinks;
   layout: BoardWidgetLayout;
   theme: BoardWidgetTheme;
 }
 
+export type BoardWidgetComposer = 'inline' | 'collapsed';
+
 export type BoardWidgetDensity = 'compact' | 'comfortable' | 'spacious';
+
+export type BoardWidgetEmptyLaneDisplay = 'visible' | 'compact' | 'hidden';
+
+export type BoardWidgetIssueLinks = 'visible' | 'hidden';
 
 export type BoardWidgetLayout = 'inline' | 'panel' | 'kanban';
 
