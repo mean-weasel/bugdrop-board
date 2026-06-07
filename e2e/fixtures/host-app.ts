@@ -4,6 +4,11 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { createBoardToken } from '../../src/lib/board-token';
+import {
+  CUSTOMIZATION_VARIANTS,
+  type CustomizationVariant,
+  type CustomizationVariantConfig,
+} from './customization-variants';
 
 export const HOST_ORIGIN = 'http://127.0.0.1:5177';
 const DEFAULT_WORKER_ORIGIN = 'http://127.0.0.1:8788';
@@ -53,20 +58,6 @@ export async function provisionBoard(): Promise<ProvisionedBoard> {
 interface HostOptions {
   inlineMount?: boolean;
   variant?: CustomizationVariant;
-}
-
-export type CustomizationVariant = 'compact-saas' | 'soft-community' | 'high-contrast';
-
-interface CustomizationVariantConfig {
-  bodyBackground: string;
-  bodyColor: string;
-  config: {
-    copy: Record<string, string>;
-    density: string;
-    layout: string;
-    theme: Record<string, string>;
-  };
-  heading: string;
 }
 
 export async function startHostApp(boardId?: string, options: HostOptions = {}): Promise<HostApp> {
@@ -209,7 +200,7 @@ function renderHostPage(config: HostConfig, viewer: 'a' | 'b'): string {
       data-api-url="${escapeAttribute(config.workerOrigin)}"
       data-token-endpoint="/token?viewer=${viewer}"
       data-poll-interval="${escapeAttribute(config.pollInterval)}"
-      data-color="#1f883d"
+      ${customization ? '' : 'data-color="#1f883d"'}
       ${customization ? 'data-config-selector="#bugdrop-board-config"' : ''}
       ${config.mountSelector ? `data-mount-selector="${escapeAttribute(config.mountSelector)}"` : ''}
     ></script>
@@ -218,136 +209,7 @@ function renderHostPage(config: HostConfig, viewer: 'a' | 'b'): string {
 }
 
 function customizationVariant(variant: CustomizationVariant): CustomizationVariantConfig {
-  if (variant === 'compact-saas') {
-    return {
-      bodyBackground: '#f8fafc',
-      bodyColor: '#0f172a',
-      heading: 'Acme Admin',
-      config: {
-        density: 'compact',
-        layout: 'panel',
-        copy: {
-          heading: 'Roadmap queue',
-          titleLabel: 'Request',
-          titlePlaceholder: 'Short operational request',
-          descriptionLabel: 'Business context',
-          descriptionPlaceholder: 'Who needs this and why?',
-          submitLabel: 'Add request',
-          emptyLabel: 'No requests yet.',
-          upvoteLabel: 'Prioritize',
-          upvotedLabel: 'Prioritized',
-        },
-        theme: {
-          accent: '#0f766e',
-          accentSoft: '#ccfbf1',
-          background: '#ffffff',
-          border: '#cbd5e1',
-          buttonRadius: '4px',
-          fieldRadius: '4px',
-          fontSize: '13px',
-          headingSize: '18px',
-          itemRadius: '4px',
-          maxWidth: '640px',
-          muted: '#475569',
-          radius: '4px',
-          shadow: '0 1px 2px rgba(15, 23, 42, 0.08)',
-          surfaceAlt: '#f8fafc',
-          text: '#0f172a',
-        },
-      },
-    };
-  }
-
-  if (variant === 'high-contrast') {
-    return {
-      bodyBackground: '#000000',
-      bodyColor: '#ffffff',
-      heading: 'Access Lab',
-      config: {
-        density: 'spacious',
-        layout: 'panel',
-        copy: {
-          heading: 'Accessibility requests',
-          titleLabel: 'Barrier or request',
-          titlePlaceholder: 'Describe the access need',
-          descriptionLabel: 'Impact',
-          descriptionPlaceholder: 'What task is blocked?',
-          submitLabel: 'Submit access request',
-          emptyLabel: 'No access requests yet.',
-          retryLabel: 'Try loading again',
-          upvoteLabel: 'Support',
-          upvotedLabel: 'Supported',
-        },
-        theme: {
-          accent: '#ffd400',
-          accentSoft: '#1f1f00',
-          accentText: '#000000',
-          background: '#000000',
-          border: '#ffffff',
-          borderWidth: '2px',
-          buttonRadius: '0',
-          danger: '#ff7b72',
-          fieldBackground: '#000000',
-          fieldRadius: '0',
-          fieldText: '#ffffff',
-          focus: '#00ffff',
-          fontSize: '16px',
-          headingSize: '24px',
-          itemRadius: '0',
-          maxWidth: '780px',
-          muted: '#f5f5f5',
-          radius: '0',
-          surface: '#000000',
-          surfaceAlt: '#111111',
-          text: '#ffffff',
-          upvoteBackground: '#000000',
-          upvoteBorder: '#ffd400',
-          upvoteText: '#ffd400',
-        },
-      },
-    };
-  }
-
-  return {
-    bodyBackground: '#f3efe7',
-    bodyColor: '#2f2a24',
-    heading: 'Community Hub',
-    config: {
-      density: 'comfortable',
-      layout: 'panel',
-      copy: {
-        heading: 'Community ideas',
-        titleLabel: 'Idea',
-        titlePlaceholder: 'What should we improve?',
-        descriptionLabel: 'Tell us more',
-        descriptionPlaceholder: 'Add a little color or context',
-        submitLabel: 'Share idea',
-        emptyLabel: 'No ideas yet. Start the conversation.',
-        issuePrefix: 'Tracked as #',
-        upvoteLabel: 'Cheer',
-        upvotedLabel: 'Cheered',
-      },
-      theme: {
-        accent: '#9f1239',
-        accentSoft: '#ffe4e6',
-        background: '#fffaf5',
-        border: '#e7d7c6',
-        buttonRadius: '999px',
-        fieldRadius: '12px',
-        fontFamily: 'Georgia, "Times New Roman", serif',
-        headingSize: '23px',
-        itemRadius: '16px',
-        itemShadow: '0 10px 30px rgba(79, 46, 19, 0.08)',
-        maxWidth: '720px',
-        muted: '#7c6f64',
-        radius: '18px',
-        shadow: '0 18px 50px rgba(79, 46, 19, 0.12)',
-        surface: '#fffdf8',
-        surfaceAlt: '#fff7ed',
-        text: '#2f2a24',
-      },
-    },
-  };
+  return CUSTOMIZATION_VARIANTS[variant];
 }
 
 function escapeAttribute(value: string): string {

@@ -48,6 +48,7 @@
     "test": "vitest run",
     "test:node": "vitest run --config vitest.node.config.ts",
     "test:e2e": "playwright test",
+    "capture:marketing-examples": "BUGDROP_BOARD_MARKETING_SCREENSHOT_DIR=docs/marketing/assets playwright test e2e/customization-widget.spec.ts",
     "e2e:worker": "npm run build:widget && CI=1 wrangler d1 migrations apply DB --local && wrangler dev --ip 127.0.0.1 --port 8788 --var ENVIRONMENT:e2e --var BOARD_TOKEN_SECRET:e2e-secret --var BOARD_TOKEN_AUDIENCE:bugdrop-board --var BOARD_TOKEN_ISSUER:dummy-host --var ALLOWED_ORIGINS:http://127.0.0.1:5177 --log-level error",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit && tsc --project tsconfig.widget.json --noEmit",
