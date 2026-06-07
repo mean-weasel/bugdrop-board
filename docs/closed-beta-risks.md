@@ -30,6 +30,8 @@ These are acceptable for closed beta when communicated before invite:
 - No hosted control plane or billing.
 - No built-in comments.
 - No built-in monitoring, alerting, backup/export/restore automation, or incident tooling.
+- Manual support, rollback, and backup/export boundaries are documented in
+  [Closed Beta Ops Runbook](closed-beta-ops-runbook.md).
 - CORS is browser containment only; bearer tokens remain the Worker authorization boundary.
 
 ## Deferred Product Work
@@ -57,6 +59,8 @@ These are not repo code changes, but they must be complete for a specific beta i
 - Deploy or promote the Worker through the operator's chosen path.
 - Run deployed smoke with allowed and disallowed origins.
 - Complete the dogfood script and record evidence.
+- Review the ops runbook and keep support evidence free of secrets, tokens, cookies, and secret
+  screen screenshots.
 - Share accepted limitations and support path with the beta user.
 
 ## Risk Review Template

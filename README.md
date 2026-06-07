@@ -212,7 +212,8 @@ For an installer-facing closed-beta sequence, use the
 [Closed Beta Setup Checklist](docs/closed-beta-setup.md). Before inviting a beta user, walk through
 the [Closed Beta Runbook](docs/closed-beta-runbook.md), complete the
 [Closed Beta Dogfood Script](docs/closed-beta-dogfood-script.md), check
-[Closed Beta Readiness](docs/closed-beta-readiness.md), and share the
+[Closed Beta Readiness](docs/closed-beta-readiness.md), review the
+[Closed Beta Ops Runbook](docs/closed-beta-ops-runbook.md), and share
 [Closed Beta Risks](docs/closed-beta-risks.md).
 
 ## Embed Contract
@@ -1025,4 +1026,5 @@ Closed-beta handoff artifacts:
 - [Closed Beta Runbook](docs/closed-beta-runbook.md)
 - [Closed Beta Dogfood Script](docs/closed-beta-dogfood-script.md)
 - [Closed Beta Readiness](docs/closed-beta-readiness.md)
+- [Closed Beta Ops Runbook](docs/closed-beta-ops-runbook.md)
 - [Closed Beta Risks](docs/closed-beta-risks.md)
