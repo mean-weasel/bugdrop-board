@@ -1,0 +1,145 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Closed Beta Final Acceptance'
+  slug: 'bugdrop-board-closed-beta-final-acceptance'
+  kind: existing_plan
+  tranche: 'Closed-beta final go/no-go packet and evidence index only.'
+  status: done
+  oracle:
+    signal: 'A maintainer can make a first-beta go/conditional-go/no-go decision from one linked acceptance packet.'
+    cadence: 'after Worker and final Judge audit'
+    final_proof: 'Final acceptance doc, docs scans, format check, GoalBuddy checker, forbidden-scope scan, and receipts.'
+  intake:
+    original_request: 'begin'
+    interpreted_outcome: 'Create the final closed-beta acceptance packet and wire it into the existing beta handoff docs.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers preparing the first closed-beta install'
+    authority: approved
+    proof_type: artifact
+    completion_proof: 'Linked final acceptance packet plus receipts proving global evidence, per-install proof, invite checklist, user handoff, and preserved limitations.'
+    likely_misfire: 'Treating final acceptance as approval to deploy, publish, invite a real beta user, add product behavior, or mutate credentials instead of creating the decision packet.'
+    hard_constraints:
+      - 'No product behavior, deploys, D1 mutations, credential or secret changes, npm publish, or package version bump.'
+      - 'No monitoring implementation, alerting, backup/export/restore automation, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or status/admin workflow.'
+      - 'No first live beta-user activity.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-closed-beta-final-acceptance/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-closed-beta-final-acceptance'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Create and link the closed-beta final acceptance packet.'
+    allowed_files:
+      - 'README.md'
+      - 'docs/closed-beta-runbook.md'
+      - 'docs/closed-beta-readiness.md'
+      - 'docs/closed-beta-final-acceptance.md'
+      - 'docs/goals/bugdrop-board-closed-beta-final-acceptance/goal.md'
+      - 'docs/goals/bugdrop-board-closed-beta-final-acceptance/state.yaml'
+      - 'docs/goals/bugdrop-board-closed-beta-final-acceptance/notes/.gitkeep'
+      - 'docs/goals/bugdrop-board-closed-beta-final-acceptance/notes/T001-worker.md'
+    acceptance:
+      - 'Final acceptance packet has go, conditional-go, and no-go criteria.'
+      - 'Packet indexes setup, doctor, security, customization, package, dogfood, ops, and risks evidence.'
+      - 'Packet separates globally proven readiness from per-install operator proof.'
+      - 'Packet includes first-beta invite checklist and beta-user handoff template.'
+      - 'README, closed-beta runbook, and readiness matrix link to the packet.'
+      - 'Packet preserves limitations and does not ask operators to paste secrets, tokens, cookies, secret files, or secret-screen screenshots.'
+    verify:
+      - 'npx prettier --check README.md docs/closed-beta-runbook.md docs/closed-beta-readiness.md docs/closed-beta-final-acceptance.md docs/goals/bugdrop-board-closed-beta-final-acceptance/goal.md docs/goals/bugdrop-board-closed-beta-final-acceptance/state.yaml docs/goals/bugdrop-board-closed-beta-final-acceptance/notes/*.md'
+      - 'focused rg scan for go criteria, conditional go, no-go, global proof, per-install proof, invite checklist, handoff template, accepted limitations, and secret-redaction guidance'
+      - 'forbidden-scope scan proving no implementation/deploy/credential/publish/product drift'
+      - 'git diff --check'
+    stop_if:
+      - 'The work requires product behavior, deploys, D1 mutations, credential or secret changes, npm publish, package version bump, monitoring implementation, alerting, backup/export/restore automation, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, status/admin workflow, or first live beta-user activity.'
+    receipt:
+      result: done
+      changed_files:
+        - 'README.md'
+        - 'docs/closed-beta-runbook.md'
+        - 'docs/closed-beta-readiness.md'
+        - 'docs/closed-beta-final-acceptance.md'
+        - 'docs/goals/bugdrop-board-closed-beta-final-acceptance/goal.md'
+        - 'docs/goals/bugdrop-board-closed-beta-final-acceptance/state.yaml'
+        - 'docs/goals/bugdrop-board-closed-beta-final-acceptance/notes/.gitkeep'
+        - 'docs/goals/bugdrop-board-closed-beta-final-acceptance/notes/T001-worker.md'
+      summary: 'Created the closed-beta final acceptance packet and linked it from README, the closed-beta runbook, and readiness matrix.'
+      commands:
+        - command: 'npx prettier --write README.md docs/closed-beta-runbook.md docs/closed-beta-readiness.md docs/closed-beta-final-acceptance.md docs/goals/bugdrop-board-closed-beta-final-acceptance/goal.md docs/goals/bugdrop-board-closed-beta-final-acceptance/state.yaml docs/goals/bugdrop-board-closed-beta-final-acceptance/notes/T001-worker.md'
+          status: pass
+          evidence: 'Prettier completed; docs/closed-beta-readiness.md and docs/closed-beta-final-acceptance.md were normalized.'
+        - command: 'focused rg scan for go criteria, conditional go, no-go, global proof, per-install proof, invite checklist, handoff template, accepted limitations, and secret-redaction guidance'
+          status: pass
+          evidence: 'Required sections and cross-links are present.'
+        - command: 'forbidden-scope added-line scan'
+          status: pass
+          evidence: 'No added implementation/deploy/credential/publish/product drift lines matched.'
+        - command: 'git diff --check'
+          status: pass
+          evidence: 'No whitespace errors.'
+      note: 'docs/goals/bugdrop-board-closed-beta-final-acceptance/notes/T001-worker.md'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether the final acceptance packet satisfies the oracle.'
+    expected_output: 'Final receipt with decision, proof commands, strongest failure mode, and explicit remaining status.'
+    verify:
+      - 'npm run format:check'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-closed-beta-final-acceptance/state.yaml'
+      - 'focused rg scan for required acceptance packet sections and links'
+      - 'forbidden-scope scan proving no implementation/deploy/credential/publish/product drift'
+      - 'git diff --check'
+    stop_if:
+      - 'Any readiness claim lacks direct text evidence, existing receipt references, or explicit per-install proof status.'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: 'Closed-beta final acceptance oracle is satisfied: one linked packet now records conditional-go status, global evidence, per-install proof, first-beta checklist, beta-user handoff, no-go blockers, and accepted limitations.'
+      evidence:
+        - '`npm run format:check` passed.'
+        - 'GoalBuddy checker passed while T999 was active.'
+        - 'Focused scan found current decision, global evidence, per-install proof, go criteria, conditional-go criteria, no-go criteria, first-beta invite checklist, beta-user handoff template, accepted limitations, final status, cross-links, and secret-redaction guidance.'
+        - 'Forbidden-scope added-line scan returned no implementation, deploy, credential, publish, or product drift matches.'
+        - '`git diff --check` passed.'
+      strongest_failure_mode: 'The packet could overstate readiness and imply approval to deploy, publish, mutate credentials, or invite a beta user. The document instead states conditional go only, says it is not approval for those actions, and requires target-app operator proof before invite.'
+      remaining_status: 'Repo/product readiness is conditional-go; first beta invite still requires target-app proof and beta-user acceptance of limitations.'
+      note: 'docs/goals/bugdrop-board-closed-beta-final-acceptance/notes/T999-judge-final.md'
+
+checks:
+  dirty_fingerprint: null
+  last_verification:
+    result: pass
+    task: T999
+    commands:
+      - 'npm run format:check'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-closed-beta-final-acceptance/state.yaml'
+      - 'focused rg scan for required acceptance sections'
+      - 'forbidden-scope added-line scan'
+      - 'git diff --check'
