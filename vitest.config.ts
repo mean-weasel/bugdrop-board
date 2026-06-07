@@ -19,6 +19,7 @@ export default defineConfig({
   test: {
     globals: true,
     include: ['test/**/*.test.ts'],
+    exclude: ['test/doctor-selfhost.test.ts'],
     setupFiles: ['./test/apply-migrations.ts'],
     coverage: {
       reporter: ['text', 'json-summary'],

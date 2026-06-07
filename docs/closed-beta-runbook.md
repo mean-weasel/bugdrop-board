@@ -39,9 +39,22 @@ Closed beta is ready for a specific app only when a maintainer can show:
    npm run deploy:check:production
    ```
 
-6. Complete [Closed Beta Dogfood Script](closed-beta-dogfood-script.md) for the target app.
-7. Check [Closed Beta Readiness](closed-beta-readiness.md) and record any pending operator proof.
-8. Review [Closed Beta Risks](closed-beta-risks.md) with the beta user.
+6. Run the self-host doctor against the intended environment, host origin, repo, board id, Worker
+   URL, and token endpoint. It should pass before remote migrations or deploys:
+
+   ```bash
+   npm run doctor:selfhost -- \
+     --env production \
+     --host-origin https://app.example.com \
+     --repo owner/name \
+     --board-id board_owner_name \
+     --worker-url https://bugdrop-board.example.workers.dev \
+     --token-endpoint https://app.example.com/api/bugdrop-board-token
+   ```
+
+7. Complete [Closed Beta Dogfood Script](closed-beta-dogfood-script.md) for the target app.
+8. Check [Closed Beta Readiness](closed-beta-readiness.md) and record any pending operator proof.
+9. Review [Closed Beta Risks](closed-beta-risks.md) with the beta user.
 
 ## Evidence To Capture
 
@@ -59,6 +72,7 @@ Record a dated handoff note for each beta install. Use this shape:
 - Package version/dist-tag:
 - Worker environment:
 - D1 database name/id location, without secret values:
+- Doctor command summary:
 - Deploy or dry-run proof:
 - Smoke command summary:
 - Dogfood item title:
@@ -78,8 +92,9 @@ browser cookies in the handoff note.
 
 ## Support Path
 
-- Setup failure: start with [Closed Beta Setup Checklist](closed-beta-setup.md), then inspect the
-  exact command output that failed.
+- Setup failure: start with `npm run doctor:selfhost`, then use
+  [Closed Beta Setup Checklist](closed-beta-setup.md) and inspect the exact command output that
+  failed.
 - Token failure: confirm `BOARD_TOKEN_SECRET`, audience, issuer, `boardId`, and `exp` match the
   Worker environment. Tokens longer than `BOARD_TOKEN_MAX_TTL_SECONDS` are rejected.
 - CORS failure: confirm `ALLOWED_ORIGINS` names the exact host app origin. CORS is browser

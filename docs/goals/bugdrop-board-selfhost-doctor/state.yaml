@@ -1,0 +1,157 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Self-Host Doctor'
+  slug: 'bugdrop-board-selfhost-doctor'
+  kind: existing_plan
+  tranche: 'Closed-beta self-host doctor and setup diagnosis only.'
+  status: done
+  oracle:
+    signal: 'A closed-beta self-hoster can run one non-mutating doctor command and get actionable setup diagnostics before deploy/dogfood.'
+    cadence: 'after Worker and final Judge audit'
+    final_proof: 'Focused doctor tests, docs scans, repo gates, GoalBuddy receipts, and forbidden-scope scan.'
+  intake:
+    original_request: 'continue'
+    interpreted_outcome: 'Continue the closed-beta conveyor with Board 5: self-host doctor/setup diagnosis only, as recommended by Board 4.'
+    input_shape: existing_plan
+    audience: 'Closed-beta self-host installers and BugDrop Board maintainers'
+    authority: approved
+    proof_type: test
+    completion_proof: 'Doctor command, core tests, docs, and receipts prove setup diagnosis without mutating Cloudflare, GitHub, D1, npm, or secrets.'
+    likely_misfire: 'Building a deployment tool, hosted installer, SDK, or product feature instead of a non-mutating setup doctor.'
+    hard_constraints:
+      - 'No npm publish or package version bump.'
+      - 'No Cloudflare deploy, D1 mutation, Worker secret change, credential change, or secret rotation.'
+      - 'No hosted control plane, billing, realtime, comments, downvotes, or GitHub Projects.'
+      - 'No status/admin workflow, host token SDK/helpers, sorting/prioritization, accessibility audit, or product UX change.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-selfhost-doctor/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-selfhost-doctor'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Implement the non-mutating self-host doctor CLI, focused tests, and installer docs.'
+    allowed_files:
+      - 'package.json'
+      - 'README.md'
+      - 'docs/closed-beta-setup.md'
+      - 'docs/closed-beta-runbook.md'
+      - 'scripts/doctor-selfhost-core.js'
+      - 'scripts/doctor-selfhost.js'
+      - 'test/doctor-selfhost.test.ts'
+      - 'vitest.config.ts'
+      - 'vitest.node.config.ts'
+      - 'docs/goals/bugdrop-board-selfhost-doctor/notes/T001-worker.md'
+      - 'docs/goals/bugdrop-board-selfhost-doctor/state.yaml'
+    acceptance:
+      - '`npm run doctor:selfhost` exists and does not mutate Cloudflare, GitHub, D1, npm registry, package versions, or secrets.'
+      - 'Doctor checks runtime/tooling, package metadata, `.deploy.secrets` ignore, migrations, Wrangler env vars, D1 binding/id, allowed origin alignment, repo/board id shape, and smoke input completeness.'
+      - 'Optional Cloudflare/GitHub live checks require explicit flags and are non-mutating.'
+      - 'Output is structured JSON and exits nonzero only on failed required checks.'
+      - 'Docs explain when to run it and how to follow up with deploy smoke/dogfood proof.'
+    verify:
+      - 'npm run test:node -- test/doctor-selfhost.test.ts'
+      - 'npm run doctor:selfhost -- --env production --host-origin https://bugdrop.dev --repo mean-weasel/bugdrop-board-production-dogfood --board-id board_mean_weasel_bugdrop_board_production_dogfood --worker-url https://board.bugdrop.dev --token-endpoint https://bugdrop.dev/api/bugdrop-board-token?viewer=a'
+      - 'npm run format:check'
+      - 'npm run typecheck'
+    stop_if:
+      - 'The doctor requires deploys, D1 mutations, secret edits, npm publish/version bump, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, status/admin workflow, host token SDK/helper work, sorting/prioritization, accessibility work, or product UX changes.'
+    receipt:
+      result: done
+      changed_files:
+        - 'package.json'
+        - 'README.md'
+        - 'docs/closed-beta-setup.md'
+        - 'docs/closed-beta-runbook.md'
+        - 'scripts/doctor-selfhost-core.js'
+        - 'scripts/doctor-selfhost.js'
+        - 'test/doctor-selfhost.test.ts'
+        - 'vitest.config.ts'
+        - 'vitest.node.config.ts'
+        - 'docs/goals/bugdrop-board-selfhost-doctor/notes/T001-worker.md'
+        - 'docs/goals/bugdrop-board-selfhost-doctor/state.yaml'
+      summary: 'Added the non-mutating self-host doctor CLI/core, plain-Node test harness, focused tests, README/setup/runbook guidance, and worker receipt.'
+      commands:
+        - command: 'npm run test:node -- test/doctor-selfhost.test.ts'
+          status: pass
+          evidence: '5 doctor core/CLI tests passed without real Cloudflare, GitHub, D1, deploys, secrets, or network.'
+        - command: 'npm run doctor:selfhost -- --env production --host-origin https://bugdrop.dev --repo mean-weasel/bugdrop-board-production-dogfood --board-id board_mean_weasel_bugdrop_board_production_dogfood --worker-url https://board.bugdrop.dev --token-endpoint https://bugdrop.dev/api/bugdrop-board-token?viewer=a'
+          status: pass
+          evidence: '17 pass, 0 warn, 0 fail; emitted the exact deploy smoke follow-up command.'
+        - command: 'npm run format:check'
+          status: pass
+          evidence: 'All matched files use Prettier style.'
+        - command: 'npm run typecheck'
+          status: pass
+          evidence: 'Root and widget TypeScript projects passed.'
+        - command: 'npm run lint'
+          status: pass
+          evidence: 'ESLint passed.'
+      note: 'docs/goals/bugdrop-board-selfhost-doctor/notes/T001-worker.md'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether Board 5 satisfies the self-host doctor oracle.'
+    expected_output: 'Final receipt with pass/fail decision, proof commands, strongest failure modes, and next board recommendation.'
+    verify:
+      - 'npm run validate'
+      - 'npm run knip'
+      - 'npm run audit'
+      - 'npm run check:actions-node24'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-selfhost-doctor/state.yaml'
+      - 'forbidden-scope scan for deploys, D1 mutations, secret changes, npm publish/version bump, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, status/admin workflow, host token SDK/helpers, sorting/prioritization, accessibility, and product UX changes'
+    stop_if:
+      - 'Any doctor claim lacks test, command, source inspection, or receipt-backed proof.'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: 'Board 5 satisfies the self-host doctor oracle: self-hosters now have a local non-mutating doctor, tests prove static/failure/live-opt-in paths, docs tell installers when to run it, and repo gates passed.'
+      evidence:
+        - '`npm run validate` passed after the final implementation edit with 11 test files and 72 Worker-suite tests.'
+        - '`npm run test:node -- test/doctor-selfhost.test.ts` passed with 5 doctor tests.'
+        - '`npm run doctor:selfhost -- ...bugdrop.dev...` passed with 17 checks, 0 warnings, and 0 failures.'
+        - '`npm run knip`, `npm run audit`, and `npm run check:actions-node24` passed.'
+        - 'GoalBuddy checker passed after inline receipts were added.'
+        - 'Added-line forbidden-scope scan found no npm publish/version bump, deploy, secret mutation, D1 mutation, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, status/admin workflow, host token SDK/helper, sorting/prioritization, accessibility, credential, or product UX implementation drift.'
+      note: 'docs/goals/bugdrop-board-selfhost-doctor/notes/T999-judge-final.md'
+
+checks:
+  dirty_fingerprint: null
+  last_verification:
+    result: pass
+    task: T999
+    commands:
+      - 'npm run test:node -- test/doctor-selfhost.test.ts'
+      - 'npm run doctor:selfhost -- --env production --host-origin https://bugdrop.dev --repo mean-weasel/bugdrop-board-production-dogfood --board-id board_mean_weasel_bugdrop_board_production_dogfood --worker-url https://board.bugdrop.dev --token-endpoint https://bugdrop.dev/api/bugdrop-board-token?viewer=a'
+      - 'npm run validate'
+      - 'npm run knip'
+      - 'npm run audit'
+      - 'npm run check:actions-node24'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-selfhost-doctor/state.yaml'
+      - 'git diff --check'
