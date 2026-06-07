@@ -1,0 +1,206 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Closed Beta Acceptance Rehearsal'
+  slug: 'bugdrop-board-closed-beta-acceptance-rehearsal'
+  kind: existing_plan
+  tranche: 'Production dogfood target-app acceptance proof only.'
+  status: done
+  oracle:
+    signal: 'A dated production dogfood receipt proves the final acceptance packet per-install flow against the existing dogfood target.'
+    cadence: 'after Worker and final Judge audit'
+    final_proof: 'Doctor, deploy smoke, two-viewer browser proof, GitHub/API read-back, receipt, GoalBuddy checker, and scope audit.'
+  intake:
+    original_request: 'continue'
+    interpreted_outcome: 'Run the next safe target-app proof from the final acceptance packet against the existing production dogfood install.'
+    input_shape: specific
+    audience: 'BugDrop Board maintainers preparing first closed-beta invite readiness'
+    authority: inferred
+    proof_type: demo
+    completion_proof: 'Dated production dogfood acceptance receipt plus green verification and PR/CI.'
+    likely_misfire: 'Treating dogfood proof as permission to deploy, publish, rotate credentials, clean dogfood data, or invite a beta user.'
+    hard_constraints:
+      - 'Allowed live mutation is limited to one new dogfood item and one upvote in the existing dogfood board.'
+      - 'No production deploy, D1 mutation outside normal item/upvote writes, credential or secret change, npm publish, package version bump, or destructive dogfood cleanup.'
+      - 'No hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, status/admin workflow, monitoring implementation, or backup/export/restore automation.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-closed-beta-acceptance-rehearsal/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Run non-mutating target preflight checks before browser dogfood mutation.'
+    allowed_files:
+      - 'docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/state.yaml'
+      - 'docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/notes/.gitkeep'
+      - 'docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/notes/T001-worker.md'
+    acceptance:
+      - 'Doctor passes for the production dogfood target.'
+      - 'Deploy smoke passes for health, board.js, allowed CORS, disallowed CORS, items, and events.'
+      - 'GitHub dogfood repo is reachable and existing issues can be inspected without changing them.'
+      - 'No browser mutation occurs until preflight passes.'
+    verify:
+      - 'npm run doctor:selfhost -- --env production --host-origin https://bugdrop.dev --repo mean-weasel/bugdrop-board-production-dogfood --board-id board_mean_weasel_bugdrop_board_production_dogfood --worker-url https://board.bugdrop.dev --token-endpoint https://bugdrop.dev/api/bugdrop-board-token?viewer=a'
+      - 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production --cors-origin https://bugdrop.dev --cors-disallowed-origin https://evil.example --cors-board-id board_mean_weasel_bugdrop_board_production_dogfood --cors-token-endpoint https://bugdrop.dev/api/bugdrop-board-token?viewer=a'
+      - 'gh issue list --repo mean-weasel/bugdrop-board-production-dogfood --state open --limit 5 --json number,title,url'
+    stop_if:
+      - 'Preflight requires deploys, credential changes, secret inspection, destructive cleanup, or production config mutation.'
+    receipt:
+      result: done
+      changed_files:
+        - 'docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/state.yaml'
+        - 'docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/notes/T001-worker.md'
+      summary: 'Preflight passed without browser mutation: self-host doctor, deployed smoke with allowed/disallowed CORS, and GitHub issue-list visibility.'
+      commands:
+        - command: 'npm run doctor:selfhost -- --env production --host-origin https://bugdrop.dev --repo mean-weasel/bugdrop-board-production-dogfood --board-id board_mean_weasel_bugdrop_board_production_dogfood --worker-url https://board.bugdrop.dev --token-endpoint https://bugdrop.dev/api/bugdrop-board-token?viewer=a'
+          status: pass
+          evidence: '17 pass, 0 warn, 0 fail.'
+        - command: 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production --cors-origin https://bugdrop.dev --cors-disallowed-origin https://evil.example --cors-board-id board_mean_weasel_bugdrop_board_production_dogfood --cors-token-endpoint https://bugdrop.dev/api/bugdrop-board-token?viewer=a'
+          status: pass
+          evidence: 'Health production; /board.js 200 text/javascript; allowed CORS set to https://bugdrop.dev; disallowed origin returned no allow-origin.'
+        - command: 'gh issue list --repo mean-weasel/bugdrop-board-production-dogfood --state open --limit 5 --json number,title,url'
+          status: pass
+          evidence: 'Returned current open dogfood issues #10, #9, #8, #7, and #6.'
+      note: 'docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/notes/T001-worker.md'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Run live two-viewer production dogfood acceptance proof and record raw evidence.'
+    allowed_files:
+      - 'docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/state.yaml'
+      - 'docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/notes/T002-worker.md'
+    acceptance:
+      - 'Viewer A and Viewer B load the live embedded board.'
+      - 'Viewer A creates one uniquely titled acceptance item.'
+      - 'Viewer B sees the item through polling.'
+      - 'One viewer upvotes; both viewers see count 1 with viewer-specific selected state.'
+      - 'Refresh preserves item, GitHub link, count, and selected state.'
+      - 'GitHub issue and API read-back agree with browser proof.'
+    verify:
+      - 'two-viewer browser automation against https://bugdrop.dev/board-dogfood?viewer=a and ?viewer=b'
+      - 'gh issue view <new issue> --repo mean-weasel/bugdrop-board-production-dogfood --json number,title,state,url,body'
+      - 'API read-back for Viewer A and Viewer B without logging token values'
+    stop_if:
+      - 'Browser proof would require exposing secrets, changing credentials, deploying, cleaning dogfood data, or creating more than one item/upvote.'
+    receipt:
+      result: done
+      changed_files:
+        - 'docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/state.yaml'
+        - 'docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/notes/T002-worker.md'
+      summary: 'Live two-viewer production dogfood acceptance proof passed with one created item, GitHub issue #11, one Viewer B upvote, polling visibility, refresh persistence, GitHub proof, and API agreement.'
+      commands:
+        - command: 'read-only Playwright probe of https://bugdrop.dev/board-dogfood?viewer=a'
+          status: pass
+          evidence: 'Confirmed current labels/placeholders/buttons and no console errors before mutation.'
+        - command: 'two-viewer Playwright acceptance proof'
+          status: pass
+          evidence: 'Created `Closed beta acceptance rehearsal 20260607T014840Z`; Viewer B saw it through polling, upvoted it, Viewer A saw count 1 unselected, refresh preserved state, and API read-back agreed for both viewers.'
+        - command: 'gh issue view 11 --repo mean-weasel/bugdrop-board-production-dogfood --json number,title,state,url,createdAt,body'
+          status: pass
+          evidence: 'Issue #11 is open, has the matching title, and includes `BugDrop Board item: item_a33f58acf757e85041d4be6e`.'
+      note: 'docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/notes/T002-worker.md'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Write and verify the dated acceptance rehearsal receipt.'
+    allowed_files:
+      - 'docs/production-dogfood-results/2026-06-06-closed-beta-acceptance-rehearsal.md'
+      - 'docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/state.yaml'
+      - 'docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/notes/T003-worker.md'
+    acceptance:
+      - 'Receipt records decision, targets, unique item, GitHub issue, browser proof, API proof, redaction proof, scope audit, and remaining status.'
+      - 'Receipt says whether the dogfood target is go, conditional-go, no-go, or blocked.'
+      - 'Receipt contains no token values, cookies, secret files, or screenshots of secret screens.'
+    verify:
+      - 'npx prettier --check docs/production-dogfood-results/2026-06-06-closed-beta-acceptance-rehearsal.md docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/state.yaml docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/notes/*.md'
+      - 'secret-shaped value scan over the receipt and GoalBuddy notes'
+      - 'forbidden-scope scan for deploys, credential changes, publishing, destructive cleanup, and excluded product work'
+    stop_if:
+      - 'Receipt would need to include secret values or unverified claims.'
+    receipt:
+      result: done
+      changed_files:
+        - 'docs/production-dogfood-results/2026-06-06-closed-beta-acceptance-rehearsal.md'
+        - 'docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/state.yaml'
+        - 'docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/notes/T003-worker.md'
+      summary: 'Wrote the dated closed-beta acceptance rehearsal receipt with decision, targets, preflight, browser proof, GitHub proof, API proof, redaction proof, scope audit, and remaining status.'
+      commands:
+        - command: 'manual receipt write from T001/T002 proof'
+          status: pass
+          evidence: 'Receipt records issue #11, item id item_a33f58acf757e85041d4be6e, Viewer A/B API agreement, and the conditional first-beta status.'
+      note: 'docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/notes/T003-worker.md'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether the acceptance rehearsal satisfies the oracle.'
+    expected_output: 'Final receipt with decision, proof commands, strongest failure mode, and remaining status.'
+    verify:
+      - 'npm run format:check'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/state.yaml'
+      - 'focused receipt scan for all acceptance proof sections'
+      - 'forbidden-scope scan'
+      - 'git diff --check'
+    stop_if:
+      - 'Any acceptance claim lacks command, browser, GitHub, API, or receipt-backed proof.'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: 'Closed-beta acceptance rehearsal oracle is satisfied for the production dogfood target: doctor, deploy smoke, live two-viewer browser proof, GitHub issue #11, API agreement, receipt, redaction scan, and scope audit all passed.'
+      evidence:
+        - '`npm run doctor:selfhost -- ...bugdrop.dev...` passed with 17 checks, 0 warnings, and 0 failures.'
+        - '`npm run deploy:smoke -- ...bugdrop.dev...` passed for production health, board.js, allowed CORS, disallowed CORS, items, and events.'
+        - 'Playwright live proof created `Closed beta acceptance rehearsal 20260607T014840Z`, confirmed Viewer B polling visibility, Viewer B prioritize, Viewer A count sync, refresh persistence, and empty console/page error arrays during the passing proof.'
+        - '`gh issue view 11 --repo mean-weasel/bugdrop-board-production-dogfood --json number,title,state,url,createdAt,body` confirmed the mirrored issue and board item id.'
+        - 'API read-back agreed for Viewer A and Viewer B: issue #11, item id `item_a33f58acf757e85041d4be6e`, upvote count 1, Viewer A not upvoted, Viewer B upvoted.'
+        - 'Receipt, secret-shaped scan, forbidden-scope scan, format check, GoalBuddy checker, and `git diff --check` passed.'
+      strongest_failure_mode: 'The proof could accidentally create extra dogfood data or overstate beta readiness. The first script created exactly one item then stopped before upvote due to stale link-text assertion; the second script reused that same item, and the receipt limits the go decision to the existing dogfood target while keeping first real beta invite conditional.'
+      remaining_status: 'Production dogfood target is go; first real beta invite still requires target-app proof and beta-user acceptance of limitations.'
+      note: 'docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/notes/T999-judge-final.md'
+
+checks:
+  dirty_fingerprint: null
+  last_verification:
+    result: pass
+    task: T999
+    commands:
+      - 'npm run doctor:selfhost -- --env production --host-origin https://bugdrop.dev --repo mean-weasel/bugdrop-board-production-dogfood --board-id board_mean_weasel_bugdrop_board_production_dogfood --worker-url https://board.bugdrop.dev --token-endpoint https://bugdrop.dev/api/bugdrop-board-token?viewer=a'
+      - 'npm run deploy:smoke -- --url https://board.bugdrop.dev --expect-environment production --cors-origin https://bugdrop.dev --cors-disallowed-origin https://evil.example --cors-board-id board_mean_weasel_bugdrop_board_production_dogfood --cors-token-endpoint https://bugdrop.dev/api/bugdrop-board-token?viewer=a'
+      - 'gh issue list --repo mean-weasel/bugdrop-board-production-dogfood --state open --limit 5 --json number,title,url'
+      - 'two-viewer Playwright acceptance proof against https://bugdrop.dev/board-dogfood?viewer=a and ?viewer=b'
+      - 'gh issue view 11 --repo mean-weasel/bugdrop-board-production-dogfood --json number,title,state,url,createdAt,body'
+      - 'manual receipt write from T001/T002 proof'
+      - 'npx prettier --check docs/production-dogfood-results/2026-06-06-closed-beta-acceptance-rehearsal.md docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/state.yaml docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/notes/*.md'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-closed-beta-acceptance-rehearsal/state.yaml'
+      - 'secret-shaped value scan over the receipt and GoalBuddy notes'
+      - 'forbidden-scope scan'
+      - 'git diff --check'
