@@ -44,6 +44,7 @@
     "deploy:workflow:check": "node scripts/verify-deploy-workflow.js",
     "package:workflow:check": "node scripts/verify-package-workflow.js",
     "provision:board": "node scripts/provision-board.js",
+    "dogfood:seed-kanban": "node scripts/seed-dogfood-kanban-statuses.js",
     "staging:secrets": "node scripts/staging-secrets.js",
     "test": "vitest run",
     "test:node": "vitest run --config vitest.node.config.ts",
