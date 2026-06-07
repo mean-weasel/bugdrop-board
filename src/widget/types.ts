@@ -16,7 +16,7 @@ export interface BoardWidgetCustomization {
 
 export type BoardWidgetDensity = 'compact' | 'comfortable' | 'spacious';
 
-export type BoardWidgetLayout = 'inline' | 'panel';
+export type BoardWidgetLayout = 'inline' | 'panel' | 'kanban';
 
 export interface BoardWidgetCopy {
   heading: string;

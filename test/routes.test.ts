@@ -69,6 +69,14 @@ describe('api routes', () => {
     });
   });
 
+  it('redirects the worker root to the live dogfood board host page', async () => {
+    const api = createApi();
+    const res = await api.request('/', {}, env());
+
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('https://bugdrop.dev/board-dogfood');
+  });
+
   it('rejects item creation without a bearer token', async () => {
     const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName });
     const issueCreator = createIssueCreator();

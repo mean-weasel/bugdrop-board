@@ -68,6 +68,52 @@ describe('widget DOM rendering', () => {
     expect(button?.getAttribute('aria-label')).toBe('Remove upvote from Add dark mode. 3 upvotes.');
   });
 
+  it('renders board items in kanban status lanes when configured', () => {
+    const root = render(
+      state({
+        loading: false,
+        items: [
+          {
+            id: 'item_1',
+            title: 'Add invite cohorts',
+            description: 'Segment beta testers by rollout stage.',
+            status: 'open',
+            upvoteCount: 12,
+          },
+          {
+            id: 'item_2',
+            title: 'Release health dashboard',
+            description: 'Track feedback after launch.',
+            status: 'in_progress',
+            upvoteCount: 8,
+          },
+          {
+            id: 'item_3',
+            title: 'Public changelog',
+            description: 'Show shipped requests.',
+            status: 'shipped',
+            upvoteCount: 3,
+          },
+        ],
+      }),
+      {},
+      DEFAULT_COPY,
+      'kanban'
+    );
+
+    const lanes = root.querySelectorAll('.bugdrop-board__lane');
+
+    expect(lanes).toHaveLength(4);
+    expect(lanes[0].querySelector('.bugdrop-board__lane-title')?.textContent).toBe('Open');
+    expect(lanes[0].querySelector('.bugdrop-board__lane-count')?.textContent).toBe('1');
+    expect(lanes[0].textContent).toContain('Add invite cohorts');
+    expect(lanes[2].querySelector('.bugdrop-board__lane-title')?.textContent).toBe('Building');
+    expect(lanes[2].textContent).toContain('Release health dashboard');
+    expect(lanes[2].textContent).toContain('In progress');
+    expect(lanes[3].querySelector('.bugdrop-board__lane-title')?.textContent).toBe('Shipped');
+    expect(lanes[3].textContent).toContain('Public changelog');
+  });
+
   it('injects conservative CSS custom-property hooks with data-color as the default accent', () => {
     const host = document.createElement('div');
     const shadow = host.attachShadow({ mode: 'open' });
@@ -81,6 +127,7 @@ describe('widget DOM rendering', () => {
     expect(css).toContain('var(--bugdrop-board-surface)');
     expect(css).toContain('var(--bugdrop-board-danger)');
     expect(css).toContain(':host([data-bugdrop-board-layout="panel"])');
+    expect(css).toContain(':host([data-bugdrop-board-layout="kanban"])');
   });
 
   it('renders configurable copy while preserving accessible upvote labels', () => {
@@ -142,7 +189,7 @@ describe('widget DOM rendering', () => {
           expect(selector).toBe('#bugdrop-board-config');
           const element = new MiniElement('script');
           element.textContent = JSON.stringify({
-            layout: 'panel',
+            layout: 'kanban',
             density: 'spacious',
             copy: { heading: 'Ideas', submitLabel: 'Add idea' },
             theme: {
@@ -162,7 +209,7 @@ describe('widget DOM rendering', () => {
 
     expect(config.copy.heading).toBe('Ideas');
     expect(config.copy.submitLabel).toBe('Add idea');
-    expect(config.layout).toBe('panel');
+    expect(config.layout).toBe('kanban');
     expect(config.density).toBe('compact');
     expect(host.style.getPropertyValue('--bugdrop-board-accent')).toBe('#1f883d');
     expect(host.style.getPropertyValue('--bugdrop-board-radius')).toBe('2px');
@@ -170,7 +217,7 @@ describe('widget DOM rendering', () => {
   });
 });
 
-function render(overrides: BoardState, handlers = {}, copy = DEFAULT_COPY) {
+function render(overrides: BoardState, handlers = {}, copy = DEFAULT_COPY, layout = 'inline') {
   const root = document.createElement('div');
   renderBoard(
     root,
@@ -181,7 +228,8 @@ function render(overrides: BoardState, handlers = {}, copy = DEFAULT_COPY) {
       onRetry: vi.fn(),
       ...handlers,
     },
-    copy
+    copy,
+    layout
   );
   return root;
 }

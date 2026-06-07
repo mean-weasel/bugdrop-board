@@ -7,7 +7,7 @@ import type {
 } from './types';
 
 const DENSITIES = new Set<BoardWidgetDensity>(['compact', 'comfortable', 'spacious']);
-const LAYOUTS = new Set<BoardWidgetLayout>(['inline', 'panel']);
+const LAYOUTS = new Set<BoardWidgetLayout>(['inline', 'panel', 'kanban']);
 
 const THEME_TOKEN_TO_CSS_PROPERTY = {
   accent: '--bugdrop-board-accent',
