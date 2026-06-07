@@ -402,6 +402,9 @@ keys and are ignored if they contain stylesheet-breaking characters such as `{`,
 
 ### Customization Examples
 
+For screenshot-ready examples across five host-app aesthetics, see
+[Custom UX Examples](docs/marketing/custom-ux-examples.md).
+
 Compact SaaS:
 
 ```json

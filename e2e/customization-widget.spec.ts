@@ -1,48 +1,22 @@
 import { mkdir } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { expect, test } from '@playwright/test';
-import { type CustomizationVariant, provisionBoard, startHostApp } from './fixtures/host-app';
+import { CUSTOMIZATION_VARIANTS } from './fixtures/customization-variants';
+import { provisionBoard, startHostApp } from './fixtures/host-app';
 
-const VARIANTS: Array<{
-  buttonName: string;
-  density: string;
-  heading: string;
-  itemTitle: string;
-  layout: string;
-  pressedButtonName: string;
-  screenshot: string;
-  variant: CustomizationVariant;
-}> = [
-  {
-    buttonName: 'Prioritize Compact SaaS request. 0 upvotes.',
-    density: 'compact',
-    heading: 'Roadmap queue',
-    itemTitle: 'Compact SaaS request',
-    layout: 'panel',
-    pressedButtonName: 'Remove prioritize from Compact SaaS request. 1 upvote.',
-    screenshot: 'compact-saas.png',
-    variant: 'compact-saas',
-  },
-  {
-    buttonName: 'Cheer Soft community idea. 0 upvotes.',
-    density: 'comfortable',
-    heading: 'Community ideas',
-    itemTitle: 'Soft community idea',
-    layout: 'panel',
-    pressedButtonName: 'Remove cheer from Soft community idea. 1 upvote.',
-    screenshot: 'soft-community.png',
-    variant: 'soft-community',
-  },
-  {
-    buttonName: 'Support High contrast request. 0 upvotes.',
-    density: 'spacious',
-    heading: 'Accessibility requests',
-    itemTitle: 'High contrast request',
-    layout: 'panel',
-    pressedButtonName: 'Remove support from High contrast request. 1 upvote.',
-    screenshot: 'high-contrast.png',
-    variant: 'high-contrast',
-  },
-];
+const VARIANTS = Object.keys(CUSTOMIZATION_VARIANTS).map(variant => ({
+  config: CUSTOMIZATION_VARIANTS[variant as keyof typeof CUSTOMIZATION_VARIANTS],
+  variant: variant as keyof typeof CUSTOMIZATION_VARIANTS,
+}));
+
+const SCREENSHOT_DIR =
+  process.env.BUGDROP_BOARD_MARKETING_SCREENSHOT_DIR &&
+  resolve(process.env.BUGDROP_BOARD_MARKETING_SCREENSHOT_DIR);
+
+const ISSUE_LINK_PATTERN = /Issue #|Tracked as #|Spec #|Experiment #/;
+const TITLE_LABEL_PATTERN = /Request|Idea|Barrier|Endpoint|Bet/;
+const DESCRIPTION_LABEL_PATTERN = /Business context|Tell us more|Impact|Use case|Signal/;
+const SUBMIT_BUTTON_PATTERN = /Add request|Share idea|Submit access request|Send feedback|Add bet/;
 
 test.describe('customized embedded board variants', () => {
   for (const variant of VARIANTS) {
@@ -55,39 +29,41 @@ test.describe('customized embedded board variants', () => {
       try {
         await page.goto(`${host.url}/viewer-a`);
 
-        await expect(page.getByRole('heading', { name: variant.heading })).toBeVisible();
+        await expect(
+          page.getByRole('heading', { name: variant.config.config.copy.heading })
+        ).toBeVisible();
         await expect(page.getByText(/No .*yet\./)).toBeVisible();
 
         const rootState = await page.locator('[data-bugdrop-board-root]').evaluate(hostRoot => ({
           density: (hostRoot as HTMLElement).dataset.bugdropBoardDensity,
           layout: (hostRoot as HTMLElement).dataset.bugdropBoardLayout,
         }));
-        expect(rootState).toEqual({ density: variant.density, layout: variant.layout });
+        expect(rootState).toEqual({
+          density: variant.config.config.density,
+          layout: variant.config.config.layout,
+        });
 
-        await page.getByLabel(/Request|Idea|Barrier/).fill(variant.itemTitle);
+        await page.getByLabel(TITLE_LABEL_PATTERN).fill(variant.config.itemTitle);
         await page
-          .getByLabel(/Business context|Tell us more|Impact/)
+          .getByLabel(DESCRIPTION_LABEL_PATTERN)
           .fill(`Visual proof for ${variant.variant}.`);
-        await page
-          .getByRole('button', { name: /Add request|Share idea|Submit access request/ })
-          .click();
+        await page.getByRole('button', { name: SUBMIT_BUTTON_PATTERN }).click();
 
-        await expect(page.getByText(variant.itemTitle)).toBeVisible();
-        await expect(page.getByRole('link', { name: /Issue #|Tracked as #/ })).toBeVisible();
+        await expect(page.getByText(variant.config.itemTitle)).toBeVisible();
+        await expect(page.getByRole('link', { name: ISSUE_LINK_PATTERN })).toBeVisible();
 
-        const upvote = page.getByRole('button', { name: variant.buttonName });
+        const upvote = page.getByRole('button', { name: variant.config.upvoteButtonName });
         await expect(upvote).toHaveAttribute('aria-pressed', 'false');
         await upvote.click();
-        await expect(page.getByRole('button', { name: variant.pressedButtonName })).toHaveAttribute(
-          'aria-pressed',
-          'true'
-        );
+        await expect(
+          page.getByRole('button', { name: variant.config.upvotedButtonName })
+        ).toHaveAttribute('aria-pressed', 'true');
 
-        const screenshotDir = testInfo.outputPath('customization-variants');
+        const screenshotDir = SCREENSHOT_DIR ?? testInfo.outputPath('customization-variants');
         await mkdir(screenshotDir, { recursive: true });
         await page.screenshot({
           fullPage: true,
-          path: `${screenshotDir}/${variant.screenshot}`,
+          path: `${screenshotDir}/${variant.config.screenshot}`,
         });
       } finally {
         await host.close();
