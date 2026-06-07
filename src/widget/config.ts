@@ -1,12 +1,18 @@
 import type {
   BoardWidgetCopy,
+  BoardWidgetComposer,
   BoardWidgetCustomization,
   BoardWidgetDensity,
+  BoardWidgetEmptyLaneDisplay,
+  BoardWidgetIssueLinks,
   BoardWidgetLayout,
   BoardWidgetTheme,
 } from './types';
 
+const COMPOSERS = new Set<BoardWidgetComposer>(['inline', 'collapsed']);
 const DENSITIES = new Set<BoardWidgetDensity>(['compact', 'comfortable', 'spacious']);
+const EMPTY_LANE_DISPLAYS = new Set<BoardWidgetEmptyLaneDisplay>(['visible', 'compact', 'hidden']);
+const ISSUE_LINKS = new Set<BoardWidgetIssueLinks>(['visible', 'hidden']);
 const LAYOUTS = new Set<BoardWidgetLayout>(['inline', 'panel', 'kanban']);
 
 const THEME_TOKEN_TO_CSS_PROPERTY = {
@@ -70,7 +76,12 @@ export function readCustomization(
   doc: Pick<Document, 'querySelector'> = document
 ): BoardWidgetCustomization {
   const fromJson = readJsonCustomization(script, doc);
+  const composer = parseComposer(script.dataset.composer ?? fromJson.composer);
   const density = parseDensity(script.dataset.density ?? fromJson.density);
+  const emptyLaneDisplay = parseEmptyLaneDisplay(
+    script.dataset.emptyLaneDisplay ?? fromJson.emptyLaneDisplay
+  );
+  const issueLinks = parseIssueLinks(script.dataset.issueLinks ?? fromJson.issueLinks);
   const layout = parseLayout(script.dataset.layout ?? fromJson.layout);
   const copy = { ...DEFAULT_COPY, ...pickStringMap(fromJson.copy, Object.keys(DEFAULT_COPY)) };
   const theme = pickStringMap(fromJson.theme, Object.keys(THEME_TOKEN_TO_CSS_PROPERTY));
@@ -79,15 +90,18 @@ export function readCustomization(
     theme.accent = script.dataset.color;
   }
 
-  return { copy, density, layout, theme };
+  return { composer, copy, density, emptyLaneDisplay, issueLinks, layout, theme };
 }
 
 export function applyCustomization(
   host: HTMLElement,
   customization: BoardWidgetCustomization
 ): void {
+  host.dataset.bugdropBoardComposer = customization.composer;
   host.dataset.bugdropBoardLayout = customization.layout;
   host.dataset.bugdropBoardDensity = customization.density;
+  host.dataset.bugdropBoardEmptyLaneDisplay = customization.emptyLaneDisplay;
+  host.dataset.bugdropBoardIssueLinks = customization.issueLinks;
 
   for (const [token, property] of Object.entries(THEME_TOKEN_TO_CSS_PROPERTY)) {
     const value = customization.theme[token as keyof BoardWidgetTheme];
@@ -101,8 +115,11 @@ function readJsonCustomization(
   script: HTMLScriptElement,
   doc: Pick<Document, 'querySelector'>
 ): {
+  composer?: unknown;
   copy?: unknown;
   density?: unknown;
+  emptyLaneDisplay?: unknown;
+  issueLinks?: unknown;
   layout?: unknown;
   theme?: unknown;
 } {
@@ -133,6 +150,24 @@ function parseDensity(value: unknown): BoardWidgetDensity {
   return typeof value === 'string' && DENSITIES.has(value as BoardWidgetDensity)
     ? (value as BoardWidgetDensity)
     : 'comfortable';
+}
+
+function parseComposer(value: unknown): BoardWidgetComposer {
+  return typeof value === 'string' && COMPOSERS.has(value as BoardWidgetComposer)
+    ? (value as BoardWidgetComposer)
+    : 'inline';
+}
+
+function parseEmptyLaneDisplay(value: unknown): BoardWidgetEmptyLaneDisplay {
+  return typeof value === 'string' && EMPTY_LANE_DISPLAYS.has(value as BoardWidgetEmptyLaneDisplay)
+    ? (value as BoardWidgetEmptyLaneDisplay)
+    : 'visible';
+}
+
+function parseIssueLinks(value: unknown): BoardWidgetIssueLinks {
+  return typeof value === 'string' && ISSUE_LINKS.has(value as BoardWidgetIssueLinks)
+    ? (value as BoardWidgetIssueLinks)
+    : 'visible';
 }
 
 function parseLayout(value: unknown): BoardWidgetLayout {

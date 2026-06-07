@@ -147,7 +147,12 @@ function mount(config: BoardWidgetConfig): void {
         onRetry: retryRefresh,
       },
       config.customization.copy,
-      config.customization.layout
+      {
+        composer: config.customization.composer,
+        emptyLaneDisplay: config.customization.emptyLaneDisplay,
+        issueLinks: config.customization.issueLinks,
+        layout: config.customization.layout,
+      }
     );
 
   rerender();

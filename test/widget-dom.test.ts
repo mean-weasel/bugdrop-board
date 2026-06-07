@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { applyCustomization, DEFAULT_COPY, readCustomization } from '../src/widget/config';
 import { renderBoard } from '../src/widget/dom';
 import { injectTheme } from '../src/widget/theme';
-import type { BoardState, BoardWidgetCustomization } from '../src/widget/types';
+import type { BoardState, BoardWidgetCustomization, BoardWidgetLayout } from '../src/widget/types';
 
 describe('widget DOM rendering', () => {
   beforeEach(() => {
@@ -63,7 +63,7 @@ describe('widget DOM rendering', () => {
     );
     const button = root.querySelector<HTMLButtonElement>('.bugdrop-board__upvote');
 
-    expect(button?.textContent).toBe('Upvoted 3');
+    expect(button?.textContent).toBe('Upvoted 3 votes');
     expect(button?.getAttribute('aria-pressed')).toBe('true');
     expect(button?.getAttribute('aria-label')).toBe('Remove upvote from Add dark mode. 3 upvotes.');
   });
@@ -98,7 +98,7 @@ describe('widget DOM rendering', () => {
       }),
       {},
       DEFAULT_COPY,
-      'kanban'
+      { layout: 'kanban' }
     );
 
     const lanes = root.querySelectorAll('.bugdrop-board__lane');
@@ -109,9 +109,66 @@ describe('widget DOM rendering', () => {
     expect(lanes[0].textContent).toContain('Add invite cohorts');
     expect(lanes[2].querySelector('.bugdrop-board__lane-title')?.textContent).toBe('Building');
     expect(lanes[2].textContent).toContain('Release health dashboard');
-    expect(lanes[2].textContent).toContain('In progress');
+    expect(lanes[2].textContent).not.toContain('In progress');
     expect(lanes[3].querySelector('.bugdrop-board__lane-title')?.textContent).toBe('Shipped');
     expect(lanes[3].textContent).toContain('Public changelog');
+  });
+
+  it('can collapse the composer so the board list is not pushed below a large form', () => {
+    const root = render(
+      state({
+        loading: false,
+        items: [
+          {
+            id: 'item_1',
+            title: 'SAML role mapping',
+            description: 'Admins need group-based access.',
+            status: 'open',
+            upvoteCount: 5,
+          },
+        ],
+      }),
+      {},
+      { ...DEFAULT_COPY, submitLabel: 'Add idea' },
+      { composer: 'collapsed' }
+    );
+
+    expect(root.querySelector('details')?.className).toBe('bugdrop-board__composer');
+    expect(root.querySelector('summary')?.textContent).toBe('Add idea');
+    expect(root.querySelector('.bugdrop-board__form')).toBeTruthy();
+    expect(root.querySelector('.bugdrop-board__item')?.textContent).toContain('SAML role mapping');
+  });
+
+  it('can hide GitHub issue links and empty kanban lanes for cleaner embedded demos', () => {
+    const root = render(
+      state({
+        loading: false,
+        items: [
+          {
+            id: 'item_1',
+            title: 'Export feedback to CSV',
+            description: 'Product teams need a planning export.',
+            status: 'open',
+            githubIssueNumber: 42,
+            githubIssueUrl: 'https://github.test/issues/42',
+            upvoteCount: 1,
+          },
+        ],
+      }),
+      {},
+      DEFAULT_COPY,
+      { emptyLaneDisplay: 'hidden', issueLinks: 'hidden', layout: 'kanban' }
+    );
+
+    const lanes = root.querySelectorAll('.bugdrop-board__lane');
+
+    expect(lanes).toHaveLength(1);
+    expect(lanes[0].querySelector('.bugdrop-board__lane-title')?.textContent).toBe('Open');
+    expect(root.querySelector('a')).toBeNull();
+    expect(root.querySelector('.bugdrop-board__status')).toBeNull();
+    expect(root.querySelector<HTMLButtonElement>('.bugdrop-board__upvote')?.textContent).toBe(
+      'Upvote 1 vote'
+    );
   });
 
   it('injects conservative CSS custom-property hooks with data-color as the default accent', () => {
@@ -128,6 +185,8 @@ describe('widget DOM rendering', () => {
     expect(css).toContain('var(--bugdrop-board-danger)');
     expect(css).toContain(':host([data-bugdrop-board-layout="panel"])');
     expect(css).toContain(':host([data-bugdrop-board-layout="kanban"])');
+    expect(css).toContain('data-bugdrop-board-empty-lane-display="hidden"');
+    expect(css).toContain('.bugdrop-board__composer-summary');
   });
 
   it('renders configurable copy while preserving accessible upvote labels', () => {
@@ -168,7 +227,7 @@ describe('widget DOM rendering', () => {
     expect(root.querySelector<HTMLTextAreaElement>('textarea')?.placeholder).toBe('Add context');
     expect(root.querySelector('a')?.textContent).toBe('GH-42');
     expect(root.querySelector<HTMLButtonElement>('.bugdrop-board__upvote')?.textContent).toBe(
-      'Boost 1'
+      'Boost 1 vote'
     );
     expect(
       root.querySelector<HTMLButtonElement>('.bugdrop-board__upvote')?.getAttribute('aria-label')
@@ -190,7 +249,10 @@ describe('widget DOM rendering', () => {
           const element = new MiniElement('script');
           element.textContent = JSON.stringify({
             layout: 'kanban',
+            composer: 'collapsed',
             density: 'spacious',
+            emptyLaneDisplay: 'hidden',
+            issueLinks: 'hidden',
             copy: { heading: 'Ideas', submitLabel: 'Add idea' },
             theme: {
               accent: '#111111',
@@ -209,15 +271,26 @@ describe('widget DOM rendering', () => {
 
     expect(config.copy.heading).toBe('Ideas');
     expect(config.copy.submitLabel).toBe('Add idea');
+    expect(config.composer).toBe('collapsed');
     expect(config.layout).toBe('kanban');
+    expect(config.emptyLaneDisplay).toBe('hidden');
+    expect(config.issueLinks).toBe('hidden');
     expect(config.density).toBe('compact');
+    expect(host.dataset.bugdropBoardComposer).toBe('collapsed');
+    expect(host.dataset.bugdropBoardEmptyLaneDisplay).toBe('hidden');
+    expect(host.dataset.bugdropBoardIssueLinks).toBe('hidden');
     expect(host.style.getPropertyValue('--bugdrop-board-accent')).toBe('#1f883d');
     expect(host.style.getPropertyValue('--bugdrop-board-radius')).toBe('2px');
     expect(host.style.getPropertyValue('--bugdrop-board-danger')).toBe('');
   });
 });
 
-function render(overrides: BoardState, handlers = {}, copy = DEFAULT_COPY, layout = 'inline') {
+function render(
+  overrides: BoardState,
+  handlers = {},
+  copy = DEFAULT_COPY,
+  options: BoardWidgetLayout | Parameters<typeof renderBoard>[4] = {}
+) {
   const root = document.createElement('div');
   renderBoard(
     root,
@@ -229,7 +302,7 @@ function render(overrides: BoardState, handlers = {}, copy = DEFAULT_COPY, layou
       ...handlers,
     },
     copy,
-    layout
+    typeof options === 'string' ? { layout: options as BoardWidgetLayout } : options
   );
   return root;
 }
@@ -247,8 +320,11 @@ function customization(
   overrides: Partial<BoardWidgetCustomization> = {}
 ): BoardWidgetCustomization {
   return {
+    composer: 'inline',
     copy: DEFAULT_COPY,
     density: 'comfortable',
+    emptyLaneDisplay: 'visible',
+    issueLinks: 'visible',
     layout: 'inline',
     theme: {},
     ...overrides,

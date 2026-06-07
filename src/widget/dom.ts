@@ -1,5 +1,13 @@
 import { DEFAULT_COPY } from './config';
-import type { BoardItemView, BoardState, BoardWidgetCopy, BoardWidgetLayout } from './types';
+import type {
+  BoardItemView,
+  BoardState,
+  BoardWidgetComposer,
+  BoardWidgetCopy,
+  BoardWidgetEmptyLaneDisplay,
+  BoardWidgetIssueLinks,
+  BoardWidgetLayout,
+} from './types';
 
 const KANBAN_LANES = [
   { key: 'open', title: 'Open', statuses: new Set(['open']) },
@@ -14,15 +22,23 @@ interface BoardDomHandlers {
   onRetry(): void;
 }
 
+interface BoardRenderOptions {
+  composer?: BoardWidgetComposer;
+  emptyLaneDisplay?: BoardWidgetEmptyLaneDisplay;
+  issueLinks?: BoardWidgetIssueLinks;
+  layout?: BoardWidgetLayout;
+}
+
 export function renderBoard(
   root: HTMLElement,
   state: BoardState,
   handlers: BoardDomHandlers,
   copy: BoardWidgetCopy = DEFAULT_COPY,
-  layout: BoardWidgetLayout = 'inline'
+  options: BoardRenderOptions = {}
 ): void {
   root.replaceChildren();
 
+  const renderOptions = withDefaultOptions(options);
   const shell = document.createElement('section');
   shell.className = 'bugdrop-board';
   shell.setAttribute('aria-busy', String(state.loading || Boolean(state.submitting)));
@@ -34,10 +50,17 @@ export function renderBoard(
   heading.textContent = copy.heading;
   header.append(heading);
 
-  const form = createForm(handlers, Boolean(state.submitting), copy);
+  const composer = createComposer(
+    handlers,
+    Boolean(state.submitting),
+    copy,
+    renderOptions.composer
+  );
   const list = document.createElement('div');
   list.className =
-    layout === 'kanban' ? 'bugdrop-board__list bugdrop-board__kanban' : 'bugdrop-board__list';
+    renderOptions.layout === 'kanban'
+      ? 'bugdrop-board__list bugdrop-board__kanban'
+      : 'bugdrop-board__list';
   list.setAttribute('aria-live', 'polite');
 
   if (state.loading) {
@@ -51,13 +74,15 @@ export function renderBoard(
     empty.className = 'bugdrop-board__empty';
     empty.textContent = copy.emptyLabel;
     list.append(empty);
-  } else if (layout === 'kanban') {
-    renderKanbanLanes(state.items, handlers, copy).forEach(lane => list.append(lane));
+  } else if (renderOptions.layout === 'kanban') {
+    renderKanbanLanes(state.items, handlers, copy, renderOptions).forEach(lane =>
+      list.append(lane)
+    );
   } else {
-    state.items.forEach(item => list.append(renderItem(item, handlers, copy)));
+    state.items.forEach(item => list.append(renderItem(item, handlers, copy, renderOptions)));
   }
 
-  shell.append(header, form);
+  shell.append(header, composer);
   if (state.error) {
     const error = document.createElement('p');
     error.className = 'bugdrop-board__error';
@@ -78,6 +103,35 @@ export function renderBoard(
   }
   shell.append(list);
   root.append(shell);
+}
+
+function withDefaultOptions(options: BoardRenderOptions): Required<BoardRenderOptions> {
+  return {
+    composer: options.composer ?? 'inline',
+    emptyLaneDisplay: options.emptyLaneDisplay ?? 'visible',
+    issueLinks: options.issueLinks ?? 'visible',
+    layout: options.layout ?? 'inline',
+  };
+}
+
+function createComposer(
+  handlers: BoardDomHandlers,
+  disabled: boolean,
+  copy: BoardWidgetCopy,
+  composer: BoardWidgetComposer
+): HTMLElement {
+  const form = createForm(handlers, disabled, copy);
+  if (composer === 'inline') {
+    return form;
+  }
+
+  const details = document.createElement('details');
+  details.className = 'bugdrop-board__composer';
+  const summary = document.createElement('summary');
+  summary.className = 'bugdrop-board__composer-summary';
+  summary.textContent = copy.submitLabel;
+  details.append(summary, form);
+  return details;
 }
 
 function createForm(
@@ -132,12 +186,22 @@ function createForm(
 function renderKanbanLanes(
   items: BoardItemView[],
   handlers: BoardDomHandlers,
-  copy: BoardWidgetCopy
+  copy: BoardWidgetCopy,
+  options: Required<BoardRenderOptions>
 ): HTMLElement[] {
-  return KANBAN_LANES.map(lane => {
+  const lanes: HTMLElement[] = [];
+
+  for (const lane of KANBAN_LANES) {
     const laneItems = items.filter(item => statusBelongsInLane(item.status, lane.statuses));
+    if (laneItems.length === 0 && options.emptyLaneDisplay === 'hidden') {
+      continue;
+    }
+
     const section = document.createElement('section');
     section.className = `bugdrop-board__lane bugdrop-board__lane--${lane.key}`;
+    if (laneItems.length === 0 && options.emptyLaneDisplay === 'compact') {
+      section.className += ' bugdrop-board__lane--compact-empty';
+    }
     section.setAttribute(
       'aria-label',
       `${lane.title} lane, ${laneItems.length} ${laneItems.length === 1 ? 'item' : 'items'}`
@@ -154,16 +218,18 @@ function renderKanbanLanes(
     header.append(title, count);
     section.append(header);
 
-    if (laneItems.length === 0) {
+    if (laneItems.length === 0 && options.emptyLaneDisplay !== 'compact') {
       const empty = document.createElement('p');
       empty.className = 'bugdrop-board__lane-empty';
       empty.textContent = 'No requests';
       section.append(empty);
     } else {
-      laneItems.forEach(item => section.append(renderItem(item, handlers, copy)));
+      laneItems.forEach(item => section.append(renderItem(item, handlers, copy, options)));
     }
-    return section;
-  });
+    lanes.push(section);
+  }
+
+  return lanes;
 }
 
 function statusBelongsInLane(status: string, laneStatuses: Set<string>): boolean {
@@ -181,7 +247,8 @@ function knownStatus(status: string): boolean {
 function renderItem(
   item: BoardItemView,
   handlers: BoardDomHandlers,
-  copy: BoardWidgetCopy
+  copy: BoardWidgetCopy,
+  options: Pick<Required<BoardRenderOptions>, 'issueLinks' | 'layout'>
 ): HTMLElement {
   const article = document.createElement('article');
   article.className = 'bugdrop-board__item';
@@ -189,9 +256,9 @@ function renderItem(
   const vote = document.createElement('button');
   vote.type = 'button';
   vote.className = 'bugdrop-board__upvote';
-  vote.textContent = `${item.viewerHasUpvoted ? copy.upvotedLabel : copy.upvoteLabel} ${
+  vote.textContent = `${item.viewerHasUpvoted ? copy.upvotedLabel : copy.upvoteLabel} ${voteCount(
     item.upvoteCount
-  }`;
+  )}`;
   vote.setAttribute('aria-pressed', String(Boolean(item.viewerHasUpvoted)));
   vote.setAttribute('aria-label', voteLabel(item, copy));
   vote.addEventListener('click', () => handlers.onUpvote(item.id));
@@ -204,27 +271,40 @@ function renderItem(
 
   const meta = document.createElement('div');
   meta.className = 'bugdrop-board__meta';
+  let hasMeta = false;
 
-  const status = document.createElement('span');
-  status.className = 'bugdrop-board__status';
-  status.textContent = statusLabel(item.status);
-  meta.append(status);
+  if (options.layout !== 'kanban') {
+    const status = document.createElement('span');
+    status.className = 'bugdrop-board__status';
+    status.textContent = statusLabel(item.status);
+    meta.append(status);
+    hasMeta = true;
+  }
 
-  if (item.githubIssueUrl && item.githubIssueNumber) {
+  if (options.issueLinks === 'visible' && item.githubIssueUrl && item.githubIssueNumber) {
     const issue = document.createElement('a');
     issue.href = item.githubIssueUrl;
     issue.target = '_blank';
     issue.rel = 'noreferrer';
     issue.textContent = `${copy.issuePrefix}${item.githubIssueNumber}`;
     meta.append(issue);
+    hasMeta = true;
   }
 
   const description = document.createElement('p');
   description.textContent = item.description;
 
-  content.append(title, meta, description);
+  content.append(title);
+  if (hasMeta) {
+    content.append(meta);
+  }
+  content.append(description);
   article.append(vote, content);
   return article;
+}
+
+function voteCount(count: number): string {
+  return `${count} ${count === 1 ? 'vote' : 'votes'}`;
 }
 
 function voteLabel(item: BoardItemView, copy: BoardWidgetCopy): string {
