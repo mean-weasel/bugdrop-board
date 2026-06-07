@@ -17,6 +17,7 @@ pending proof.
 | Upvote and polling proof    | Two viewers can see the same item, one viewer can upvote it, and polling updates the other viewer.                                                                      | [2026-06-06 Chrome Upvote Issue 9](production-dogfood-results/2026-06-06-chrome-upvote-issue-9.md), [Closed Beta Dogfood Script](closed-beta-dogfood-script.md)                         | Go when target-app dogfood proof passes.                                          |
 | Customization               | The widget can be styled and copied to fit the host app without forking internals.                                                                                      | [v0.2.0 Customization Release Prep](release-readiness-results/2026-06-06-v0.2.0-customization-release.md), README customization docs                                                    | Go when the host accepts the current customization contract.                      |
 | Ops handoff                 | Operator knows triage, safe evidence capture, rollback, support handoff, and manual backup/export boundaries.                                                           | [Closed Beta Ops Runbook](closed-beta-ops-runbook.md)                                                                                                                                   | Go when operator accepts manual ops ownership for closed beta.                    |
+| Final acceptance            | Maintainer records go, conditional-go, or no-go with global evidence, per-install proof, and accepted limitations.                                                      | [Closed Beta Final Acceptance](closed-beta-final-acceptance.md)                                                                                                                         | Go when the target-app decision is recorded.                                      |
 | Handoff docs                | Operator has runbook, dogfood script, readiness matrix, and risk handoff.                                                                                               | [Closed Beta Runbook](closed-beta-runbook.md), [Closed Beta Dogfood Script](closed-beta-dogfood-script.md), [Closed Beta Risks](closed-beta-risks.md)                                   | Go when beta user receives limitations and support path.                          |
 
 ## Go Criteria
@@ -29,6 +30,8 @@ pending proof.
 - The maintainer has a rollback path for the host app embed and Worker deployment.
 - The operator has reviewed [Closed Beta Ops Runbook](closed-beta-ops-runbook.md) and knows what
   evidence can be shared without exposing secrets.
+- The maintainer records the final decision in
+  [Closed Beta Final Acceptance](closed-beta-final-acceptance.md).
 
 ## No-Go Criteria
 

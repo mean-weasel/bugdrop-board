@@ -56,7 +56,8 @@ Closed beta is ready for a specific app only when a maintainer can show:
 8. Check [Closed Beta Readiness](closed-beta-readiness.md) and record any pending operator proof.
 9. Review [Closed Beta Ops Runbook](closed-beta-ops-runbook.md) so support, rollback, and manual
    backup/export boundaries are understood.
-10. Review [Closed Beta Risks](closed-beta-risks.md) with the beta user.
+10. Make the [Closed Beta Final Acceptance](closed-beta-final-acceptance.md) decision.
+11. Review [Closed Beta Risks](closed-beta-risks.md) with the beta user.
 
 ## Evidence To Capture
 
@@ -91,6 +92,9 @@ Record a dated handoff note for each beta install. Use this shape:
 
 Do not include token values, `.dev.vars`, `.deploy.secrets`, screenshots of secret screens, or raw
 browser cookies in the handoff note.
+
+For the final go, conditional-go, or no-go decision, use
+[Closed Beta Final Acceptance](closed-beta-final-acceptance.md).
 
 ## Support Path
 
