@@ -33,6 +33,24 @@ dogfood-style setup in a new app. It is intentionally limited to setup safety an
   npm run deploy:check:production
   ```
 
+- After `wrangler.toml` contains the intended production vars and D1 id, run the non-mutating
+  setup doctor:
+
+  ```bash
+  npm run doctor:selfhost -- \
+    --env production \
+    --host-origin https://app.example.com \
+    --repo owner/name \
+    --board-id board_owner_name \
+    --worker-url https://bugdrop-board.example.workers.dev \
+    --token-endpoint https://app.example.com/api/bugdrop-board-token
+  ```
+
+  The doctor is local by default. It checks setup drift and prints the exact follow-up
+  `deploy:smoke` command without deploying, mutating D1, changing secrets, publishing npm, or
+  creating GitHub Issues. Use `--check-cloudflare-auth` and `--check-github-token` only when the
+  maintainer explicitly wants non-mutating account/token reachability checks.
+
 ## 2. Cloudflare And D1
 
 - Create or choose the remote D1 database for the beta install.
@@ -133,6 +151,7 @@ Record these before calling the beta install ready:
 - D1 database name/id location, without secrets;
 - Worker URL and exact allowed host origins;
 - provisioned repo and board id;
+- doctor output summary;
 - deploy run or command summary;
 - deploy smoke output summary;
 - live embedded create/upvote/GitHub mirror proof;

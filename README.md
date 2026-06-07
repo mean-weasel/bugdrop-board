@@ -133,7 +133,26 @@ configuration should be explicit before the first deploy.
    Do not put these values in `wrangler.toml`, browser code, or the embed script. `.dev.vars` is
    only for local `wrangler dev`.
 
-5. Build and dry-run the production Worker bundle:
+5. Run the non-mutating self-host doctor before deploy or migration work:
+
+   ```bash
+   npm run doctor:selfhost -- \
+     --env production \
+     --host-origin https://app.example.com \
+     --repo mean-weasel/demo \
+     --board-id board_mean_weasel_demo \
+     --worker-url https://bugdrop-board.example.workers.dev \
+     --token-endpoint https://app.example.com/api/bugdrop-board-token
+   ```
+
+   The doctor checks the local toolchain, package metadata, ignored secret files, migrations,
+   production Wrangler vars, remote D1 binding/id, exact CORS origins, repo/board id shape, and
+   whether it can compose the follow-up `deploy:smoke` command. By default it does not contact
+   Cloudflare or GitHub and does not mutate D1, secrets, deployments, npm, or GitHub Issues. Add
+   `--check-cloudflare-auth` or `--check-github-token` only when you want explicit non-mutating
+   reachability checks.
+
+6. Build and dry-run the production Worker bundle:
 
    ```bash
    npm run deploy:check:production
@@ -144,13 +163,13 @@ configuration should be explicit before the first deploy.
    not use the top-level development Wrangler config for closed-beta or production installs; it
    intentionally defaults to wildcard local CORS and placeholder D1 ids.
 
-6. Apply remote D1 migrations:
+7. Apply remote D1 migrations:
 
    ```bash
    npx wrangler d1 migrations apply DB --remote --env production
    ```
 
-7. Provision one board for the app's GitHub repo:
+8. Provision one board for the app's GitHub repo:
 
    ```bash
    npm run provision:board -- --repo mean-weasel/demo --name "Demo Board" --remote --env production
@@ -159,21 +178,21 @@ configuration should be explicit before the first deploy.
    Save the printed `board.id`; that value becomes the embed script's `data-board-id`. Running the
    command again updates the board name and keeps the same repo-backed board id.
 
-8. Deploy the Worker:
+9. Deploy the Worker:
 
    ```bash
    npm run deploy:production
    ```
 
-9. Verify the deployed surface:
+10. Verify the deployed surface:
 
-   ```bash
-   curl https://bugdrop-board.example.workers.dev/health
-   curl -I https://bugdrop-board.example.workers.dev/board.js
-   ```
+```bash
+curl https://bugdrop-board.example.workers.dev/health
+curl -I https://bugdrop-board.example.workers.dev/board.js
+```
 
-   Then embed the script in a signed-in test page and confirm that a created item appears in the
-   configured GitHub repo and that a second browser session sees the upvote after polling.
+Then embed the script in a signed-in test page and confirm that a created item appears in the
+configured GitHub repo and that a second browser session sees the upvote after polling.
 
 Production readiness checklist:
 
@@ -184,6 +203,8 @@ Production readiness checklist:
 - Host token endpoint signs short-lived user tokens with matching secret, audience, issuer, and
   `boardId`.
 - GitHub access token can create issues in the provisioned board repo.
+- `npm run doctor:selfhost` passes for the intended Worker URL, host origin, repo, board id, and
+  token endpoint.
 - `npm run deploy:check:production`, `npm run validate`, `npm run test:e2e`, and `make check` pass
   before deploy.
 
