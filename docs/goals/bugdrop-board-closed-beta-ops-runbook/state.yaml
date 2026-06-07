@@ -1,0 +1,143 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Closed Beta Ops Runbook'
+  slug: 'bugdrop-board-closed-beta-ops-runbook'
+  kind: existing_plan
+  tranche: 'Manual closed-beta operations, support, rollback, and backup guidance only.'
+  status: done
+  oracle:
+    signal: 'A self-host closed-beta operator can triage, capture safe evidence, roll back, and understand manual backup/export boundaries from docs alone.'
+    cadence: 'after Worker and final Judge audit'
+    final_proof: 'Docs scans, format checks, GoalBuddy checker, forbidden-scope scan, and receipts.'
+  intake:
+    original_request: 'continue'
+    interpreted_outcome: 'Continue the closed-beta conveyor with a docs-only operator operations runbook for self-hosted beta installs.'
+    input_shape: specific
+    audience: 'Closed-beta self-host operators and maintainers'
+    authority: inferred
+    proof_type: artifact
+    completion_proof: 'Linked operations runbook plus scans proving required guidance and preserved exclusions.'
+    likely_misfire: 'Implementing monitoring, backup automation, deploys, incident tooling, or new product behavior instead of bounded operator documentation.'
+    hard_constraints:
+      - 'No runtime monitoring, alerting, incident response tooling, backup/export/restore automation, or product behavior.'
+      - 'No hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, or status/admin workflow.'
+      - 'No npm publish, package version bump, Cloudflare deploy, D1 mutation, Worker secret change, credential change, or secret rotation.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: not_started
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-closed-beta-ops-runbook/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-closed-beta-ops-runbook'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Create and link the closed-beta operator operations runbook.'
+    allowed_files:
+      - 'README.md'
+      - 'docs/closed-beta-runbook.md'
+      - 'docs/closed-beta-readiness.md'
+      - 'docs/closed-beta-risks.md'
+      - 'docs/closed-beta-ops-runbook.md'
+      - 'docs/goals/bugdrop-board-closed-beta-ops-runbook/goal.md'
+      - 'docs/goals/bugdrop-board-closed-beta-ops-runbook/state.yaml'
+      - 'docs/goals/bugdrop-board-closed-beta-ops-runbook/notes/.gitkeep'
+      - 'docs/goals/bugdrop-board-closed-beta-ops-runbook/notes/T001-worker.md'
+    acceptance:
+      - 'Operations runbook covers triage entry points, safe evidence capture, health/smoke checks, token/CORS/GitHub/D1/polling isolation, rollback, support handoff, and manual backup/export/restore boundaries.'
+      - 'Docs explicitly forbid pasting secrets, tokens, cookies, `.dev.vars`, `.deploy.secrets`, or screenshots of secret screens into receipts.'
+      - 'README, closed-beta runbook, readiness matrix, and risk handoff link to the operations runbook.'
+      - 'The slice stays documentation-only and does not add monitoring, backup automation, deploy, credential, or product behavior.'
+    verify:
+      - 'npx prettier --check README.md docs/closed-beta-runbook.md docs/closed-beta-readiness.md docs/closed-beta-risks.md docs/closed-beta-ops-runbook.md docs/goals/bugdrop-board-closed-beta-ops-runbook/goal.md docs/goals/bugdrop-board-closed-beta-ops-runbook/state.yaml docs/goals/bugdrop-board-closed-beta-ops-runbook/notes/*.md'
+      - 'focused rg scan for triage, evidence, health, smoke, token, CORS, GitHub, D1, polling, rollback, support, backup, export, restore, and secret-redaction guidance'
+      - 'forbidden-scope scan proving no implementation/deploy/credential/publish/product drift'
+    stop_if:
+      - 'The work requires runtime monitoring, alerting, incident tooling, backup/export/restore automation, product behavior, hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, status/admin workflow, npm publish/version bump, Cloudflare deploy, D1 mutation, or credential/secret changes.'
+    receipt:
+      result: done
+      changed_files:
+        - 'README.md'
+        - 'docs/closed-beta-runbook.md'
+        - 'docs/closed-beta-readiness.md'
+        - 'docs/closed-beta-risks.md'
+        - 'docs/closed-beta-ops-runbook.md'
+        - 'docs/goals/bugdrop-board-closed-beta-ops-runbook/goal.md'
+        - 'docs/goals/bugdrop-board-closed-beta-ops-runbook/state.yaml'
+        - 'docs/goals/bugdrop-board-closed-beta-ops-runbook/notes/.gitkeep'
+        - 'docs/goals/bugdrop-board-closed-beta-ops-runbook/notes/T001-worker.md'
+      summary: 'Created and linked the docs-only closed-beta operations runbook for support triage, safe evidence, rollback, and manual backup/export boundaries.'
+      commands:
+        - command: 'npx prettier --write README.md docs/closed-beta-runbook.md docs/closed-beta-readiness.md docs/closed-beta-risks.md docs/closed-beta-ops-runbook.md docs/goals/bugdrop-board-closed-beta-ops-runbook/goal.md docs/goals/bugdrop-board-closed-beta-ops-runbook/state.yaml docs/goals/bugdrop-board-closed-beta-ops-runbook/notes/T001-worker.md'
+          status: pass
+          evidence: 'Prettier completed; only docs/closed-beta-readiness.md changed during formatting.'
+        - command: 'focused rg scan for triage, evidence, health, smoke, token, CORS, GitHub, D1, polling, rollback, support, backup, export, restore, and secret-redaction guidance'
+          status: pass
+          evidence: 'Runbook contains first response, safe evidence, baseline checks, failure isolation, rollback, manual backup/export boundary, support handoff, and redaction warnings.'
+        - command: 'forbidden-scope added-line scan'
+          status: pass
+          evidence: 'No added implementation/deploy/credential/publish/product drift lines matched.'
+        - command: 'git diff --check'
+          status: pass
+          evidence: 'No whitespace errors.'
+      note: 'docs/goals/bugdrop-board-closed-beta-ops-runbook/notes/T001-worker.md'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether the operations runbook satisfies the oracle.'
+    expected_output: 'Final receipt with decision, proof commands, strongest failure mode, and residual risk.'
+    verify:
+      - 'npm run format:check'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-closed-beta-ops-runbook/state.yaml'
+      - 'focused rg scan for required ops guidance and secret-redaction warnings'
+      - 'forbidden-scope scan proving no implementation/deploy/credential/publish/product drift'
+      - 'git diff --check'
+    stop_if:
+      - 'Any runbook claim lacks source-backed repo context, direct text evidence, or receipt-backed proof.'
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: 'Closed-beta ops runbook oracle is satisfied: operators now have a linked manual triage, evidence, rollback, support, and backup/export boundary guide without runtime or credential-changing behavior.'
+      evidence:
+        - '`npm run format:check` passed.'
+        - 'GoalBuddy checker passed while T999 was active.'
+        - 'Focused scan found first response, safe evidence, baseline checks, setup/deploy, token, CORS, GitHub, D1, polling/upvote, rollback, manual backup/export, support handoff, and redaction guidance.'
+        - 'Forbidden-scope added-line scan returned no implementation, deploy, credential, publish, or product drift matches.'
+        - '`git diff --check` passed.'
+      strongest_failure_mode: 'The docs could accidentally ask operators to share secrets or perform manual data/deploy mutations as support steps. The runbook explicitly forbids token/cookie/secret-file/screenshot disclosure, keeps rollback and backup/export operator-controlled, and says it does not execute deploys, D1 mutations, rollback, or credential changes.'
+      note: 'docs/goals/bugdrop-board-closed-beta-ops-runbook/notes/T999-judge-final.md'
+
+checks:
+  dirty_fingerprint: null
+  last_verification:
+    result: pass
+    task: T999
+    commands:
+      - 'npm run format:check'
+      - 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.3.8/skills/goalbuddy/scripts/check-goal-state.mjs docs/goals/bugdrop-board-closed-beta-ops-runbook/state.yaml'
+      - 'focused rg scan for required ops guidance'
+      - 'forbidden-scope added-line scan'
+      - 'git diff --check'

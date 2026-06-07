@@ -54,7 +54,9 @@ Closed beta is ready for a specific app only when a maintainer can show:
 
 7. Complete [Closed Beta Dogfood Script](closed-beta-dogfood-script.md) for the target app.
 8. Check [Closed Beta Readiness](closed-beta-readiness.md) and record any pending operator proof.
-9. Review [Closed Beta Risks](closed-beta-risks.md) with the beta user.
+9. Review [Closed Beta Ops Runbook](closed-beta-ops-runbook.md) so support, rollback, and manual
+   backup/export boundaries are understood.
+10. Review [Closed Beta Risks](closed-beta-risks.md) with the beta user.
 
 ## Evidence To Capture
 
@@ -92,6 +94,8 @@ browser cookies in the handoff note.
 
 ## Support Path
 
+- For support triage, safe evidence capture, rollback, and manual backup/export boundaries, use
+  [Closed Beta Ops Runbook](closed-beta-ops-runbook.md).
 - Setup failure: start with `npm run doctor:selfhost`, then use
   [Closed Beta Setup Checklist](closed-beta-setup.md) and inspect the exact command output that
   failed.
@@ -119,5 +123,5 @@ This runbook does not perform rollback, deploys, or credential changes.
 
 Closed beta does not include hosted control plane, billing, realtime transport, comments, downvotes,
 GitHub Projects, status workflow, built-in monitoring, backup/export/restore automation, or
-operator incident tooling. Those are future product or operations boards, not requirements for this
-handoff.
+operator incident tooling. The ops runbook documents manual operator response only; those automated
+capabilities remain future product or operations boards.
