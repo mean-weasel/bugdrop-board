@@ -9,8 +9,13 @@ The examples are deliberately varied:
 - compact SaaS admin;
 - creator/community space;
 - developer portal;
+- finance console;
+- healthcare portal;
 - high-contrast accessibility board;
-- dark launch-planning room.
+- dark launch-planning room;
+- learning platform;
+- marketplace seller studio;
+- editorial/product studio.
 
 Regenerate the screenshots after widget styling changes:
 
@@ -131,6 +136,61 @@ npm run capture:marketing-examples
 }
 ```
 
+## Finance Console
+
+![Finance console BugDrop Board](assets/finance-console.png)
+
+```json
+{
+  "layout": "panel",
+  "density": "compact",
+  "copy": {
+    "heading": "Capital requests",
+    "submitLabel": "Propose",
+    "issuePrefix": "Ledger #",
+    "upvoteLabel": "Invest",
+    "upvotedLabel": "Invested"
+  },
+  "theme": {
+    "accent": "#047857",
+    "accentSoft": "#d1fae5",
+    "background": "#ffffff",
+    "border": "#a7f3d0",
+    "buttonRadius": "3px",
+    "itemRadius": "3px",
+    "maxWidth": "680px"
+  }
+}
+```
+
+## Health Portal
+
+![Health portal BugDrop Board](assets/health-portal.png)
+
+```json
+{
+  "layout": "panel",
+  "density": "spacious",
+  "copy": {
+    "heading": "Patient experience requests",
+    "submitLabel": "Request care fix",
+    "issuePrefix": "Care #",
+    "upvoteLabel": "Advocate",
+    "upvotedLabel": "Advocated"
+  },
+  "theme": {
+    "accent": "#0e7490",
+    "accentSoft": "#cffafe",
+    "background": "#ffffff",
+    "border": "#99f6e4",
+    "buttonRadius": "12px",
+    "fieldRadius": "12px",
+    "itemRadius": "16px",
+    "shadow": "0 18px 42px rgba(15, 118, 110, 0.12)"
+  }
+}
+```
+
 ## Launch Dark
 
 ![Launch dark BugDrop Board](assets/launch-dark.png)
@@ -158,6 +218,89 @@ npm run capture:marketing-examples
     "surface": "#18181b",
     "surfaceAlt": "#27272a",
     "text": "#f4f4f5"
+  }
+}
+```
+
+## Learning Platform
+
+![Learning platform BugDrop Board](assets/learning-platform.png)
+
+```json
+{
+  "layout": "panel",
+  "density": "comfortable",
+  "copy": {
+    "heading": "Course requests",
+    "submitLabel": "Add lesson",
+    "issuePrefix": "Lesson #",
+    "upvoteLabel": "Teach",
+    "upvotedLabel": "Teaching"
+  },
+  "theme": {
+    "accent": "#7c3aed",
+    "accentSoft": "#ede9fe",
+    "background": "#ffffff",
+    "border": "#c4b5fd",
+    "buttonRadius": "14px",
+    "fontFamily": "Nunito, ui-sans-serif, system-ui, sans-serif",
+    "itemRadius": "18px",
+    "shadow": "0 20px 60px rgba(76, 29, 149, 0.14)"
+  }
+}
+```
+
+## Marketplace
+
+![Marketplace BugDrop Board](assets/marketplace.png)
+
+```json
+{
+  "layout": "panel",
+  "density": "comfortable",
+  "copy": {
+    "heading": "Buyer demand",
+    "submitLabel": "Nominate",
+    "issuePrefix": "Listing #",
+    "upvoteLabel": "Stock",
+    "upvotedLabel": "Stocked"
+  },
+  "theme": {
+    "accent": "#ea580c",
+    "accentSoft": "#ffedd5",
+    "background": "#fffaf5",
+    "border": "#fed7aa",
+    "buttonRadius": "8px",
+    "itemRadius": "10px",
+    "surfaceAlt": "#ffedd5"
+  }
+}
+```
+
+## Studio Editorial
+
+![Studio editorial BugDrop Board](assets/studio-editorial.png)
+
+```json
+{
+  "layout": "inline",
+  "density": "spacious",
+  "copy": {
+    "heading": "Creative backlog",
+    "submitLabel": "Add brief",
+    "issuePrefix": "Brief #",
+    "upvoteLabel": "Fund",
+    "upvotedLabel": "Funded"
+  },
+  "theme": {
+    "accent": "#db2777",
+    "accentSoft": "#fce7f3",
+    "background": "transparent",
+    "border": "#e4e4e7",
+    "buttonRadius": "2px",
+    "fieldRadius": "2px",
+    "headingSize": "26px",
+    "itemRadius": "2px"
   }
 }
 ```

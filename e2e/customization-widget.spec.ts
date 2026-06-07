@@ -13,10 +13,14 @@ const SCREENSHOT_DIR =
   process.env.BUGDROP_BOARD_MARKETING_SCREENSHOT_DIR &&
   resolve(process.env.BUGDROP_BOARD_MARKETING_SCREENSHOT_DIR);
 
-const ISSUE_LINK_PATTERN = /Issue #|Tracked as #|Spec #|Experiment #/;
-const TITLE_LABEL_PATTERN = /Request|Idea|Barrier|Endpoint|Bet/;
-const DESCRIPTION_LABEL_PATTERN = /Business context|Tell us more|Impact|Use case|Signal/;
-const SUBMIT_BUTTON_PATTERN = /Add request|Share idea|Submit access request|Send feedback|Add bet/;
+const ISSUE_LINK_PATTERN =
+  /Issue #|Tracked as #|Spec #|Ledger #|Care #|Experiment #|Lesson #|Listing #|Brief #/;
+const TITLE_LABEL_PATTERN =
+  /Request|Idea|Barrier|Endpoint|Opportunity|Patient need|Bet|Lesson request|Listing idea|Creative brief/;
+const DESCRIPTION_LABEL_PATTERN =
+  /Business context|Tell us more|Impact|Use case|Why now|Care context|Signal|Classroom context|Buyer signal|Direction/;
+const SUBMIT_BUTTON_PATTERN =
+  /Add request|Share idea|Submit access request|Send feedback|Propose|Request care fix|Add bet|Add lesson|Nominate|Add brief/;
 
 test.describe('customized embedded board variants', () => {
   for (const variant of VARIANTS) {
