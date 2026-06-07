@@ -89,6 +89,12 @@ function shellCss(): string {
       border: var(--bugdrop-board-border-width) solid var(--bugdrop-board-border);
       padding: var(--bugdrop-board-item-padding);
     }
+    :host([data-bugdrop-board-layout="kanban"]) .bugdrop-board {
+      --bugdrop-board-max-width: 1120px;
+      background: var(--bugdrop-board-surface);
+      border: var(--bugdrop-board-border-width) solid var(--bugdrop-board-border);
+      padding: var(--bugdrop-board-item-padding);
+    }
     .bugdrop-board__header h2 {
       font-size: var(--bugdrop-board-heading-size);
       font-weight: 700;
@@ -98,6 +104,34 @@ function shellCss(): string {
     .bugdrop-board__list {
       display: grid;
       gap: var(--bugdrop-board-gap);
+    }
+    .bugdrop-board__kanban {
+      align-items: start;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      overflow-x: auto;
+    }
+    .bugdrop-board__lane {
+      background: var(--bugdrop-board-surface-alt);
+      border: var(--bugdrop-board-border-width) solid var(--bugdrop-board-border);
+      border-radius: var(--bugdrop-board-item-radius);
+      display: grid;
+      gap: var(--bugdrop-board-gap);
+      min-width: 180px;
+      padding: var(--bugdrop-board-item-padding);
+    }
+    .bugdrop-board__lane-header {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+    }
+    .bugdrop-board__lane-title {
+      font-size: 13px;
+      margin: 0;
+    }
+    .bugdrop-board__lane-count {
+      color: var(--bugdrop-board-muted);
+      font-size: 12px;
+      font-weight: 700;
     }
   `;
 }
@@ -167,6 +201,12 @@ function itemCss(): string {
     :host([data-bugdrop-board-layout="panel"]) .bugdrop-board__item {
       background: var(--bugdrop-board-surface-alt);
     }
+    :host([data-bugdrop-board-layout="kanban"]) .bugdrop-board__item {
+      grid-template-columns: 1fr;
+    }
+    :host([data-bugdrop-board-layout="kanban"]) .bugdrop-board__upvote {
+      justify-self: start;
+    }
     .bugdrop-board__item h3 {
       font-size: 16px;
       line-height: 1.25;
@@ -223,6 +263,11 @@ function stateCss(): string {
     }
     .bugdrop-board__retry {
       justify-self: start;
+    }
+    .bugdrop-board__lane-empty {
+      color: var(--bugdrop-board-muted);
+      font-size: 13px;
+      margin: 0;
     }
   `;
 }

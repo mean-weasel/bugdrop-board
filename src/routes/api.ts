@@ -48,6 +48,8 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
 
   api.post('/__e2e/reset', resetE2eBoard);
 
+  api.get('/', c => c.redirect('https://bugdrop.dev/board-dogfood', 302));
+
   api.get('/health', c => {
     return c.json({
       status: 'ok',

@@ -146,7 +146,8 @@ function mount(config: BoardWidgetConfig): void {
         },
         onRetry: retryRefresh,
       },
-      config.customization.copy
+      config.customization.copy,
+      config.customization.layout
     );
 
   rerender();
