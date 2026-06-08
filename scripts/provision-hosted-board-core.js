@@ -5,6 +5,7 @@ const ENV_PATTERN = /^[A-Za-z0-9_][A-Za-z0-9_-]*$/;
 const ID_PART_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
 const LAYOUTS = new Set(['inline', 'panel', 'kanban']);
 const DENSITIES = new Set(['compact', 'comfortable', 'spacious']);
+const TOKEN_VERIFIER_TYPES = new Set(['jwks', 'hmac_legacy']);
 const SECRET_KEYS = new Set([
   'accesstoken',
   'authorization',
@@ -30,7 +31,9 @@ export function parseHostedArgs(argv) {
     else if (arg === '--origin') options.origins.push(originValue(argv, (index += 1), arg));
     else if (arg === '--issuer') options.issuer = value(argv, (index += 1), arg);
     else if (arg === '--audience') options.audience = value(argv, (index += 1), arg);
-    else if (arg === '--jwks-url') options.jwksUrl = httpsUrlValue(argv, (index += 1), arg);
+    else if (arg === '--verifier-type') {
+      options.tokenVerifierType = oneOf(argv, (index += 1), arg, TOKEN_VERIFIER_TYPES);
+    } else if (arg === '--jwks-url') options.jwksUrl = httpsUrlValue(argv, (index += 1), arg);
     else if (arg === '--key-id') options.keyId = value(argv, (index += 1), arg);
     else if (arg === '--token-max-ttl-seconds') {
       options.maxTtlSeconds = positiveInteger(argv, (index += 1), arg);
@@ -70,7 +73,7 @@ export function buildHostedProvisioningPlan(options) {
       origins: options.origins,
       tokenVerifier: {
         id: ids.verifierId,
-        type: 'jwks',
+        type: tokenVerifierType(options),
         issuer: options.issuer,
         audience: options.audience,
         jwksUrl: options.jwksUrl,
@@ -119,13 +122,18 @@ export function redactHostedSetupOutput(value) {
 }
 
 function securityChecklist(options) {
-  return [
+  const checklist = [
     `Confirm allowed origin list includes only: ${options.origins.join(', ')}`,
     `Confirm host tokens use issuer ${options.issuer}`,
     `Confirm host tokens use audience ${options.audience}`,
     `Confirm GitHub installation ${options.githubInstallationId} is installed on the mirrored repo`,
     'Confirm the host token endpoint returns short-lived { token } responses for authenticated users',
   ];
+  if (tokenVerifierType(options) === 'hmac_legacy') {
+    checklist.push('Confirm the legacy HMAC token verifier uses the Worker BOARD_TOKEN_SECRET');
+    checklist.push('Confirm host tokens include tenantId and appId claims from the setup handoff');
+  }
+  return checklist;
 }
 
 function requireHostedOptions(options) {
@@ -138,7 +146,6 @@ function requireHostedOptions(options) {
     'repo',
     'issuer',
     'audience',
-    'jwksUrl',
     'githubInstallationId',
     'apiUrl',
     'tokenEndpoint',
@@ -146,8 +153,15 @@ function requireHostedOptions(options) {
   for (const key of required) {
     if (!options[key]) throw new Error(`Missing required --${kebab(key)}`);
   }
+  if (tokenVerifierType(options) === 'jwks' && !options.jwksUrl) {
+    throw new Error('Missing required --jwks-url for jwks verifier type');
+  }
   if (options.origins.length === 0) throw new Error('Expected at least one --origin');
   return options;
+}
+
+function tokenVerifierType(options) {
+  return options.tokenVerifierType ?? 'jwks';
 }
 
 function value(argv, index, flag) {

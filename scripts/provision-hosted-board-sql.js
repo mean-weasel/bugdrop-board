@@ -56,20 +56,24 @@ ON CONFLICT(app_id, origin) DO UPDATE SET
 }
 
 function upsertVerifierSql(ids, options) {
+  const verifierType = tokenVerifierType(options);
   return `INSERT INTO hosted_app_token_verifiers (
   id, tenant_id, app_id, verifier_type, issuer, audience, jwks_url, public_key_pem,
   key_id, secret_ref, max_ttl_seconds, status, is_default
 )
 VALUES (
-  ${sql(ids.verifierId)}, ${sql(ids.tenantId)}, ${sql(ids.appId)}, 'jwks',
-  ${sql(options.issuer)}, ${sql(options.audience)}, ${sql(options.jwksUrl)}, NULL,
-  ${nullableSql(options.keyId)}, NULL, ${options.maxTtlSeconds ?? 300}, 'active', 1
+  ${sql(ids.verifierId)}, ${sql(ids.tenantId)}, ${sql(ids.appId)}, ${sql(verifierType)},
+  ${sql(options.issuer)}, ${sql(options.audience)}, ${nullableSql(options.jwksUrl)}, NULL,
+  ${nullableSql(options.keyId)}, ${verifierType === 'hmac_legacy' ? sql('BOARD_TOKEN_SECRET') : 'NULL'}, ${options.maxTtlSeconds ?? 300}, 'active', 1
 )
 ON CONFLICT(id) DO UPDATE SET
+  verifier_type = excluded.verifier_type,
   issuer = excluded.issuer,
   audience = excluded.audience,
   jwks_url = excluded.jwks_url,
+  public_key_pem = excluded.public_key_pem,
   key_id = excluded.key_id,
+  secret_ref = excluded.secret_ref,
   max_ttl_seconds = excluded.max_ttl_seconds,
   status = 'active',
   is_default = 1,
@@ -120,4 +124,8 @@ function sql(item) {
 
 function idPart(value) {
   return String(value).replace(/[^A-Za-z0-9_]/g, '_');
+}
+
+function tokenVerifierType(options) {
+  return options.tokenVerifierType ?? 'jwks';
 }

@@ -41,6 +41,7 @@ npm run provision:hosted-board -- \
   --origin https://bugdrop.dev \
   --issuer https://bugdrop.dev \
   --audience bugdrop-board \
+  --verifier-type jwks \
   --jwks-url https://bugdrop.dev/.well-known/jwks.json \
   --github-installation-id 123456 \
   --api-url https://board.bugdrop.dev \
@@ -53,6 +54,11 @@ The command prints deterministic SQL plus a redacted setup handoff with the boar
 allowed origins, token verifier settings, GitHub installation metadata, and security checklist. Drop
 `--dry-run` and add `--remote --env production` only when the operator is ready to mutate the target
 D1 database.
+
+Use `--verifier-type jwks` with `--jwks-url` for new hosted beta apps that can publish signing
+keys. Use `--verifier-type hmac_legacy` only for migration or dogfood installs that intentionally
+share the Worker `BOARD_TOKEN_SECRET`; those host tokens must include `tenantId` and `appId` claims
+from the setup handoff.
 
 ## Local Setup
 

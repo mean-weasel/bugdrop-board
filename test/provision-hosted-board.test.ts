@@ -69,6 +69,21 @@ describe('provision-hosted-board helpers', () => {
     });
   });
 
+  it('parses hosted provisioning inputs for explicit hmac legacy verifier mode', () => {
+    const hmacArgs = REQUIRED_ARGS.filter((value, index, args) => {
+      const previous = args[index - 1];
+      return value !== '--jwks-url' && previous !== '--jwks-url';
+    });
+
+    const parsed = parseHostedArgs([...hmacArgs, '--verifier-type', 'hmac_legacy']);
+
+    expect(parsed).toMatchObject({
+      tokenVerifierType: 'hmac_legacy',
+      local: true,
+    });
+    expect(parsed).not.toHaveProperty('jwksUrl');
+  });
+
   it('builds hosted setup SQL for tenant, app, board, origins, verifier, GitHub connection, and board config', () => {
     const plan = buildHostedProvisioningPlan(
       parseHostedArgs([...REQUIRED_ARGS, '--board-name', "Ada's Requests"])
@@ -90,6 +105,29 @@ describe('provision-hosted-board helpers', () => {
     expect(plan.sql).toContain('INSERT INTO hosted_github_connections');
     expect(plan.sql).toContain('INSERT INTO hosted_board_configs');
     expect(plan.sql).toContain("'Ada''s Requests'");
+  });
+
+  it('builds hosted setup SQL for hmac legacy token verifier metadata', () => {
+    const hmacArgs = REQUIRED_ARGS.filter((value, index, args) => {
+      const previous = args[index - 1];
+      return value !== '--jwks-url' && previous !== '--jwks-url';
+    });
+    const plan = buildHostedProvisioningPlan(
+      parseHostedArgs([...hmacArgs, '--verifier-type', 'hmac_legacy'])
+    );
+
+    expect(plan.sql).toContain("'hmac_legacy'");
+    expect(plan.sql).toContain("'BOARD_TOKEN_SECRET'");
+    expect(plan.sql).not.toContain('https://bugdrop.dev/.well-known/jwks.json');
+    expect(plan.handoff.tokenVerifier).toMatchObject({
+      type: 'hmac_legacy',
+      jwksUrl: undefined,
+    });
+    expect(plan.handoff.securityChecklist).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('legacy HMAC token verifier uses the Worker BOARD_TOKEN_SECRET'),
+      ])
+    );
   });
 
   it('generates a hosted embed snippet and security checklist handoff', () => {
