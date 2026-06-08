@@ -1,0 +1,179 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Hosted Control Plane Board 3: MVP Scaffold'
+  slug: 'bugdrop-board-hosted-control-plane-scaffold'
+  kind: existing_plan
+  tranche: 'Hosted control-plane scaffold only.'
+  status: done
+  oracle:
+    signal: 'Tenant/app/board config foundations exist, hosted board origins are isolated per app, self-host global behavior still works, and unsupported hosted verifier types fail closed.'
+    cadence: 'after scaffold implementation, focused tests, and final audit'
+    final_proof: 'Migration/repository/API tests, scope scans, git diff proof, and npm run validate.'
+  intake:
+    original_request: 'Continue with Board 3 after resolving the self-host key question.'
+    interpreted_outcome: 'Implement the MVP hosted control-plane scaffold using the approved design while preserving self-host behavior.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers preparing hosted SaaS mode'
+    authority: requested
+    proof_type: test
+    completion_proof: 'Focused tests prove hosted origin isolation, self-host fallback, hosted config repository behavior, and unsupported verifier fail-closed; repo validation passes.'
+    likely_misfire: 'Building GitHub App integration or onboarding UI before the config scaffold and isolation boundary are proven.'
+    hard_constraints:
+      - 'No full JWKS/public-key verification in this board.'
+      - 'No GitHub App issue creation, onboarding UX/API, billing, realtime, comments, downvotes, GitHub Projects, deploys, credentials, package publishing, or production data migration.'
+      - 'Do not change wrangler.toml, package versions, workflows, public assets, or deployment credentials.'
+      - 'Self-host behavior must remain supported and unchanged.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: active
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-hosted-control-plane-scaffold/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-hosted-control-plane-scaffold'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Confirm exact scaffold insertion points and test coverage before edits.'
+    allowed_files:
+      - 'docs/superpowers/specs/2026-06-08-bugdrop-board-hosted-control-plane-design.md'
+      - 'migrations/'
+      - 'src/types.ts'
+      - 'src/lib/board-token.ts'
+      - 'src/lib/board-repository.ts'
+      - 'src/routes/api-helpers.ts'
+      - 'src/routes/api.ts'
+      - 'test/'
+      - 'docs/goals/bugdrop-board-hosted-control-plane-scaffold/notes/T001-scout.md'
+      - 'docs/goals/bugdrop-board-hosted-control-plane-scaffold/state.yaml'
+    expected_output: 'Scout note naming the exact files to edit, tests to add, and scope guardrails.'
+    verify:
+      - 'rg scans for board schema, CORS, token verifier, route auth, and existing tests'
+    stop_if:
+      - 'The scaffold cannot be implemented without deploy config, credentials, package changes, or full JWKS/GitHub App implementation.'
+    receipt:
+      summary: 'Confirmed the scaffold can fit in one migration, one config repository, board-route origin lookup, token claim extension, and focused tests without deploy config, credentials, package changes, full JWKS, or GitHub App work.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-control-plane-scaffold/notes/T001-scout.md'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Add hosted control-plane scaffold tables and repository/config interfaces.'
+    allowed_files:
+      - 'migrations/0003_hosted_control_plane.sql'
+      - 'src/types.ts'
+      - 'src/lib/hosted-config-repository.ts'
+      - 'test/hosted-config-repository.test.ts'
+      - 'docs/goals/bugdrop-board-hosted-control-plane-scaffold/notes/T002-worker.md'
+      - 'docs/goals/bugdrop-board-hosted-control-plane-scaffold/state.yaml'
+    acceptance:
+      - 'Migration defines hosted tenants, apps, origins, token verifiers, board configs, GitHub connection placeholder, and audit events.'
+      - 'Repository can create/read tenant/app/board config and active origins.'
+      - 'Verifier config types include jwks, public_key, and hmac_legacy with jwks as hosted default guidance in code/docs comments or tests.'
+      - 'Repository tests cover cross-tenant board lookup and inactive origins/config.'
+    verify:
+      - 'npm run test -- test/hosted-config-repository.test.ts'
+    receipt:
+      summary: 'Added hosted control-plane scaffold tables, repository/types, and repository tests for active config lookup, origins, verifier metadata, and inactive config suppression.'
+      proof:
+        - command: 'npm run test -- test/hosted-config-repository.test.ts'
+          output: 'Test Files 1 passed (1), Tests 3 passed (3)'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-control-plane-scaffold/notes/T002-worker.md'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Wire hosted per-app origin lookup and fail-closed unsupported hosted verifier behavior into board routes.'
+    allowed_files:
+      - 'src/routes/api-helpers.ts'
+      - 'src/routes/api.ts'
+      - 'src/lib/board-token.ts'
+      - 'src/lib/hosted-config-repository.ts'
+      - 'test/routes.test.ts'
+      - 'docs/goals/bugdrop-board-hosted-control-plane-scaffold/notes/T003-worker.md'
+      - 'docs/goals/bugdrop-board-hosted-control-plane-scaffold/state.yaml'
+    acceptance:
+      - 'Board route preflight/response CORS uses hosted active origins when hosted config exists.'
+      - 'Origin mismatch on hosted boards does not return allow headers.'
+      - 'Boards without hosted config keep self-host/global CORS behavior.'
+      - 'Hosted jwks/public_key verifier config fails closed until verifier implementation exists.'
+      - 'Self-host HMAC token behavior still passes existing route tests.'
+    verify:
+      - 'npm run test -- test/routes.test.ts'
+    receipt:
+      summary: 'Wired hosted per-app origin lookup and fail-closed unsupported hosted verifier behavior into board routes while preserving self-host global CORS/HMAC behavior.'
+      proof:
+        - command: 'npm run test -- test/routes.test.ts'
+          output: 'Test Files 1 passed (1), Tests 17 passed (17)'
+        - command: 'npm run test -- test/board-token.test.ts test/hosted-config-repository.test.ts test/routes.test.ts'
+          output: 'Test Files 3 passed (3), Tests 33 passed (33)'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-control-plane-scaffold/notes/T003-worker.md'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: verify Board 3 scaffold oracle and scope boundaries.'
+    expected_output: 'Final pass/fail receipt with proof commands and next Board 4 starter.'
+    verify:
+      - 'npm run test -- test/hosted-config-repository.test.ts test/routes.test.ts'
+      - 'npm run validate'
+      - 'rg -n "hosted_tenants|app_token_verifiers|jwks|public_key|hmac_legacy|hosted_board_configs|app_origins" migrations src test docs/goals/bugdrop-board-hosted-control-plane-scaffold'
+      - '! git diff --name-only origin/main...HEAD | rg "^(wrangler.toml|package.json|package-lock.json|public/|.github/workflows/)"'
+      - '! rg -n "GitHub App installation token|billing|realtime|downvote|GitHub Projects|NPM_TOKEN|CLOUDFLARE_API_TOKEN" src migrations test'
+      - 'git diff --check'
+    stop_if:
+      - 'Runtime behavior for self-host routes regresses.'
+      - 'Implementation requires full JWKS/public-key verification or GitHub App issue creation in this board.'
+    receipt:
+      summary: 'Approved. Board 3 adds hosted tenant/app/board scaffold tables, config repository, per-app hosted origin lookup, token verifier config metadata, fail-closed unsupported hosted verifier behavior, self-host fallback preservation, and focused tests while avoiding deploy/package/workflow/public asset changes and out-of-scope product work.'
+      proof:
+        - command: 'ruby -e ''require "yaml"; YAML.load_file("docs/goals/bugdrop-board-hosted-control-plane-scaffold/state.yaml"); puts "state yaml ok"'''
+          output: 'state yaml ok'
+        - command: 'npm run test -- test/hosted-config-repository.test.ts'
+          output: 'Test Files 1 passed (1), Tests 3 passed (3)'
+        - command: 'npm run test -- test/routes.test.ts'
+          output: 'Test Files 1 passed (1), Tests 17 passed (17)'
+        - command: 'npm run test -- test/board-token.test.ts test/hosted-config-repository.test.ts test/routes.test.ts'
+          output: 'Test Files 3 passed (3), Tests 33 passed (33)'
+        - command: 'npm run test -- test/hosted-config-repository.test.ts test/routes.test.ts'
+          output: 'Test Files 2 passed (2), Tests 20 passed (20)'
+        - command: 'npm run validate'
+          output: 'lint, Prettier, typecheck, workflow guards, and Vitest passed; Test Files 12 passed (12), Tests 83 passed (83)'
+        - command: 'make check'
+          output: 'ESLint, Prettier, typecheck, knip, critical audit, and GitHub Actions Node 24 guard passed'
+        - command: 'rg -n "hosted_tenants|app_token_verifiers|jwks|public_key|hmac_legacy|hosted_board_configs|hosted_app_origins" migrations src test docs/goals/bugdrop-board-hosted-control-plane-scaffold'
+          output: 'found scaffold tables, repository, route fail-closed branch, tests, and receipts'
+        - command: '! git diff --name-only origin/main...HEAD | rg "^(wrangler.toml|package.json|package-lock.json|public/|.github/workflows/)"'
+          output: 'no deploy config, package, public asset, or workflow changes'
+        - command: '! rg -n "GitHub App installation token|billing|realtime|downvote|GitHub Projects|NPM_TOKEN|CLOUDFLARE_API_TOKEN" src migrations test'
+          output: 'no matches in runtime/test scaffold code'
+        - command: 'git diff --check'
+          output: 'no whitespace errors'
+      burden_of_proof: 'Checked the strongest realistic failure mode: self-host route behavior regressing under hosted config lookup. Route tests prove boards without hosted config still use global ALLOWED_ORIGINS and existing HMAC behavior; hosted boards use active app origins and unsupported hosted jwks/public_key verifiers fail closed.'
+      next_starter_command: '$goal-prep Build BugDrop Board Hosted Control Plane Board 4: token verifier implementation only, using completed Board 3 hosted config scaffold and approved JWKS/public-key hosted default; implement hosted JWKS/public-key verification and key-rotation tests while preserving self-host HMAC behavior and excluding GitHub App integration, onboarding UX, billing, realtime, comments, downvotes, GitHub Projects, deploys, credentials, and package publishing.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-control-plane-scaffold/notes/T999-final-audit.md'

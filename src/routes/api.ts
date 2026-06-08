@@ -38,12 +38,12 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
 
   api.use('*', async (c, next) => {
     if (c.req.method === 'OPTIONS') {
-      applyCorsHeaders(c);
+      await applyCorsHeaders(c);
       return c.body(null, 204);
     }
 
     await next();
-    applyCorsHeaders(c);
+    await applyCorsHeaders(c);
   });
 
   api.post('/__e2e/reset', resetE2eBoard);

@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
 import { verifyBoardToken } from '../lib/board-token';
+import { HostedConfigRepository, type HostedBoardConfig } from '../lib/hosted-config-repository';
 import { parseCreateItemInput } from '../lib/validation';
 import type { Env } from '../types';
 
@@ -8,9 +9,13 @@ type BoardTokenClaims = Awaited<ReturnType<typeof verifyBoardToken>>;
 
 type AuthorizedRequest = { ok: true; claims: BoardTokenClaims } | { ok: false; response: Response };
 
-export function applyCorsHeaders(c: Context<ApiEnv>): void {
+export async function applyCorsHeaders(c: Context<ApiEnv>): Promise<void> {
   const origin = c.req.header('Origin');
-  const allowedOrigin = allowedCorsOrigin(c.env.ALLOWED_ORIGINS, origin);
+  const boardId = boardIdFromPath(c.req.url);
+  const hostedConfig = boardId ? await loadHostedBoardConfig(c.env, boardId) : null;
+  const allowedOrigin = hostedConfig
+    ? allowedHostedCorsOrigin(hostedConfig, origin)
+    : allowedCorsOrigin(c.env.ALLOWED_ORIGINS, origin);
   if (!allowedOrigin) {
     return;
   }
@@ -33,7 +38,10 @@ export async function authorizeBoardRequest(
     return { ok: false, response: c.json({ error: 'Board token secret is not configured' }, 500) };
   }
 
-  const claims = await verifyToken(token, c.env, boardId);
+  const hostedConfig = await loadHostedBoardConfig(c.env, boardId);
+  const claims = hostedConfig
+    ? await verifyHostedToken(token, c.env, boardId, hostedConfig)
+    : await verifyToken(token, c.env, boardId);
   if (!claims) {
     return { ok: false, response: c.json({ error: 'Invalid board token' }, 401) };
   }
@@ -83,6 +91,16 @@ function allowedCorsOrigin(allowedOrigins: string, origin: string | undefined): 
   return allowed.includes(origin) ? origin : null;
 }
 
+function allowedHostedCorsOrigin(
+  hostedConfig: HostedBoardConfig,
+  origin: string | undefined
+): string | null {
+  if (!origin) {
+    return null;
+  }
+  return hostedConfig.activeOrigins.includes(origin) ? origin : null;
+}
+
 function parseBearerToken(header: string | undefined): string | null {
   if (!header?.startsWith('Bearer ')) {
     return null;
@@ -103,6 +121,53 @@ async function verifyToken(token: string, env: Env, boardId: string) {
   } catch {
     return null;
   }
+}
+
+async function verifyHostedToken(
+  token: string,
+  env: Env,
+  boardId: string,
+  hostedConfig: HostedBoardConfig
+) {
+  const verifier = hostedConfig.tokenVerifier;
+  if (!verifier || verifier.type !== 'hmac_legacy') {
+    return null;
+  }
+
+  try {
+    return await verifyBoardToken(token, {
+      secret: env.BOARD_TOKEN_SECRET,
+      expectedBoardId: boardId,
+      expectedTenantId: hostedConfig.tenantId,
+      expectedAppId: hostedConfig.appId,
+      expectedAudience: verifier.audience,
+      expectedIssuer: verifier.issuer,
+      maxTtlSeconds: verifier.maxTtlSeconds,
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function loadHostedBoardConfig(env: Env, boardId: string): Promise<HostedBoardConfig | null> {
+  try {
+    return await new HostedConfigRepository(env.DB).getBoardConfig(boardId);
+  } catch (error) {
+    if (isMissingHostedTable(error)) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+function isMissingHostedTable(error: unknown): boolean {
+  return error instanceof Error && /no such table: hosted_/i.test(error.message);
+}
+
+function boardIdFromPath(url: string): string | null {
+  const pathname = new URL(url).pathname;
+  const match = /^\/boards\/([^/]+)/.exec(pathname);
+  return match ? decodeURIComponent(match[1]) : null;
 }
 
 function positiveInteger(value: string | undefined): number | undefined {

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BoardRepository } from '../src/lib/board-repository';
 import { createBoardToken } from '../src/lib/board-token';
 import type { IssueCreator } from '../src/lib/github';
+import { HostedConfigRepository } from '../src/lib/hosted-config-repository';
 import { createApi } from '../src/routes/api';
 import type { Env } from '../src/types';
 
@@ -26,12 +27,20 @@ function env(overrides: Partial<Env> = {}): Env {
 
 async function boardToken(
   boardId: string,
-  overrides: Partial<{ boardId: string; externalUserId: string; displayName: string }> = {}
+  overrides: Partial<{
+    boardId: string;
+    externalUserId: string;
+    displayName: string;
+    tenantId: string;
+    appId: string;
+  }> = {}
 ) {
   return createBoardToken(
     {
       boardId: overrides.boardId ?? boardId,
       externalUserId: overrides.externalUserId ?? 'user_1',
+      tenantId: overrides.tenantId,
+      appId: overrides.appId,
       displayName: overrides.displayName ?? 'Ada',
       exp: Math.floor(Date.now() / 1000) + 60,
       aud: TOKEN_AUDIENCE,
@@ -51,10 +60,12 @@ function createIssueCreator(
 
 describe('api routes', () => {
   let repo: BoardRepository;
+  let hosted: HostedConfigRepository;
   let repoName: string;
 
   beforeEach(() => {
     repo = new BoardRepository(workerEnv.DB);
+    hosted = new HostedConfigRepository(workerEnv.DB);
     testSequence += 1;
     repoName = `demo_${testSequence}`;
   });
@@ -426,5 +437,125 @@ describe('api routes', () => {
     expect(upvote.status).toBe(401);
     await expect(repo.getItem(boardA.id, item.id)).resolves.toMatchObject({ upvoteCount: 0 });
     await expect(repo.listItems(boardB.id)).resolves.toHaveLength(0);
+  });
+
+  it('uses hosted app origins for board route CORS when hosted config exists', async () => {
+    const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName });
+    const tenant = await hosted.createTenant({
+      name: 'Mean Weasel',
+      slug: `tenant-${testSequence}`,
+    });
+    const app = await hosted.createApp({
+      tenantId: tenant.id,
+      name: 'Dogfood',
+      slug: 'dogfood',
+    });
+    await hosted.addOrigin({
+      tenantId: tenant.id,
+      appId: app.id,
+      origin: 'https://board.bugdrop.dev',
+    });
+    await hosted.configureBoard({ tenantId: tenant.id, appId: app.id, boardId: board.id });
+    const api = createApi();
+
+    const allowed = await api.request(
+      `/boards/${board.id}/items`,
+      { method: 'OPTIONS', headers: { Origin: 'https://board.bugdrop.dev' } },
+      env({ ALLOWED_ORIGINS: 'https://global.example' })
+    );
+    const disallowed = await api.request(
+      `/boards/${board.id}/items`,
+      { method: 'OPTIONS', headers: { Origin: 'https://global.example' } },
+      env({ ALLOWED_ORIGINS: 'https://global.example' })
+    );
+
+    expect(allowed.status).toBe(204);
+    expect(allowed.headers.get('Access-Control-Allow-Origin')).toBe('https://board.bugdrop.dev');
+    expect(disallowed.status).toBe(204);
+    expect(disallowed.headers.get('Access-Control-Allow-Origin')).toBeNull();
+  });
+
+  it('keeps self-host global CORS behavior when no hosted board config exists', async () => {
+    const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName });
+    const api = createApi();
+
+    const res = await api.request(
+      `/boards/${board.id}/items`,
+      { method: 'OPTIONS', headers: { Origin: 'https://selfhost.example' } },
+      env({ ALLOWED_ORIGINS: 'https://selfhost.example' })
+    );
+
+    expect(res.status).toBe(204);
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://selfhost.example');
+  });
+
+  it('fails closed for hosted jwks verifier config until hosted verification is implemented', async () => {
+    const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName });
+    const tenant = await hosted.createTenant({
+      name: 'Hosted Tenant',
+      slug: `jwks-${testSequence}`,
+    });
+    const app = await hosted.createApp({
+      tenantId: tenant.id,
+      name: 'Hosted App',
+      slug: 'hosted-app',
+    });
+    await hosted.createTokenVerifier({
+      tenantId: tenant.id,
+      appId: app.id,
+      type: 'jwks',
+      issuer: TOKEN_ISSUER,
+      audience: TOKEN_AUDIENCE,
+      jwksUrl: 'https://app.example.com/.well-known/jwks.json',
+    });
+    await hosted.configureBoard({ tenantId: tenant.id, appId: app.id, boardId: board.id });
+    const api = createApi();
+
+    const res = await api.request(
+      `/boards/${board.id}/items`,
+      { headers: { Authorization: `Bearer ${await boardToken(board.id)}` } },
+      env()
+    );
+
+    expect(res.status).toBe(401);
+  });
+
+  it('allows explicit hosted hmac legacy tokens with tenant and app claims', async () => {
+    const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName });
+    const tenant = await hosted.createTenant({
+      name: 'Legacy Tenant',
+      slug: `legacy-${testSequence}`,
+    });
+    const app = await hosted.createApp({
+      tenantId: tenant.id,
+      name: 'Legacy App',
+      slug: 'legacy-app',
+    });
+    await hosted.createTokenVerifier({
+      tenantId: tenant.id,
+      appId: app.id,
+      type: 'hmac_legacy',
+      issuer: TOKEN_ISSUER,
+      audience: TOKEN_AUDIENCE,
+      secretRef: 'worker-secret',
+    });
+    await hosted.configureBoard({ tenantId: tenant.id, appId: app.id, boardId: board.id });
+    const api = createApi();
+
+    const res = await api.request(
+      `/boards/${board.id}/items`,
+      {
+        headers: {
+          Authorization: `Bearer ${await boardToken(board.id, {
+            tenantId: tenant.id,
+            appId: app.id,
+          })}`,
+        },
+      },
+      env()
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({ items: [] });
   });
 });
