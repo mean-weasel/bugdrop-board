@@ -90,11 +90,35 @@ For BugDrop Hosted Beta, BugDrop configures:
 - the D1 board row and board-to-GitHub repo mapping;
 - `BOARD_TOKEN_AUDIENCE`, `BOARD_TOKEN_ISSUER`, and `BOARD_TOKEN_MAX_TTL_SECONDS`;
 - request throttle defaults;
-- the hosted Worker secrets, including `BOARD_TOKEN_SECRET` and the GitHub issue token;
-- the GitHub mirror repo access used to create issues.
+- the hosted Worker secrets, including GitHub App credentials used server-side only;
+- the GitHub App installation metadata used to create issues in the mirrored repo.
 
-Hosted beta GitHub access should use a token with the smallest useful scope: one repo, **Issues:
-Read and write**. Avoid broad account or organization tokens.
+Operators should prepare hosted config with a dry run first:
+
+```bash
+npm run provision:hosted-board -- \
+  --tenant-slug mean-weasel \
+  --tenant-name "Mean Weasel" \
+  --app-slug dogfood \
+  --app-name "Dogfood" \
+  --repo mean-weasel/demo \
+  --origin https://bugdrop.dev \
+  --origin https://board.bugdrop.dev \
+  --issuer https://bugdrop.dev \
+  --audience bugdrop-board \
+  --jwks-url https://bugdrop.dev/.well-known/jwks.json \
+  --github-installation-id 123456 \
+  --github-account-login mean-weasel \
+  --api-url https://board.bugdrop.dev \
+  --token-endpoint /api/bugdrop-board-token \
+  --layout kanban \
+  --density compact \
+  --dry-run
+```
+
+The dry run prints SQL plus a redacted handoff containing the embed snippet and setup checklist. To
+apply it, remove `--dry-run` and choose the target D1 mode, for example `--remote --env production`.
+The command does not create GitHub Apps, rotate credentials, deploy Workers, or publish packages.
 
 ## Recommended Defaults
 
@@ -106,7 +130,7 @@ Use these defaults unless the beta install has a specific reason to change them:
   surfaces;
 - one board per app repo;
 - upvotes only, with one upvote per signed-in host user per idea;
-- GitHub issue token scoped only to the repo represented by the board;
+- GitHub App installation metadata must match the repo represented by the board;
 - no secrets in browser code, committed files, receipts, screenshots, logs, or app config visible to
   users.
 

@@ -1,0 +1,190 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Hosted Onboarding Provisioning'
+  slug: 'bugdrop-board-hosted-onboarding-provisioning'
+  kind: existing_plan
+  tranche: 'Operator hosted provisioning script only.'
+  status: done
+  oracle:
+    signal: 'A tested operator command can generate/apply hosted tenant/app/board/origin/verifier/GitHub connection config and print a redacted embed/setup handoff.'
+    cadence: 'after scout, red tests, implementation, focused checks, and final audit'
+    final_proof: 'Focused script tests, full repo gates, docs checks, redaction proof, and scope scans.'
+  intake:
+    original_request: 'Continue after hosted GitHub App integration.'
+    interpreted_outcome: 'Implement the next hosted control-plane board: operator onboarding/provisioning scripts.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board operators preparing hosted beta tenants'
+    authority: requested
+    proof_type: test
+    completion_proof: 'A committed operator provisioning command/core helper with tests and docs.'
+    likely_misfire: 'Building a public hosted admin UI or leaking token/private-key material in setup output.'
+    blind_spots_considered:
+      - 'Manual operator provisioning is acceptable for hosted MVP.'
+      - 'The command must preserve the existing self-host provisioning command.'
+      - 'Generated output must be useful without exposing secrets.'
+      - 'Remote D1 execution should not run during local verification.'
+    hard_constraints:
+      - 'No public tenant-admin UI, deploys, credential changes, real GitHub App installation smoke, npm publishing, package version bump, billing, realtime, comments, downvotes, or GitHub Projects.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: active
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-hosted-onboarding-provisioning/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-hosted-onboarding-provisioning'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: PM
+    status: done
+    objective: 'Map existing provisioning scripts, hosted schema/repository support, and hosted design acceptance before edits.'
+    allowed_files:
+      - 'scripts/provision-board.js'
+      - 'scripts/provision-board-core.js'
+      - 'test/provision-board.test.ts'
+      - 'migrations/0003_hosted_control_plane.sql'
+      - 'src/lib/hosted-config-repository.ts'
+      - 'docs/superpowers/specs/2026-06-08-bugdrop-board-hosted-control-plane-design.md'
+      - 'docs/goals/bugdrop-board-hosted-onboarding-provisioning/notes/T001-scout.md'
+      - 'docs/goals/bugdrop-board-hosted-onboarding-provisioning/state.yaml'
+    expected_output: 'Scout receipt naming script insertion points, tests to add, and scope constraints.'
+    verify:
+      - 'Direct inspection of existing provision script, tests, hosted schema, hosted repository, and design spec.'
+    receipt:
+      summary: 'Confirmed hosted onboarding should be an operator script sibling to provision-board, backed by the existing hosted schema and repository support.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-onboarding-provisioning/notes/T001-scout.md'
+
+  - id: T002
+    type: worker
+    assignee: PM
+    status: done
+    objective: 'Write failing tests for hosted provisioning parser, SQL generation, embed snippet, checklist, and redacted output.'
+    allowed_files:
+      - 'test/provision-hosted-board.test.ts'
+      - 'docs/goals/bugdrop-board-hosted-onboarding-provisioning/notes/T002-red-tests.md'
+      - 'docs/goals/bugdrop-board-hosted-onboarding-provisioning/state.yaml'
+    acceptance:
+      - 'Tests cover required tenant/app/repo/origin/verifier/GitHub connection fields.'
+      - 'Tests cover generated hosted SQL for tenant/app/board/origin/verifier/GitHub connection/board config.'
+      - 'Tests cover embed snippet generation with API URL, board id, token endpoint, layout, and config hooks.'
+      - 'Tests prove private key/HMAC/token-like values are redacted from output.'
+    verify:
+      - 'npm run test -- test/provision-hosted-board.test.ts'
+    receipt:
+      summary: 'Added red tests for hosted provisioning parser, SQL, embed snippet/checklist, and recursive redaction.'
+      proof:
+        - command: 'npm run test -- test/provision-hosted-board.test.ts'
+          output: 'failed as expected: missing ../scripts/provision-hosted-board-core.js'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-onboarding-provisioning/notes/T002-red-tests.md'
+
+  - id: T003
+    type: worker
+    assignee: PM
+    status: done
+    objective: 'Implement hosted provisioning core and CLI.'
+    allowed_files:
+      - 'scripts/provision-hosted-board-core.js'
+      - 'scripts/provision-hosted-board.js'
+      - 'package.json'
+      - 'test/provision-hosted-board.test.ts'
+      - 'docs/goals/bugdrop-board-hosted-onboarding-provisioning/notes/T003-worker.md'
+      - 'docs/goals/bugdrop-board-hosted-onboarding-provisioning/state.yaml'
+    acceptance:
+      - 'CLI supports dry-run/local/remote/env modes and mirrors existing wrangler execution style.'
+      - 'Core helper builds deterministic SQL and redacted JSON setup output.'
+      - 'Existing `provision:board` behavior remains unchanged.'
+    verify:
+      - 'npm run test -- test/provision-board.test.ts test/provision-hosted-board.test.ts'
+    receipt:
+      summary: 'Implemented hosted provisioning core, SQL builder, CLI wrapper, and package script while preserving the existing self-host provision command.'
+      proof:
+        - command: 'npm run test -- test/provision-board.test.ts test/provision-hosted-board.test.ts'
+          output: 'passed: 2 test files, 12 tests'
+        - command: 'npm run provision:hosted-board -- ... --dry-run'
+          output: 'printed redacted setup handoff, embed snippet, checklist, and SQL without D1 mutation'
+        - command: 'wc -l scripts/provision-hosted-board-core.js scripts/provision-hosted-board-sql.js scripts/provision-hosted-board.js'
+          output: '216, 123, and 60 lines'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-onboarding-provisioning/notes/T003-worker.md'
+
+  - id: T004
+    type: worker
+    assignee: PM
+    status: done
+    objective: 'Document hosted operator provisioning usage and setup handoff.'
+    allowed_files:
+      - 'README.md'
+      - 'docs/hosted-security-and-setup.md'
+      - 'docs/goals/bugdrop-board-hosted-onboarding-provisioning/notes/T004-docs.md'
+      - 'docs/goals/bugdrop-board-hosted-onboarding-provisioning/state.yaml'
+    acceptance:
+      - 'Docs show dry-run first, local/remote usage, required inputs, redacted output expectations, and follow-up verification.'
+      - 'Docs do not imply public self-service, billing, realtime, comments, downvotes, or GitHub Projects.'
+    verify:
+      - 'rg -n "provision:hosted-board|dry-run|allowed origins|token endpoint|GitHub installation" README.md docs/hosted-security-and-setup.md'
+    receipt:
+      summary: 'Documented hosted operator provisioning dry-run/apply usage, redacted handoff expectations, and GitHub App installation setup language.'
+      proof:
+        - command: 'rg -n "provision:hosted-board|dry-run|allowed origins|token endpoint|GitHub installation" README.md docs/hosted-security-and-setup.md'
+          output: 'found command, dry-run guidance, allowed-origin/token-endpoint setup language, and GitHub installation language'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-onboarding-provisioning/notes/T004-docs.md'
+
+  - id: T999
+    type: judge
+    assignee: PM
+    status: done
+    objective: 'Final audit against the hosted onboarding/provisioning oracle.'
+    expected_output: 'Final receipt with commands, proof, scope scans, and residual risks.'
+    verify:
+      - 'npm run test -- test/provision-board.test.ts test/provision-hosted-board.test.ts'
+      - 'npm run validate'
+      - 'make check'
+      - 'ruby -e ''require "yaml"; YAML.load_file("docs/goals/bugdrop-board-hosted-onboarding-provisioning/state.yaml"); puts "state yaml ok"'''
+      - 'git diff --check'
+      - '! rg -n "ghs_|ghp_|BEGIN PRIVATE" README.md docs/hosted-security-and-setup.md scripts/provision-hosted-board*.js'
+    stop_if:
+      - 'Output can leak secrets or token material.'
+      - 'Existing self-host provision tests regress.'
+      - 'Verification requires real deploys, credentials, or remote D1 mutation.'
+    receipt:
+      summary: 'Approved. Hosted operator provisioning now has a tested dry-run/apply command, deterministic SQL, redacted setup handoff, embed snippet/checklist output, and docs.'
+      proof:
+        - command: 'npm run test -- test/provision-board.test.ts test/provision-hosted-board.test.ts'
+          output: 'passed: 2 test files, 12 tests'
+        - command: 'npm run validate'
+          output: 'passed: lint, Prettier, typecheck, workflow checks, and Vitest; 14 files, 101 tests'
+        - command: 'make check'
+          output: 'passed: ESLint, Prettier, typecheck, knip, critical audit, and Actions Node 24 guard'
+        - command: 'ruby -e ''require "yaml"; YAML.load_file("docs/goals/bugdrop-board-hosted-onboarding-provisioning/state.yaml"); puts "state yaml ok"'''
+          output: 'state yaml ok'
+        - command: 'git diff --check'
+          output: 'no whitespace errors'
+        - command: 'rg -n "provision:hosted-board|dry-run|allowed origins|token endpoint|GitHub installation" README.md docs/hosted-security-and-setup.md'
+          output: 'found command, dry-run guidance, allowed-origin/token-endpoint language, and GitHub installation language'
+        - command: 'rg -n "ghs_|ghp_|BEGIN PRIVATE" README.md docs/hosted-security-and-setup.md scripts/provision-hosted-board*.js'
+          output: 'no matches'
+      burden_of_proof: 'Checked the strongest realistic failures: unintended D1 mutation during verification, secret/token leakage, and self-host provisioning regression. Dry-run proof, redaction tests/scans, and existing provision-board tests rule them out for this slice.'
+      residual_risk: 'The command is operator-facing and does not create GitHub Apps or validate a real installation. Real hosted tenant smoke remains a follow-up.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-onboarding-provisioning/notes/T999-final-audit.md'

@@ -17,6 +17,7 @@ D1, creates one GitHub Issue per board item, and keeps upvotes in D1.
 
 BugDrop Hosted Beta is the manual, BugDrop-run path for teams that do not want to self-host yet.
 Self-hosters run their own Cloudflare Worker, D1 database, Worker secrets, and GitHub access token.
+Hosted beta uses BugDrop-managed Worker secrets and GitHub App installation metadata server-side.
 
 ## Hosted Beta
 
@@ -27,6 +28,31 @@ audience/issuer, throttles, and GitHub mirror access during manual provisioning.
 Read [Hosted Security And Setup](docs/hosted-security-and-setup.md) for the current security
 promise, app responsibilities, configurable settings, and limitations. Hosted beta is not yet a
 self-service multi-tenant control plane.
+
+Operators can prepare hosted board config with a dry run before touching D1:
+
+```bash
+npm run provision:hosted-board -- \
+  --tenant-slug mean-weasel \
+  --tenant-name "Mean Weasel" \
+  --app-slug dogfood \
+  --app-name "Dogfood" \
+  --repo mean-weasel/demo \
+  --origin https://bugdrop.dev \
+  --issuer https://bugdrop.dev \
+  --audience bugdrop-board \
+  --jwks-url https://bugdrop.dev/.well-known/jwks.json \
+  --github-installation-id 123456 \
+  --api-url https://board.bugdrop.dev \
+  --token-endpoint /api/bugdrop-board-token \
+  --layout kanban \
+  --dry-run
+```
+
+The command prints deterministic SQL plus a redacted setup handoff with the board id, embed snippet,
+allowed origins, token verifier settings, GitHub installation metadata, and security checklist. Drop
+`--dry-run` and add `--remote --env production` only when the operator is ready to mutate the target
+D1 database.
 
 ## Local Setup
 
