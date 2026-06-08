@@ -106,6 +106,7 @@ npm run provision:hosted-board -- \
   --origin https://board.bugdrop.dev \
   --issuer https://bugdrop.dev \
   --audience bugdrop-board \
+  --verifier-type jwks \
   --jwks-url https://bugdrop.dev/.well-known/jwks.json \
   --github-installation-id 123456 \
   --github-account-login mean-weasel \
@@ -119,6 +120,12 @@ npm run provision:hosted-board -- \
 The dry run prints SQL plus a redacted handoff containing the embed snippet and setup checklist. To
 apply it, remove `--dry-run` and choose the target D1 mode, for example `--remote --env production`.
 The command does not create GitHub Apps, rotate credentials, deploy Workers, or publish packages.
+
+For a migration or dogfood install that intentionally uses BugDrop Board's legacy HMAC token shape,
+pass `--verifier-type hmac_legacy` and omit `--jwks-url`. That mode records `BOARD_TOKEN_SECRET` as
+the verifier secret reference; it does not print or rotate the secret. Hosted HMAC tokens must include
+the provisioned `tenantId`, `appId`, and `boardId` claims so the hosted Worker can fail closed on
+tenant, app, or board drift.
 
 ## Recommended Defaults
 

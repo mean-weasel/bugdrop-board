@@ -5,13 +5,13 @@ import process from 'node:process';
 import { buildHostedProvisioningPlan, parseHostedArgs } from './provision-hosted-board-core.js';
 
 function printHelp() {
-  console.log(`Usage: npm run provision:hosted-board -- --tenant-slug slug --tenant-name "Tenant" --app-slug app --app-name "App" --repo owner/name --origin https://app.example.com --issuer https://app.example.com --audience bugdrop-board --jwks-url https://app.example.com/.well-known/jwks.json --github-installation-id 123 --api-url https://board.bugdrop.dev --token-endpoint /api/bugdrop-board-token [--local|--remote] [--env production] [--dry-run]
+  console.log(`Usage: npm run provision:hosted-board -- --tenant-slug slug --tenant-name "Tenant" --app-slug app --app-name "App" --repo owner/name --origin https://app.example.com --issuer https://app.example.com --audience bugdrop-board --verifier-type jwks --jwks-url https://app.example.com/.well-known/jwks.json --github-installation-id 123 --api-url https://board.bugdrop.dev --token-endpoint /api/bugdrop-board-token [--local|--remote] [--env production] [--dry-run]
 
 Creates or updates one hosted BugDrop Board setup in D1 and prints a redacted setup handoff.
 
 Examples:
-  npm run provision:hosted-board -- --tenant-slug mean-weasel --tenant-name "Mean Weasel" --app-slug dogfood --app-name "Dogfood" --repo mean-weasel/demo --origin https://bugdrop.dev --issuer https://bugdrop.dev --audience bugdrop-board --jwks-url https://bugdrop.dev/.well-known/jwks.json --github-installation-id 123456 --api-url https://board.bugdrop.dev --token-endpoint /api/bugdrop-board-token --dry-run
-  npm run provision:hosted-board -- --tenant-slug mean-weasel --tenant-name "Mean Weasel" --app-slug dogfood --app-name "Dogfood" --repo mean-weasel/demo --origin https://bugdrop.dev --issuer https://bugdrop.dev --audience bugdrop-board --jwks-url https://bugdrop.dev/.well-known/jwks.json --github-installation-id 123456 --api-url https://board.bugdrop.dev --token-endpoint /api/bugdrop-board-token --remote --env production`);
+  npm run provision:hosted-board -- --tenant-slug mean-weasel --tenant-name "Mean Weasel" --app-slug dogfood --app-name "Dogfood" --repo mean-weasel/demo --origin https://bugdrop.dev --issuer https://bugdrop.dev --audience bugdrop-board --verifier-type jwks --jwks-url https://bugdrop.dev/.well-known/jwks.json --github-installation-id 123456 --api-url https://board.bugdrop.dev --token-endpoint /api/bugdrop-board-token --dry-run
+  npm run provision:hosted-board -- --tenant-slug mean-weasel --tenant-name "Mean Weasel" --app-slug dogfood --app-name "Dogfood" --repo mean-weasel/demo --origin https://bugdrop.dev --issuer bugdrop-board-production-host --audience bugdrop-board --verifier-type hmac_legacy --github-installation-id 123456 --api-url https://board.bugdrop.dev --token-endpoint /api/bugdrop-board-token --remote --env production`);
 }
 
 function run() {
