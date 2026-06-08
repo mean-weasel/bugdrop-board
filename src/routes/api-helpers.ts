@@ -1,6 +1,7 @@
 import type { Context } from 'hono';
 import { verifyBoardToken } from '../lib/board-token';
 import { HostedConfigRepository, type HostedBoardConfig } from '../lib/hosted-config-repository';
+import { verifyHostedBoardToken } from '../lib/hosted-token-verifier';
 import { parseCreateItemInput } from '../lib/validation';
 import type { Env } from '../types';
 
@@ -34,11 +35,10 @@ export async function authorizeBoardRequest(
   if (!token) {
     return { ok: false, response: c.json({ error: 'Missing bearer token' }, 401) };
   }
-  if (!c.env.BOARD_TOKEN_SECRET) {
+  const hostedConfig = await loadHostedBoardConfig(c.env, boardId);
+  if (!hostedConfig && !c.env.BOARD_TOKEN_SECRET) {
     return { ok: false, response: c.json({ error: 'Board token secret is not configured' }, 500) };
   }
-
-  const hostedConfig = await loadHostedBoardConfig(c.env, boardId);
   const claims = hostedConfig
     ? await verifyHostedToken(token, c.env, boardId, hostedConfig)
     : await verifyToken(token, c.env, boardId);
@@ -130,7 +130,13 @@ async function verifyHostedToken(
   hostedConfig: HostedBoardConfig
 ) {
   const verifier = hostedConfig.tokenVerifier;
-  if (!verifier || verifier.type !== 'hmac_legacy') {
+  if (!verifier) {
+    return null;
+  }
+  if (verifier.type !== 'hmac_legacy') {
+    return verifyHostedBoardToken(token, hostedConfig);
+  }
+  if (!env.BOARD_TOKEN_SECRET) {
     return null;
   }
 

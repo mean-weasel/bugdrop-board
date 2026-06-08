@@ -1,5 +1,5 @@
 import { env as workerEnv } from 'cloudflare:workers';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BoardRepository } from '../src/lib/board-repository';
 import { createBoardToken } from '../src/lib/board-token';
 import type { IssueCreator } from '../src/lib/github';
@@ -68,6 +68,10 @@ describe('api routes', () => {
     hosted = new HostedConfigRepository(workerEnv.DB);
     testSequence += 1;
     repoName = `demo_${testSequence}`;
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('returns health status', async () => {
@@ -489,8 +493,9 @@ describe('api routes', () => {
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://selfhost.example');
   });
 
-  it('fails closed for hosted jwks verifier config until hosted verification is implemented', async () => {
+  it('authenticates hosted jwks verifier tokens for board reads', async () => {
     const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName });
+    const keyPair = await generateKeyPair();
     const tenant = await hosted.createTenant({
       name: 'Hosted Tenant',
       slug: `jwks-${testSequence}`,
@@ -507,13 +512,82 @@ describe('api routes', () => {
       issuer: TOKEN_ISSUER,
       audience: TOKEN_AUDIENCE,
       jwksUrl: 'https://app.example.com/.well-known/jwks.json',
+      keyId: 'route-kid',
     });
     await hosted.configureBoard({ tenantId: tenant.id, appId: app.id, boardId: board.id });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(jsonResponse({ keys: [await publicJwk(keyPair, 'route-kid')] }))
+    );
     const api = createApi();
+    const token = await signHostedJwt(
+      {
+        iss: TOKEN_ISSUER,
+        aud: TOKEN_AUDIENCE,
+        boardId: board.id,
+        tenantId: tenant.id,
+        appId: app.id,
+        externalUserId: 'hosted_user',
+        exp: Math.floor(Date.now() / 1000) + 60,
+      },
+      keyPair.privateKey,
+      { kid: 'route-kid' }
+    );
 
     const res = await api.request(
       `/boards/${board.id}/items`,
-      { headers: { Authorization: `Bearer ${await boardToken(board.id)}` } },
+      { headers: { Authorization: `Bearer ${token}` } },
+      env()
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({ items: [] });
+  });
+
+  it('fails closed for hosted jwks tokens with wrong tenant claims', async () => {
+    const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName });
+    const keyPair = await generateKeyPair();
+    const tenant = await hosted.createTenant({
+      name: 'Hosted Tenant',
+      slug: `wrong-jwks-${testSequence}`,
+    });
+    const app = await hosted.createApp({
+      tenantId: tenant.id,
+      name: 'Hosted App',
+      slug: 'hosted-app',
+    });
+    await hosted.createTokenVerifier({
+      tenantId: tenant.id,
+      appId: app.id,
+      type: 'jwks',
+      issuer: TOKEN_ISSUER,
+      audience: TOKEN_AUDIENCE,
+      jwksUrl: 'https://app.example.com/.well-known/jwks.json',
+      keyId: 'route-kid',
+    });
+    await hosted.configureBoard({ tenantId: tenant.id, appId: app.id, boardId: board.id });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(jsonResponse({ keys: [await publicJwk(keyPair, 'route-kid')] }))
+    );
+    const api = createApi();
+    const token = await signHostedJwt(
+      {
+        iss: TOKEN_ISSUER,
+        aud: TOKEN_AUDIENCE,
+        boardId: board.id,
+        tenantId: 'tenant_other',
+        appId: app.id,
+        externalUserId: 'hosted_user',
+        exp: Math.floor(Date.now() / 1000) + 60,
+      },
+      keyPair.privateKey,
+      { kid: 'route-kid' }
+    );
+
+    const res = await api.request(
+      `/boards/${board.id}/items`,
+      { headers: { Authorization: `Bearer ${token}` } },
       env()
     );
 
@@ -559,3 +633,57 @@ describe('api routes', () => {
     await expect(res.json()).resolves.toMatchObject({ items: [] });
   });
 });
+
+async function generateKeyPair(): Promise<CryptoKeyPair> {
+  return crypto.subtle.generateKey(
+    {
+      name: 'RSASSA-PKCS1-v1_5',
+      modulusLength: 2048,
+      publicExponent: new Uint8Array([1, 0, 1]),
+      hash: 'SHA-256',
+    },
+    true,
+    ['sign', 'verify']
+  ) as Promise<CryptoKeyPair>;
+}
+
+async function publicJwk(keyPair: CryptoKeyPair, kid: string): Promise<JsonWebKey> {
+  return {
+    ...(await crypto.subtle.exportKey('jwk', keyPair.publicKey)),
+    kid,
+    alg: 'RS256',
+    use: 'sig',
+  };
+}
+
+async function signHostedJwt(
+  claims: Record<string, unknown>,
+  privateKey: CryptoKey,
+  headerOverrides: Partial<{ kid: string }> = {}
+): Promise<string> {
+  const header = { alg: 'RS256', typ: 'JWT', ...headerOverrides };
+  const signingInput = `${base64url(JSON.stringify(header))}.${base64url(JSON.stringify(claims))}`;
+  const signature = await crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5',
+    privateKey,
+    new TextEncoder().encode(signingInput)
+  );
+  return `${signingInput}.${base64urlBytes(new Uint8Array(signature))}`;
+}
+
+function jsonResponse(value: unknown): Response {
+  return new Response(JSON.stringify(value), {
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+function base64url(value: string): string {
+  return base64urlBytes(new TextEncoder().encode(value));
+}
+
+function base64urlBytes(bytes: Uint8Array): string {
+  return btoa(String.fromCharCode(...bytes))
+    .replaceAll('+', '-')
+    .replaceAll('/', '_')
+    .replace(/=+$/, '');
+}

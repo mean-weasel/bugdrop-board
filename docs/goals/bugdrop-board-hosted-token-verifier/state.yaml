@@ -1,0 +1,183 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Hosted Control Plane Board 4: Token Verifier Implementation'
+  slug: 'bugdrop-board-hosted-token-verifier'
+  kind: existing_plan
+  tranche: 'Hosted JWKS/public-key token verifier only.'
+  status: done
+  oracle:
+    signal: 'Hosted jwks and public_key verifier configs validate RS256 JWT-style board tokens with tenant/app/board/user/issuer/audience/TTL enforcement while self-host HMAC remains unchanged.'
+    cadence: 'after red/green verifier tests, route integration, full validation, and final audit'
+    final_proof: 'Focused hosted-token and route tests, full validation, make check, dependency/scope scans, and GoalBuddy receipts.'
+  intake:
+    original_request: 'Continue with Board 4 after Board 3 scaffold.'
+    interpreted_outcome: 'Implement hosted JWKS/public-key token verification only, preserving self-host behavior.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers preparing hosted SaaS auth'
+    authority: requested
+    proof_type: test
+    completion_proof: 'JWKS and public-key hosted token tests pass, route tests pass, validation gates pass, and scope scans prove no unrelated hosted product work.'
+    likely_misfire: 'Adding GitHub App integration or onboarding before hosted token verification is proven.'
+    hard_constraints:
+      - 'No new npm dependencies.'
+      - 'No GitHub App integration, onboarding UX/API, billing, realtime, comments, downvotes, GitHub Projects, deploys, credentials, package publishing, or production data migration.'
+      - 'Self-host HMAC behavior must remain supported and unchanged.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: active
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-hosted-token-verifier/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-hosted-token-verifier'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Confirm verifier implementation shape, test helpers, and no-dependency path.'
+    allowed_files:
+      - 'src/lib/board-token.ts'
+      - 'src/lib/hosted-config-repository.ts'
+      - 'src/routes/api-helpers.ts'
+      - 'test/'
+      - 'package.json'
+      - 'docs/goals/bugdrop-board-hosted-token-verifier/notes/T001-scout.md'
+      - 'docs/goals/bugdrop-board-hosted-token-verifier/state.yaml'
+    expected_output: 'Scout note describing RS256 WebCrypto approach, test fixtures, and route integration.'
+    verify:
+      - 'rg scans for existing crypto/token/config paths'
+    stop_if:
+      - 'A new dependency is required to implement the verifier safely.'
+    receipt:
+      summary: 'Confirmed the hosted verifier can use platform WebCrypto with no new dependency. Implementation should parse compact JWT/JWS, support RS256 JWKS and uploaded public keys, enforce hosted claims, and integrate through existing route auth.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-token-verifier/notes/T001-scout.md'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Write failing hosted token verifier tests.'
+    allowed_files:
+      - 'test/hosted-token-verifier.test.ts'
+      - 'docs/goals/bugdrop-board-hosted-token-verifier/notes/T002-red.md'
+      - 'docs/goals/bugdrop-board-hosted-token-verifier/state.yaml'
+    acceptance:
+      - 'Tests cover JWKS success, uploaded public key success, missing kid failure, wrong claim failure, expired token, excessive TTL, and malformed/unsupported token failure.'
+      - 'Tests fail before production verifier code exists.'
+    verify:
+      - 'npm run test -- test/hosted-token-verifier.test.ts'
+    receipt:
+      summary: 'Added hosted verifier red tests. Initial failure was missing module; corrected red with a null-returning stub failed JWKS and public-key success assertions as expected.'
+      proof:
+        - command: 'npm run test -- test/hosted-token-verifier.test.ts'
+          output: 'red: missing module, then 2 failed | 4 passed with null-returning stub'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-token-verifier/notes/T002-red.md'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Implement hosted token verifier module until unit tests pass.'
+    allowed_files:
+      - 'src/lib/hosted-token-verifier.ts'
+      - 'test/hosted-token-verifier.test.ts'
+      - 'docs/goals/bugdrop-board-hosted-token-verifier/notes/T003-green.md'
+      - 'docs/goals/bugdrop-board-hosted-token-verifier/state.yaml'
+    acceptance:
+      - 'JWKS and public-key tests pass.'
+      - 'No new package dependency is added.'
+      - 'Verifier returns existing board-token claim shape for route use.'
+    verify:
+      - 'npm run test -- test/hosted-token-verifier.test.ts'
+    receipt:
+      summary: 'Implemented hosted token verifier module with RS256 JWKS/public-key verification and hosted claim/TTL enforcement.'
+      proof:
+        - command: 'npm run test -- test/hosted-token-verifier.test.ts'
+          output: 'Test Files 1 passed (1), Tests 6 passed (6)'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-token-verifier/notes/T003-green.md'
+
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Integrate hosted verifier into routes and update route tests.'
+    allowed_files:
+      - 'src/routes/api-helpers.ts'
+      - 'test/routes.test.ts'
+      - 'docs/goals/bugdrop-board-hosted-token-verifier/notes/T004-routes.md'
+      - 'docs/goals/bugdrop-board-hosted-token-verifier/state.yaml'
+    acceptance:
+      - 'Hosted jwks/public_key route tests prove authenticated reads work.'
+      - 'Hosted wrong claim/signature tests fail closed at 401.'
+      - 'Self-host HMAC tests still pass.'
+    verify:
+      - 'npm run test -- test/routes.test.ts test/hosted-token-verifier.test.ts'
+    receipt:
+      summary: 'Integrated hosted verifier into routes. Hosted JWKS tokens can authenticate board reads, wrong hosted tenant claims fail closed, and self-host HMAC coverage remains green.'
+      proof:
+        - command: 'npm run test -- test/hosted-token-verifier.test.ts test/routes.test.ts'
+          output: 'Test Files 2 passed (2), Tests 24 passed (24)'
+        - command: 'npm run test -- test/board-token.test.ts test/hosted-token-verifier.test.ts test/routes.test.ts'
+          output: 'Test Files 3 passed (3), Tests 37 passed (37)'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-token-verifier/notes/T004-routes.md'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: verify hosted token verifier oracle and scope boundaries.'
+    expected_output: 'Final pass/fail receipt with proof and next Board 5 starter.'
+    verify:
+      - 'npm run test -- test/hosted-token-verifier.test.ts test/routes.test.ts'
+      - 'npm run validate'
+      - 'make check'
+      - 'git diff --check'
+      - '! git diff --name-only origin/main...HEAD | rg "^(package.json|package-lock.json|wrangler.toml|public/|.github/workflows/)"'
+      - '! rg -n "GitHub App installation token|billing|realtime|downvote|GitHub Projects|NPM_TOKEN|CLOUDFLARE_API_TOKEN" src migrations test'
+    stop_if:
+      - 'Self-host route behavior regresses.'
+      - 'A new dependency, GitHub App behavior, deploy config, or credential change is required.'
+    receipt:
+      summary: 'Approved. Hosted jwks and public_key verifier configs validate RS256 JWT-style tokens with issuer/audience/tenant/app/board/user/expiry/TTL enforcement, routes authenticate valid hosted JWKS tokens and fail closed on wrong claims, self-host HMAC behavior remains covered, and validation/scope gates passed.'
+      proof:
+        - command: 'npm run test -- test/hosted-token-verifier.test.ts'
+          output: 'Test Files 1 passed (1), Tests 6 passed (6)'
+        - command: 'npm run test -- test/hosted-token-verifier.test.ts test/routes.test.ts'
+          output: 'Test Files 2 passed (2), Tests 24 passed (24)'
+        - command: 'npm run test -- test/board-token.test.ts test/hosted-token-verifier.test.ts test/routes.test.ts'
+          output: 'Test Files 3 passed (3), Tests 37 passed (37)'
+        - command: 'npm run validate'
+          output: 'lint, Prettier, typecheck, workflow guards, and Vitest passed; Test Files 13 passed (13), Tests 90 passed (90)'
+        - command: 'make check'
+          output: 'ESLint, Prettier, typecheck, knip, critical audit, and GitHub Actions Node 24 guard passed'
+        - command: '! git diff --name-only origin/main...HEAD | rg "^(package.json|package-lock.json|wrangler.toml|public/|.github/workflows/)"'
+          output: 'no package, deploy config, workflow, or public asset changes'
+        - command: '! rg -n "GitHub App installation token|billing|realtime|downvote|GitHub Projects|NPM_TOKEN|CLOUDFLARE_API_TOKEN" src migrations test'
+          output: 'no matches in runtime/test code'
+        - command: 'git diff --check'
+          output: 'no whitespace errors'
+      burden_of_proof: 'Checked the strongest realistic failure mode: hosted JWT verification might weaken self-host HMAC behavior or add a dependency. Focused self-host token/route tests stayed green and package/scope scans prove no dependency, deploy, workflow, credential, or unrelated hosted product work was added.'
+      next_starter_command: '$goal-prep Build BugDrop Board Hosted Control Plane Board 5: GitHub App integration only, using completed Board 3 hosted config scaffold and Board 4 hosted token verifier; add per-tenant/app/board GitHub App installation metadata use, installation-token issue creator, repo allowlist failure-closed behavior, and tests while preserving self-host PAT issue creator and excluding onboarding UX, billing, realtime, comments, downvotes, GitHub Projects, deploys, credentials, and package publishing.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-token-verifier/notes/T999-final-audit.md'
