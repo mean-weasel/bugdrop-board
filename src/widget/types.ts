@@ -29,6 +29,7 @@ export type BoardWidgetLayout = 'inline' | 'panel' | 'kanban';
 
 export interface BoardWidgetCopy {
   heading: string;
+  description: string;
   titleLabel: string;
   titlePlaceholder: string;
   descriptionLabel: string;

@@ -56,6 +56,7 @@ const THEME_TOKEN_TO_CSS_PROPERTY = {
 
 export const DEFAULT_COPY: BoardWidgetCopy = {
   heading: 'Feedback',
+  description: '',
   titleLabel: 'Idea title',
   titlePlaceholder: '',
   descriptionLabel: 'Context',
