@@ -15,8 +15,18 @@ BugDrop Board is embedded inside an existing app. The host app owns login and se
 token endpoint for its signed-in users. BugDrop Board verifies those tokens, stores board data in
 D1, creates one GitHub Issue per board item, and keeps upvotes in D1.
 
-Hosted users should eventually need only GitHub and the embed script. Self-hosters run their own
-Cloudflare Worker, D1 database, Worker secrets, and GitHub access token.
+BugDrop Hosted Beta is the manual, BugDrop-run path for teams that do not want to self-host yet.
+Self-hosters run their own Cloudflare Worker, D1 database, Worker secrets, and GitHub access token.
+
+## Hosted Beta
+
+Hosted beta users bring a signed-in app, a backend token endpoint, and a GitHub repo for mirrored
+feedback issues. BugDrop configures the hosted Worker, board id, exact origins, D1 board row, token
+audience/issuer, throttles, and GitHub mirror access during manual provisioning.
+
+Read [Hosted Security And Setup](docs/hosted-security-and-setup.md) for the current security
+promise, app responsibilities, configurable settings, and limitations. Hosted beta is not yet a
+self-service multi-tenant control plane.
 
 ## Local Setup
 

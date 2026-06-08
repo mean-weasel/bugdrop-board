@@ -1,35 +1,22 @@
 import { Hono, type Context } from 'hono';
 import { BoardRepository } from '../lib/board-repository';
-import { createGitHubIssueCreator, type IssueCreator } from '../lib/github';
+import type { IssueCreator } from '../lib/github';
+import type { HostedBoardConfig } from '../lib/hosted-config-repository';
 import { createId } from '../lib/ids';
 import type { ThrottleAction } from '../lib/request-throttle';
 import type { BoardItem, Env } from '../types';
+import { createIssueCreator, issueTargetForBoard } from './api-github';
 import { applyCorsHeaders, authorizeBoardRequest, parseJsonBody, parseSince } from './api-helpers';
 import { enforceRequestThrottle, enforceWriteThrottle } from './write-throttle';
 
 type ApiEnv = { Bindings: Env };
 
 interface ApiDependencies {
-  createIssueCreator(env: Env): IssueCreator | null;
+  createIssueCreator(env: Env, hostedConfig?: HostedBoardConfig): IssueCreator | null;
 }
 
 const defaultDependencies: ApiDependencies = {
-  createIssueCreator(env) {
-    if (env.ENVIRONMENT === 'e2e') {
-      return {
-        createIssue(input) {
-          return Promise.resolve({
-            number: 1001,
-            htmlUrl: `https://github.local/mean-weasel/demo/issues/${input.boardItemId}`,
-          });
-        },
-      };
-    }
-    if (!env.GITHUB_ISSUE_ACCESS_TOKEN) {
-      return null;
-    }
-    return createGitHubIssueCreator(env.GITHUB_ISSUE_ACCESS_TOKEN);
-  },
+  createIssueCreator,
 };
 
 export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<ApiEnv> {
@@ -38,12 +25,12 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
 
   api.use('*', async (c, next) => {
     if (c.req.method === 'OPTIONS') {
-      applyCorsHeaders(c);
+      await applyCorsHeaders(c);
       return c.body(null, 204);
     }
 
     await next();
-    applyCorsHeaders(c);
+    await applyCorsHeaders(c);
   });
 
   api.post('/__e2e/reset', resetE2eBoard);
@@ -75,6 +62,10 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
     if (!board) {
       return c.json({ error: 'Board not found' }, 404);
     }
+    const issueTarget = issueTargetForBoard(board, authorized.hostedConfig);
+    if (!issueTarget) {
+      return c.json({ error: 'GitHub issue creator is not configured' }, 500);
+    }
 
     const throttled = await enforceWriteThrottle(
       c,
@@ -86,7 +77,7 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
       return throttled;
     }
 
-    const issueCreator = deps.createIssueCreator(c.env);
+    const issueCreator = deps.createIssueCreator(c.env, authorized.hostedConfig);
     if (!issueCreator) {
       return c.json({ error: 'GitHub issue creator is not configured' }, 500);
     }
@@ -95,8 +86,8 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
     let issue;
     try {
       issue = await issueCreator.createIssue({
-        owner: board.repoOwner,
-        repo: board.repoName,
+        owner: issueTarget.owner,
+        repo: issueTarget.repo,
         title: parsedBody.value.title,
         description: parsedBody.value.description,
         boardItemId: itemId,
@@ -104,7 +95,7 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
     } catch (error) {
       console.error('GitHub issue creation failed', {
         boardId,
-        repo: `${board.repoOwner}/${board.repoName}`,
+        repo: `${issueTarget.owner}/${issueTarget.repo}`,
         message: error instanceof Error ? error.message : String(error),
       });
       return c.json({ error: 'Failed to create GitHub issue' }, 502);

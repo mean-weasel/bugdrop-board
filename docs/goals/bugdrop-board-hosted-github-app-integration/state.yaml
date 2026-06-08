@@ -1,0 +1,199 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Hosted GitHub App Integration'
+  slug: 'bugdrop-board-hosted-github-app-integration'
+  kind: existing_plan
+  tranche: 'Hosted GitHub App issue creation only.'
+  status: done
+  oracle:
+    signal: 'Hosted board item creation uses a configured active GitHub App installation token, fails closed on missing/inactive/mismatched GitHub connections, and leaves self-host PAT behavior intact.'
+    cadence: 'after scout, red tests, implementation, focused tests, and final audit'
+    final_proof: 'Focused GitHub client and route tests, full repo gates, scope scans, and GoalBuddy receipts.'
+  intake:
+    original_request: 'Continue the hosted control-plane conveyor.'
+    interpreted_outcome: 'Implement the hosted GitHub App integration slice from the hosted control-plane design.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers preparing hosted beta'
+    authority: requested
+    proof_type: test
+    completion_proof: 'Committed implementation and tests showing hosted GitHub App issue creation plus fail-closed behavior.'
+    likely_misfire: 'Using a global shared PAT for hosted tenants or creating board items before GitHub issue creation succeeds.'
+    blind_spots_considered:
+      - 'Hosted GitHub connection must be tenant/app scoped, not only board named.'
+      - 'Repo mismatch between board rows and hosted GitHub connection must fail closed.'
+      - 'Installation tokens must stay server-side and ephemeral.'
+      - 'Self-host PAT behavior must not regress.'
+    hard_constraints:
+      - 'No package dependency changes, package publishing, deploys, credentials, wrangler/workflow/public asset changes, hosted onboarding UX/API, billing, realtime, comments, downvotes, or GitHub Projects.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: active
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-hosted-github-app-integration/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-hosted-github-app-integration'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: PM
+    status: done
+    objective: 'Map the existing GitHub client, hosted config repository, API auth route, and tests before implementation.'
+    allowed_files:
+      - 'src/lib/github.ts'
+      - 'src/lib/hosted-config-repository.ts'
+      - 'src/routes/api.ts'
+      - 'src/routes/api-helpers.ts'
+      - 'src/types.ts'
+      - 'migrations/0003_hosted_control_plane.sql'
+      - 'test/github.test.ts'
+      - 'test/routes.test.ts'
+      - 'test/hosted-config-repository.test.ts'
+      - 'docs/goals/bugdrop-board-hosted-github-app-integration/notes/T001-scout.md'
+      - 'docs/goals/bugdrop-board-hosted-github-app-integration/state.yaml'
+    expected_output: 'Receipt summarizing current support, missing hosted GitHub App path, and red-test targets.'
+    verify:
+      - 'Direct inspection of current GitHub client, hosted repository, route auth, migration, and tests.'
+
+  - id: T002
+    type: worker
+    assignee: PM
+    status: done
+    objective: 'Write failing tests for hosted GitHub App issue creation and hosted-route fail-closed behavior.'
+    allowed_files:
+      - 'test/github.test.ts'
+      - 'test/routes.test.ts'
+      - 'test/hosted-config-repository.test.ts'
+      - 'docs/goals/bugdrop-board-hosted-github-app-integration/notes/T002-red-tests.md'
+      - 'docs/goals/bugdrop-board-hosted-github-app-integration/state.yaml'
+    acceptance:
+      - 'GitHub client test expects installation-token exchange then issue creation with the installation token.'
+      - 'Repository test expects active GitHub connection metadata to be read with board config.'
+      - 'Route tests expect hosted creation through the configured repo and fail-closed behavior for missing/inactive/mismatched connections.'
+      - 'Tests fail for the expected missing production behavior before implementation.'
+    verify:
+      - 'npm run test -- test/github.test.ts'
+      - 'npm run test -- test/hosted-config-repository.test.ts test/routes.test.ts'
+    receipt:
+      summary: 'Added red tests for GitHub App token exchange, malformed token response, hosted GitHub connection metadata, hosted creation through the configured repo, and fail-closed missing/mismatched connection behavior.'
+      proof:
+        - command: 'npm run test -- test/github.test.ts'
+          output: 'failed as expected: createGitHubAppIssueCreator is not a function'
+        - command: 'npm run test -- test/hosted-config-repository.test.ts test/routes.test.ts'
+          output: 'failed as expected: hosted.createGitHubConnection is not a function'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-github-app-integration/notes/T002-red-tests.md'
+
+  - id: T003
+    type: worker
+    assignee: PM
+    status: done
+    objective: 'Implement hosted GitHub App client and hosted config repository support.'
+    allowed_files:
+      - 'src/lib/github.ts'
+      - 'src/lib/hosted-config-repository.ts'
+      - 'src/types.ts'
+      - 'docs/goals/bugdrop-board-hosted-github-app-integration/notes/T003-client-repository.md'
+      - 'docs/goals/bugdrop-board-hosted-github-app-integration/state.yaml'
+    acceptance:
+      - 'GitHub App issue creator signs an app JWT, mints an installation token, and delegates issue creation.'
+      - 'Malformed installation-token responses fail closed.'
+      - 'Hosted board config exposes active GitHub connection metadata only when tenant/app/connection are active and aligned.'
+    verify:
+      - 'npm run test -- test/github.test.ts test/hosted-config-repository.test.ts'
+    receipt:
+      summary: 'Implemented GitHub App JWT/token exchange issue creator, active hosted GitHub connection repository support, and optional GitHub App env types.'
+      proof:
+        - command: 'npm run test -- test/github.test.ts'
+          output: 'passed: 5 tests'
+        - command: 'npm run test -- test/hosted-config-repository.test.ts'
+          output: 'passed: 5 tests'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-github-app-integration/notes/T003-client-repository.md'
+
+  - id: T004
+    type: worker
+    assignee: PM
+    status: done
+    objective: 'Wire hosted GitHub App issue creation into the board item create route.'
+    allowed_files:
+      - 'src/routes/api.ts'
+      - 'src/routes/api-helpers.ts'
+      - 'src/types.ts'
+      - 'test/routes.test.ts'
+      - 'docs/goals/bugdrop-board-hosted-github-app-integration/notes/T004-route.md'
+      - 'docs/goals/bugdrop-board-hosted-github-app-integration/state.yaml'
+    acceptance:
+      - 'Hosted item creation uses hosted GitHub connection repo owner/name.'
+      - 'Missing app credentials, inactive/missing connection, or repo mismatch returns an error before creating an item/event.'
+      - 'Self-host item creation still uses the injected/self-host PAT path.'
+    verify:
+      - 'npm run test -- test/routes.test.ts'
+    receipt:
+      summary: 'Wired hosted config into create-item routing, selected the hosted GitHub App issue creator for hosted boards, failed closed on missing/mismatched connection config, and preserved self-host route behavior.'
+      proof:
+        - command: 'npm run test -- test/routes.test.ts'
+          output: 'passed: 21 tests'
+        - command: 'npm run test -- test/github.test.ts test/hosted-config-repository.test.ts test/routes.test.ts'
+          output: 'passed: 3 test files, 31 tests'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-github-app-integration/notes/T004-route.md'
+
+  - id: T999
+    type: judge
+    assignee: PM
+    status: done
+    objective: 'Final audit against the oracle and scope constraints.'
+    expected_output: 'Final receipt with commands, proof, scope scans, and remaining risks.'
+    verify:
+      - 'npm run test -- test/github.test.ts test/hosted-config-repository.test.ts test/routes.test.ts'
+      - 'npm run validate'
+      - 'make check'
+      - 'ruby -e ''require "yaml"; YAML.load_file("docs/goals/bugdrop-board-hosted-github-app-integration/state.yaml"); puts "state yaml ok"'''
+      - 'git diff --check'
+      - '! git diff --name-only origin/main...HEAD | rg "^(package.json|package-lock.json|wrangler.toml|public/|.github/workflows/)"'
+      - '! rg -n "billing|realtime|downvote|GitHub Projects|NPM_TOKEN|CLOUDFLARE_API_TOKEN" src test migrations'
+    stop_if:
+      - 'Any required verification fails.'
+      - 'Scope scans show package/deploy/workflow/public asset changes.'
+      - 'Hosted route can create an item without an active matching GitHub connection.'
+    receipt:
+      summary: 'Approved. Hosted GitHub App issue creation, active connection metadata, fail-closed route behavior, and self-host preservation are proven by focused tests and repo gates.'
+      proof:
+        - command: 'npm run test -- test/github.test.ts test/hosted-config-repository.test.ts test/routes.test.ts'
+          output: 'passed: 3 test files, 31 tests'
+        - command: 'npm run validate'
+          output: 'passed: lint, Prettier, typecheck, workflow checks, and Vitest; 13 files, 97 tests'
+        - command: 'make check'
+          output: 'passed: ESLint, Prettier, typecheck, knip, critical audit, and Actions Node 24 guard'
+        - command: 'ruby -e ''require "yaml"; YAML.load_file("docs/goals/bugdrop-board-hosted-github-app-integration/state.yaml"); puts "state yaml ok"'''
+          output: 'state yaml ok'
+        - command: 'git diff --check'
+          output: 'no whitespace errors'
+        - command: 'git diff --name-only origin/main...HEAD | rg "^(package.json|package-lock.json|wrangler.toml|public/|.github/workflows/)"'
+          output: 'no matches'
+        - command: 'rg -n "billing|realtime|downvote|GitHub Projects|NPM_TOKEN|CLOUDFLARE_API_TOKEN" src test migrations'
+          output: 'no matches'
+        - command: 'wc -l src/lib/hosted-config-repository.ts src/routes/api.ts'
+          output: 'hosted-config-repository.ts: 294 lines; api.ts: 273 lines'
+      burden_of_proof: 'Checked the strongest realistic failures: shared PAT/wrong repo use for hosted tenants, D1 persistence without active GitHub connection, and repo rail drift. Focused tests, full gates, line-count proof, and scope scans rule them out for this mocked integration slice.'
+      residual_risk: 'Real GitHub App installation-token smoke remains a follow-up for hosted onboarding/credential setup.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-github-app-integration/notes/T999-final-audit.md'

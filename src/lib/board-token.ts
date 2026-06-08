@@ -1,6 +1,8 @@
 interface BoardTokenClaims {
   boardId: string;
   externalUserId: string;
+  tenantId?: string;
+  appId?: string;
   displayName?: string;
   email?: string;
   exp: number;
@@ -11,6 +13,8 @@ interface BoardTokenClaims {
 interface VerifyBoardTokenOptions {
   secret: string;
   expectedBoardId: string;
+  expectedTenantId?: string;
+  expectedAppId?: string;
   expectedAudience?: string;
   expectedIssuer?: string;
   maxTtlSeconds?: number;
@@ -51,6 +55,12 @@ export async function verifyBoardToken(
   }
   if (claims.boardId !== options.expectedBoardId) {
     throw new Error('Board token scope mismatch');
+  }
+  if (options.expectedTenantId && claims.tenantId !== options.expectedTenantId) {
+    throw new Error('Board token tenant mismatch');
+  }
+  if (options.expectedAppId && claims.appId !== options.expectedAppId) {
+    throw new Error('Board token app mismatch');
   }
   if (options.expectedAudience && claims.aud !== options.expectedAudience) {
     throw new Error('Board token audience mismatch');
@@ -97,6 +107,8 @@ function parseClaims(payload: string): BoardTokenClaims {
     return {
       boardId: decoded.boardId,
       externalUserId: decoded.externalUserId,
+      tenantId: decoded.tenantId,
+      appId: decoded.appId,
       displayName: decoded.displayName,
       email: decoded.email,
       exp: decoded.exp,

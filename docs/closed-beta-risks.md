@@ -27,7 +27,9 @@ These are acceptable for closed beta when communicated before invite:
 - GitHub Issues mirror new items, but status workflow and label sync are not part of closed beta.
 - Host app owns authentication, signed token endpoint, user identity, and session security.
 - Self-host operators own Cloudflare account, D1 database, Worker deploys, secrets, and rollback.
-- No hosted control plane or billing.
+- BugDrop Hosted Beta is manually provisioned; see
+  [Hosted Security And Setup](hosted-security-and-setup.md).
+- No self-service hosted control plane or billing.
 - No built-in comments.
 - No built-in monitoring, alerting, backup/export/restore automation, or incident tooling.
 - Manual support, rollback, and backup/export boundaries are documented in
