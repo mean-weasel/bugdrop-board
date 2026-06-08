@@ -1,23 +1,19 @@
 import { createId } from './ids';
+import {
+  createHostedGitHubConnection,
+  getActiveHostedGitHubConnection,
+  type HostedGitHubConnectionConfig,
+} from './hosted-github-connections';
+import {
+  mapTokenVerifier,
+  type HostedTokenVerifierConfig,
+  type HostedTokenVerifierStatus,
+  type HostedTokenVerifierType,
+  type HostedVerifierRow,
+} from './hosted-token-verifier-config';
 
 type HostedStatus = 'active' | 'paused' | 'disabled';
 type HostedOriginStatus = 'active' | 'disabled';
-type HostedTokenVerifierStatus = 'active' | 'disabled';
-type HostedTokenVerifierType = 'jwks' | 'public_key' | 'hmac_legacy';
-
-export interface HostedTokenVerifierConfig {
-  id: string;
-  type: HostedTokenVerifierType;
-  issuer: string;
-  audience: string;
-  jwksUrl?: string;
-  publicKeyPem?: string;
-  keyId?: string;
-  secretRef?: string;
-  maxTtlSeconds: number;
-  status: HostedTokenVerifierStatus;
-  isDefault: boolean;
-}
 
 export interface HostedBoardConfig {
   id: string;
@@ -27,6 +23,7 @@ export interface HostedBoardConfig {
   status: HostedStatus;
   activeOrigins: string[];
   tokenVerifier?: HostedTokenVerifierConfig;
+  githubConnection?: HostedGitHubConnectionConfig;
 }
 
 interface HostedBoardConfigRow {
@@ -34,25 +31,12 @@ interface HostedBoardConfigRow {
   tenant_id: string;
   app_id: string;
   board_id: string;
+  github_connection_id: string | null;
   status: HostedStatus;
 }
 
 interface HostedOriginRow {
   origin: string;
-}
-
-interface HostedVerifierRow {
-  id: string;
-  verifier_type: HostedTokenVerifierType;
-  issuer: string;
-  audience: string;
-  jwks_url: string | null;
-  public_key_pem: string | null;
-  key_id: string | null;
-  secret_ref: string | null;
-  max_ttl_seconds: number;
-  status: HostedTokenVerifierStatus;
-  is_default: number;
 }
 
 export class HostedConfigRepository {
@@ -176,6 +160,19 @@ export class HostedConfigRepository {
     return verifier;
   }
 
+  async createGitHubConnection(input: {
+    id?: string;
+    tenantId: string;
+    appId: string;
+    installationId: string;
+    accountLogin?: string;
+    repoOwner: string;
+    repoName: string;
+    status?: HostedGitHubConnectionConfig['status'];
+  }): Promise<HostedGitHubConnectionConfig> {
+    return createHostedGitHubConnection(this.db, input);
+  }
+
   async configureBoard(input: {
     id?: string;
     tenantId: string;
@@ -217,6 +214,7 @@ export class HostedConfigRepository {
                 hosted_board_configs.tenant_id,
                 hosted_board_configs.app_id,
                 hosted_board_configs.board_id,
+                hosted_board_configs.github_connection_id,
                 hosted_board_configs.status
          FROM hosted_board_configs
          JOIN hosted_tenants ON hosted_tenants.id = hosted_board_configs.tenant_id
@@ -232,9 +230,10 @@ export class HostedConfigRepository {
       return null;
     }
 
-    const [activeOrigins, tokenVerifier] = await Promise.all([
+    const [activeOrigins, tokenVerifier, githubConnection] = await Promise.all([
       this.listActiveOrigins(row.tenant_id, row.app_id),
       this.getActiveTokenVerifier(row.tenant_id, row.app_id),
+      getActiveHostedGitHubConnection(this.db, row.tenant_id, row.app_id, row.github_connection_id),
     ]);
 
     return {
@@ -245,6 +244,7 @@ export class HostedConfigRepository {
       status: row.status,
       activeOrigins,
       tokenVerifier,
+      githubConnection,
     };
   }
 
@@ -291,20 +291,4 @@ export class HostedConfigRepository {
       .first<HostedVerifierRow>();
     return row ? mapTokenVerifier(row) : undefined;
   }
-}
-
-function mapTokenVerifier(row: HostedVerifierRow): HostedTokenVerifierConfig {
-  return {
-    id: row.id,
-    type: row.verifier_type,
-    issuer: row.issuer,
-    audience: row.audience,
-    jwksUrl: row.jwks_url ?? undefined,
-    publicKeyPem: row.public_key_pem ?? undefined,
-    keyId: row.key_id ?? undefined,
-    secretRef: row.secret_ref ?? undefined,
-    maxTtlSeconds: row.max_ttl_seconds,
-    status: row.status,
-    isDefault: row.is_default === 1,
-  };
 }

@@ -632,6 +632,201 @@ describe('api routes', () => {
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({ items: [] });
   });
+
+  it('creates hosted board items through the configured GitHub App connection repo', async () => {
+    const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName });
+    const tokenKeyPair = await generateKeyPair();
+    const appKeyPair = await generateKeyPair();
+    const tenant = await hosted.createTenant({
+      name: 'Hosted Create Tenant',
+      slug: `hosted-create-${testSequence}`,
+    });
+    const app = await hosted.createApp({
+      tenantId: tenant.id,
+      name: 'Hosted Create App',
+      slug: 'hosted-create-app',
+    });
+    await hosted.createTokenVerifier({
+      tenantId: tenant.id,
+      appId: app.id,
+      type: 'jwks',
+      issuer: TOKEN_ISSUER,
+      audience: TOKEN_AUDIENCE,
+      jwksUrl: 'https://app.example.com/.well-known/jwks.json',
+      keyId: 'route-kid',
+    });
+    const connection = await hosted.createGitHubConnection({
+      tenantId: tenant.id,
+      appId: app.id,
+      installationId: '98765',
+      accountLogin: 'mean-weasel',
+      repoOwner: 'mean-weasel',
+      repoName,
+      status: 'active',
+    });
+    await hosted.configureBoard({
+      tenantId: tenant.id,
+      appId: app.id,
+      boardId: board.id,
+      githubConnectionId: connection.id,
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ keys: [await publicJwk(tokenKeyPair, 'route-kid')] }))
+      .mockResolvedValueOnce(jsonResponse({ token: 'ghs_installation_token' }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          number: 31,
+          html_url: `https://github.com/mean-weasel/${repoName}/issues/31`,
+        })
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    const api = createApi();
+    const token = await signHostedJwt(
+      {
+        iss: TOKEN_ISSUER,
+        aud: TOKEN_AUDIENCE,
+        boardId: board.id,
+        tenantId: tenant.id,
+        appId: app.id,
+        externalUserId: 'hosted_user',
+        exp: Math.floor(Date.now() / 1000) + 60,
+      },
+      tokenKeyPair.privateKey,
+      { kid: 'route-kid' }
+    );
+
+    const res = await api.request(
+      `/boards/${board.id}/items`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ title: 'Add SSO', description: 'Enterprise users need SSO.' }),
+      },
+      env({
+        GITHUB_APP_ID: '12345',
+        GITHUB_APP_PRIVATE_KEY: await privateKeyPem(appKeyPair.privateKey),
+      })
+    );
+
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as { item: { id: string; githubIssueNumber: number } };
+    expect(body.item.githubIssueNumber).toBe(31);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[1][0]).toBe(
+      'https://api.github.com/app/installations/98765/access_tokens'
+    );
+    expect(fetchMock.mock.calls[2][0]).toBe(
+      `https://api.github.com/repos/mean-weasel/${repoName}/issues`
+    );
+    await expect(repo.getItem(board.id, body.item.id)).resolves.toMatchObject({
+      createdByExternalUserId: 'hosted_user',
+      githubIssueNumber: 31,
+    });
+  });
+
+  it('fails closed for hosted item creation without an active GitHub connection', async () => {
+    const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName });
+    const tenant = await hosted.createTenant({
+      name: 'No Connection Tenant',
+      slug: `no-connection-${testSequence}`,
+    });
+    const app = await hosted.createApp({
+      tenantId: tenant.id,
+      name: 'No Connection App',
+      slug: 'no-connection-app',
+    });
+    await hosted.createTokenVerifier({
+      tenantId: tenant.id,
+      appId: app.id,
+      type: 'hmac_legacy',
+      issuer: TOKEN_ISSUER,
+      audience: TOKEN_AUDIENCE,
+      secretRef: 'worker-secret',
+    });
+    await hosted.configureBoard({ tenantId: tenant.id, appId: app.id, boardId: board.id });
+    const api = createApi();
+
+    const res = await api.request(
+      `/boards/${board.id}/items`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${await boardToken(board.id, {
+            tenantId: tenant.id,
+            appId: app.id,
+          })}`,
+        },
+        body: JSON.stringify({ title: 'Add SSO', description: 'Enterprise users need SSO.' }),
+      },
+      env({
+        GITHUB_APP_ID: '12345',
+        GITHUB_APP_PRIVATE_KEY: await privateKeyPem((await generateKeyPair()).privateKey),
+      })
+    );
+
+    expect(res.status).toBe(500);
+    await expect(repo.listItems(board.id)).resolves.toHaveLength(0);
+    await expect(repo.listEvents(board.id, 0)).resolves.toHaveLength(0);
+  });
+
+  it('fails closed when a hosted GitHub connection repo does not match the board repo', async () => {
+    const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName });
+    const tenant = await hosted.createTenant({
+      name: 'Mismatch Tenant',
+      slug: `mismatch-${testSequence}`,
+    });
+    const app = await hosted.createApp({
+      tenantId: tenant.id,
+      name: 'Mismatch App',
+      slug: 'mismatch-app',
+    });
+    await hosted.createTokenVerifier({
+      tenantId: tenant.id,
+      appId: app.id,
+      type: 'hmac_legacy',
+      issuer: TOKEN_ISSUER,
+      audience: TOKEN_AUDIENCE,
+      secretRef: 'worker-secret',
+    });
+    const connection = await hosted.createGitHubConnection({
+      tenantId: tenant.id,
+      appId: app.id,
+      installationId: '98765',
+      repoOwner: 'mean-weasel',
+      repoName: `${repoName}_other`,
+      status: 'active',
+    });
+    await hosted.configureBoard({
+      tenantId: tenant.id,
+      appId: app.id,
+      boardId: board.id,
+      githubConnectionId: connection.id,
+    });
+    const api = createApi();
+
+    const res = await api.request(
+      `/boards/${board.id}/items`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${await boardToken(board.id, {
+            tenantId: tenant.id,
+            appId: app.id,
+          })}`,
+        },
+        body: JSON.stringify({ title: 'Add SSO', description: 'Enterprise users need SSO.' }),
+      },
+      env({
+        GITHUB_APP_ID: '12345',
+        GITHUB_APP_PRIVATE_KEY: await privateKeyPem((await generateKeyPair()).privateKey),
+      })
+    );
+
+    expect(res.status).toBe(500);
+    await expect(repo.listItems(board.id)).resolves.toHaveLength(0);
+    await expect(repo.listEvents(board.id, 0)).resolves.toHaveLength(0);
+  });
 });
 
 async function generateKeyPair(): Promise<CryptoKeyPair> {
@@ -675,6 +870,15 @@ function jsonResponse(value: unknown): Response {
   return new Response(JSON.stringify(value), {
     headers: { 'Content-Type': 'application/json' },
   });
+}
+
+async function privateKeyPem(privateKey: CryptoKey): Promise<string> {
+  const bytes = new Uint8Array(await crypto.subtle.exportKey('pkcs8', privateKey));
+  const body =
+    btoa(String.fromCharCode(...bytes))
+      .match(/.{1,64}/g)
+      ?.join('\n') ?? '';
+  return `-----BEGIN PRIVATE KEY-----\n${body}\n-----END PRIVATE KEY-----`;
 }
 
 function base64url(value: string): string {

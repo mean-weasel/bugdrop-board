@@ -8,6 +8,8 @@ export interface Env {
   BOARD_TOKEN_ISSUER?: string;
   BOARD_TOKEN_MAX_TTL_SECONDS?: string;
   GITHUB_ISSUE_ACCESS_TOKEN?: string;
+  GITHUB_APP_ID?: string;
+  GITHUB_APP_PRIVATE_KEY?: string;
   REQUEST_THROTTLE_WINDOW_SECONDS?: string;
   ITEM_CREATE_RATE_LIMIT?: string;
   UPVOTE_RATE_LIMIT?: string;

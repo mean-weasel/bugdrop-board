@@ -8,7 +8,9 @@ import type { Env } from '../types';
 type ApiEnv = { Bindings: Env };
 type BoardTokenClaims = Awaited<ReturnType<typeof verifyBoardToken>>;
 
-type AuthorizedRequest = { ok: true; claims: BoardTokenClaims } | { ok: false; response: Response };
+type AuthorizedRequest =
+  | { ok: true; claims: BoardTokenClaims; hostedConfig?: HostedBoardConfig }
+  | { ok: false; response: Response };
 
 export async function applyCorsHeaders(c: Context<ApiEnv>): Promise<void> {
   const origin = c.req.header('Origin');
@@ -46,7 +48,7 @@ export async function authorizeBoardRequest(
     return { ok: false, response: c.json({ error: 'Invalid board token' }, 401) };
   }
 
-  return { ok: true, claims };
+  return { ok: true, claims, hostedConfig: hostedConfig ?? undefined };
 }
 
 export function parseSince(value: string | undefined) {

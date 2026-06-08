@@ -69,6 +69,88 @@ describe('HostedConfigRepository', () => {
     });
   });
 
+  it('creates and reads active GitHub connection metadata for a hosted board config', async () => {
+    const board = await boards.upsertBoard({
+      repoOwner: 'mean-weasel',
+      repoName: `github_${sequence}`,
+    });
+    const tenant = await hosted.createTenant({
+      name: 'GitHub Tenant',
+      slug: `github-${sequence}`,
+    });
+    const app = await hosted.createApp({
+      tenantId: tenant.id,
+      name: 'GitHub App',
+      slug: 'github-app',
+    });
+    const connection = await hosted.createGitHubConnection({
+      tenantId: tenant.id,
+      appId: app.id,
+      installationId: '123456',
+      accountLogin: 'mean-weasel',
+      repoOwner: 'mean-weasel',
+      repoName: board.repoName,
+      status: 'active',
+    });
+    await hosted.configureBoard({
+      tenantId: tenant.id,
+      appId: app.id,
+      boardId: board.id,
+      githubConnectionId: connection.id,
+    });
+
+    await expect(hosted.getBoardConfig(board.id)).resolves.toMatchObject({
+      tenantId: tenant.id,
+      appId: app.id,
+      boardId: board.id,
+      githubConnection: {
+        id: connection.id,
+        installationId: '123456',
+        accountLogin: 'mean-weasel',
+        repoOwner: 'mean-weasel',
+        repoName: board.repoName,
+        status: 'active',
+      },
+    });
+  });
+
+  it('does not expose inactive GitHub connection metadata on a hosted board config', async () => {
+    const board = await boards.upsertBoard({
+      repoOwner: 'mean-weasel',
+      repoName: `suspended_${sequence}`,
+    });
+    const tenant = await hosted.createTenant({
+      name: 'Suspended Tenant',
+      slug: `suspended-${sequence}`,
+    });
+    const app = await hosted.createApp({
+      tenantId: tenant.id,
+      name: 'Suspended App',
+      slug: 'suspended-app',
+    });
+    const connection = await hosted.createGitHubConnection({
+      tenantId: tenant.id,
+      appId: app.id,
+      installationId: '123456',
+      repoOwner: 'mean-weasel',
+      repoName: board.repoName,
+      status: 'suspended',
+    });
+    await hosted.configureBoard({
+      tenantId: tenant.id,
+      appId: app.id,
+      boardId: board.id,
+      githubConnectionId: connection.id,
+    });
+
+    await expect(hosted.getBoardConfig(board.id)).resolves.toMatchObject({
+      tenantId: tenant.id,
+      appId: app.id,
+      boardId: board.id,
+      githubConnection: undefined,
+    });
+  });
+
   it('supports uploaded public keys and explicit hmac legacy metadata without making hmac default', async () => {
     const tenant = await hosted.createTenant({
       name: 'Beta Tenant',
