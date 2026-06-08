@@ -1,0 +1,163 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Hosted/Open Security Docs'
+  slug: 'bugdrop-board-hosted-open-docs'
+  kind: existing_plan
+  tranche: 'Hosted/open security and setup documentation only.'
+  status: done
+  oracle:
+    signal: 'A prospective hosted/open beta user can understand the current security promise, required host responsibilities, configurable settings, and limitations from one linked document.'
+    cadence: 'after docs draft and final PM/Judge audit'
+    final_proof: 'Docs diff inspection, README link proof, contradiction/overpromise scans, and standard docs-focused verification.'
+  intake:
+    original_request: 'Build Board 1: hosted/open docs, and keep note of follow-on steps.'
+    interpreted_outcome: 'Prepare a GoalBuddy board to create concise hosted/open security/setup documentation without runtime behavior changes.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers and users considering the hosted/open beta path'
+    authority: requested
+    proof_type: artifact
+    completion_proof: 'A new hosted/open setup doc exists, is linked, distinguishes modes, lists current controls/settings, and avoids overpromising future hosted control-plane guarantees.'
+    likely_misfire: 'Writing more self-hosting documentation or marketing copy while failing to give hosted/open users a crisp security/settings contract.'
+    blind_spots_considered:
+      - 'Current docs document the primitives but scatter them across README, setup, risk, and ops docs.'
+      - 'Hosted/open language can accidentally imply tenant isolation or a hosted control plane that does not exist yet.'
+      - 'Users need to know both what they configure and what BugDrop configures for them.'
+      - 'CORS can be overdescribed as authentication unless the docs explicitly separate browser containment from bearer-token authorization.'
+    hard_constraints:
+      - 'Documentation only.'
+      - 'No runtime code changes, migrations, deploys, credential changes, package publishing, or secret edits.'
+      - 'No hosted control plane, billing, realtime, comments, downvotes, GitHub Projects, status workflow, analytics, monitoring, or backup/export/restore implementation.'
+      - 'Do not expose or ask for secret values.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: active
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-hosted-open-docs/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-hosted-open-docs'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Audit current docs for hosted/open security primitives, scattered setup settings, and overpromising risks.'
+    allowed_files:
+      - 'README.md'
+      - 'docs/closed-beta-setup.md'
+      - 'docs/closed-beta-risks.md'
+      - 'docs/closed-beta-ops-runbook.md'
+      - 'docs/closed-beta-final-acceptance.md'
+      - 'docs/production-dogfood.md'
+      - 'wrangler.toml'
+      - 'src/widget/config.ts'
+      - 'src/routes/api-helpers.ts'
+      - 'src/routes/api.ts'
+      - 'src/lib/request-throttle.ts'
+      - 'docs/goals/bugdrop-board-hosted-open-docs/notes/T001-docs-audit.md'
+      - 'docs/goals/bugdrop-board-hosted-open-docs/state.yaml'
+    expected_output: 'A compact audit note listing what is already documented, what is missing for hosted/open users, and exact docs that need edits.'
+    verify:
+      - 'rg scans for ALLOWED_ORIGINS, BOARD_TOKEN, Request Throttling, Host Token Endpoint, GitHub Mirroring, CORS, hosted, self-hosted, and customization settings'
+      - 'direct inspection of README and closed-beta docs for mode distinctions and overpromises'
+    stop_if:
+      - 'The docs audit finds that runtime behavior must change before truthful hosted/open docs can be written.'
+    receipt:
+      summary: 'Audited current README, closed-beta docs, production vars, widget config, API auth, and throttling. Current primitives exist but are scattered across self-host-oriented docs; no runtime changes are required for truthful hosted beta docs.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-open-docs/notes/T001-docs-audit.md'
+
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Write the hosted/open security and setup document.'
+    allowed_files:
+      - 'docs/hosted-security-and-setup.md'
+      - 'docs/goals/bugdrop-board-hosted-open-docs/notes/T002-worker.md'
+      - 'docs/goals/bugdrop-board-hosted-open-docs/state.yaml'
+    acceptance:
+      - 'Document explains current hosted/open beta security controls.'
+      - 'Document separates user responsibilities from BugDrop-managed hosted settings.'
+      - 'Document lists user-configurable embed/customization settings succinctly.'
+      - 'Document lists current limitations and future multi-tenant hosted work without overpromising.'
+      - 'Document includes recommended defaults for token TTL, polling interval, origins, and GitHub mirror scope.'
+    verify:
+      - 'markdown inspection for the required sections'
+      - 'rg scan for the current controls and limitation terms'
+    receipt:
+      summary: 'Added docs/hosted-security-and-setup.md covering the current BugDrop Hosted Beta security promise, host app responsibilities, BugDrop-managed settings, configurable embed/customization settings, recommended defaults, limitations, and go/no-go checklist.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-open-docs/notes/T002-worker.md'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Link the hosted/open docs from README and reconcile nearby setup wording.'
+    allowed_files:
+      - 'README.md'
+      - 'docs/closed-beta-risks.md'
+      - 'docs/goals/bugdrop-board-hosted-open-docs/notes/T003-worker.md'
+      - 'docs/goals/bugdrop-board-hosted-open-docs/state.yaml'
+    acceptance:
+      - 'README points hosted/open readers to the new doc.'
+      - 'Existing self-host setup wording remains true.'
+      - 'Any changed risk wording still preserves accepted limitations.'
+      - 'Follow-on conveyor notes remain visible in the goal and/or docs.'
+    verify:
+      - 'rg -n "hosted-security-and-setup|hosted/open|multi-tenant hosted|hosted control plane" README.md docs/closed-beta-risks.md docs/hosted-security-and-setup.md'
+    receipt:
+      summary: 'Linked the hosted setup/security guide from README and reconciled closed-beta risk wording so manual hosted beta provisioning is distinct from future self-service hosted control plane work.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-open-docs/notes/T003-worker.md'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether the hosted/open docs satisfy the oracle without overpromising.'
+    expected_output: 'Final receipt with pass/fail decision, proof commands, and any carry-forward issues for Board 2.'
+    verify:
+      - 'test -f docs/hosted-security-and-setup.md'
+      - 'rg -n "signed|token|TTL|origin|CORS|throttl|GitHub|upvote|customi|self-host|hosted/open|multi-tenant" docs/hosted-security-and-setup.md README.md'
+      - '! rg -n "hosted control plane exists|tenant admin is available|billing is available|realtime is available|comments are available|downvotes are available" docs/hosted-security-and-setup.md README.md docs/closed-beta-risks.md'
+      - 'git diff --check'
+    stop_if:
+      - 'Docs imply broad hosted SaaS tenant isolation or admin UI exists before Board 2+ implementation.'
+    receipt:
+      summary: 'Approved. The hosted beta setup/security doc exists, is linked from README, distinguishes self-hosted/manual hosted beta/future hosted control plane, lists current controls/settings/limitations, and passes contradiction plus repo validation gates.'
+      proof:
+        - command: 'ruby -e ''require "yaml"; YAML.load_file("docs/goals/bugdrop-board-hosted-open-docs/state.yaml"); puts "state yaml ok"'''
+          output: 'state yaml ok'
+        - command: 'git diff --check'
+          output: 'no whitespace errors'
+        - command: 'rg -n "BugDrop Hosted Beta|hosted-security-and-setup|signed|token|TTL|origin|CORS|throttl|GitHub|upvote|customi|self-host|hosted/open|multi-tenant|control plane|billing|realtime|comments|downvotes|GitHub Projects" docs/hosted-security-and-setup.md README.md docs/closed-beta-risks.md'
+          output: 'found required hosted beta doc, README link, current controls, configurable settings, and limitations'
+        - command: '! rg -n "hosted control plane exists|tenant admin is available|billing is available|realtime is available|comments are available|downvotes are available|self-service tenant admin is available|multi-tenant SaaS is available" docs/hosted-security-and-setup.md README.md docs/closed-beta-risks.md'
+          output: 'no matches'
+        - command: 'npm run validate'
+          output: 'lint, Prettier, typecheck, workflow guards, and Vitest passed; Test Files 11 passed (11), Tests 76 passed (76)'
+      burden_of_proof: 'Checked the strongest realistic failure mode: docs overpromising hosted beta as completed self-service multi-tenant SaaS. The contradiction scan found no overpromising phrases, and the new doc explicitly lists tenant admin, billing, realtime, comments, downvotes, GitHub Projects, monitoring, backup/export/restore, and generalized multi-tenant isolation as current limitations.'
+      carry_forward:
+        - 'Next board: bugdrop-board-hosted-control-plane-design.'
+        - 'Confirm product decisions for tenant boundaries, GitHub auth model, and whether asymmetric/JWKS token verification is the desired hosted default.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-open-docs/notes/T999-final-audit.md'
