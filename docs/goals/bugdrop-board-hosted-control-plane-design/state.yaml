@@ -1,0 +1,199 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Hosted Control Plane Design'
+  slug: 'bugdrop-board-hosted-control-plane-design'
+  kind: existing_plan
+  tranche: 'True multi-tenant hosted mode design spec only.'
+  status: done
+  oracle:
+    signal: 'A design spec defines the hosted control-plane trust model, tenant isolation, GitHub integration, security controls, MVP scope, and follow-on implementation conveyor.'
+    cadence: 'after architecture Scout, approach Judge, spec draft, and final design audit'
+    final_proof: 'Spec file, threat model, design alternatives, follow-on Board 3-6 acceptance criteria, scope scan proving no runtime changes, and standard docs checks.'
+  intake:
+    original_request: 'Build Board 2: true multi-tenant hosted mode additional security/product layer, and keep note of follow-on steps.'
+    interpreted_outcome: 'Prepare a GoalBuddy design board that produces a rigorous hosted control-plane spec before any implementation.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers planning hosted SaaS mode after self-hosted/open beta'
+    authority: requested
+    proof_type: artifact
+    completion_proof: 'A reviewed design spec exists with trust boundaries, security architecture, MVP/deferred split, and Boards 3-6 conveyor notes.'
+    likely_misfire: 'Jumping straight into migrations or a control-plane UI without defining tenant boundaries, GitHub credential isolation, or token trust.'
+    blind_spots_considered:
+      - 'A shared Worker-level GitHub token is not acceptable for real hosted tenants.'
+      - 'Symmetric secrets shared with hosted customers are weaker than public-key verification for a hosted service.'
+      - 'CORS cannot be the primary auth boundary.'
+      - 'Support diagnostics can accidentally leak tokens, cookies, secrets, or private user data.'
+      - 'Tenant/app/board isolation must be proven in tests, not assumed from naming conventions.'
+    hard_constraints:
+      - 'Design/spec only.'
+      - 'No runtime code changes, migrations, deploy config changes, Cloudflare deploys, credentials, GitHub App creation, secret rotation, package publishing, or product behavior changes.'
+      - 'No billing, realtime, comments, downvotes, GitHub Projects, status workflow, analytics dashboards, monitoring implementation, or backup/export/restore implementation.'
+      - 'Preserve self-hosting as a first-class path.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: active
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-hosted-control-plane-design/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-hosted-control-plane-design'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: 'Map current architecture, trust boundaries, data model, token model, GitHub mirror path, and docs limitations relevant to hosted control-plane design.'
+    allowed_files:
+      - 'AGENTS.md'
+      - 'README.md'
+      - 'docs/closed-beta-risks.md'
+      - 'docs/closed-beta-ops-runbook.md'
+      - 'docs/production-dogfood.md'
+      - 'docs/superpowers/specs/'
+      - 'migrations/'
+      - 'src/'
+      - 'test/'
+      - 'wrangler.toml'
+      - 'docs/goals/bugdrop-board-hosted-control-plane-design/notes/T001-architecture-scout.md'
+      - 'docs/goals/bugdrop-board-hosted-control-plane-design/state.yaml'
+    expected_output: 'A compact evidence note with current hosted/open architecture, security primitives, tenant-isolation gaps, and spec inputs.'
+    verify:
+      - 'rg scans for board schema, token verification, CORS, GitHub issue creation, throttling, provisioning, hosted exclusions, and self-host paths'
+      - 'direct inspection of current schema/routes/docs for what can and cannot be promised'
+    stop_if:
+      - 'The Scout finds a critical unknown that prevents a meaningful design spec without external credentials or production secret access.'
+    receipt:
+      summary: 'Mapped the current board-scoped architecture, global HMAC/CORS/GitHub settings, D1 schema, route auth, throttling, GitHub issue path, and hosted gaps. No external credentials are needed for a meaningful design spec.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-control-plane-design/notes/T001-architecture-scout.md'
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Choose the design approach and enforce the no-implementation boundary.'
+    expected_output: 'A decision note comparing at least two hosted trust models and approving one for the spec draft.'
+    acceptance:
+      - 'Compares customer-shared symmetric secret, customer JWKS/public key, and managed hosted identity/provider options.'
+      - 'Compares GitHub token-per-tenant versus GitHub App installation direction.'
+      - 'Names the recommended MVP and rejects out-of-scope product work.'
+    verify:
+      - 'Scout note cites concrete files and gaps.'
+      - 'Decision preserves self-hosting and excludes runtime implementation.'
+    receipt:
+      summary: 'Recommended hosted JWKS/public-key token verification, GitHub App installations, tenant/app/board config, and denial-by-default lookup while keeping self-host HMAC/PAT behavior.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-control-plane-design/notes/T002-judge.md'
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Write the hosted control-plane design spec.'
+    allowed_files:
+      - 'docs/superpowers/specs/2026-06-08-bugdrop-board-hosted-control-plane-design.md'
+      - 'docs/goals/bugdrop-board-hosted-control-plane-design/notes/T003-worker.md'
+      - 'docs/goals/bugdrop-board-hosted-control-plane-design/state.yaml'
+    acceptance:
+      - 'Spec covers architecture, data model sketch, token trust, GitHub App integration, CORS/origin handling, rate limits, audit logs, diagnostics, export/delete, migration path, and test strategy.'
+      - 'Spec includes a threat model and trust boundaries.'
+      - 'Spec defines hosted MVP versus deferred work.'
+      - 'Spec decomposes Boards 3-6 with acceptance criteria.'
+      - 'Spec states self-hosting remains supported.'
+    verify:
+      - 'test -f docs/superpowers/specs/2026-06-08-bugdrop-board-hosted-control-plane-design.md'
+      - 'rg -n "Threat Model|Trust Boundaries|JWKS|GitHub App|tenant|origin|rate limit|audit|export|delete|Board 3|Board 4|Board 5|Board 6" docs/superpowers/specs/2026-06-08-bugdrop-board-hosted-control-plane-design.md'
+    receipt:
+      summary: 'Wrote the hosted control-plane design spec with trust boundaries, threat model, token/GitHub recommendations, data model sketch, hosted MVP, deferred work, migration path, tests, and Boards 3-6 acceptance criteria.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-control-plane-design/notes/T003-worker.md'
+
+  - id: T004
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Review the design spec for ambiguity, contradictions, overreach, and implementation readiness.'
+    expected_output: 'A spec review receipt with required edits or approval.'
+    verify:
+      - 'Spec has no TBD/TODO placeholders.'
+      - 'Spec does not promise implemented hosted control-plane behavior.'
+      - 'Spec names concrete follow-on Boards 3-6 with measurable acceptance criteria.'
+      - 'Spec does not require billing/realtime/comments/downvotes/GitHub Projects for MVP.'
+    receipt:
+      summary: 'Approved the spec with no blocking edits. It stays design-only, recommends JWKS/public key plus GitHub App installations, preserves self-hosting, and excludes deferred product work from MVP.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-control-plane-design/notes/T004-review.md'
+
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: done
+    objective: 'Apply design-review edits without expanding scope.'
+    allowed_files:
+      - 'docs/superpowers/specs/2026-06-08-bugdrop-board-hosted-control-plane-design.md'
+      - 'docs/goals/bugdrop-board-hosted-control-plane-design/notes/T005-worker.md'
+      - 'docs/goals/bugdrop-board-hosted-control-plane-design/state.yaml'
+    acceptance:
+      - 'All Judge-required edits are resolved.'
+      - 'Spec remains design-only and scoped.'
+      - 'Follow-on conveyor notes remain explicit.'
+    verify:
+      - '! rg -n "TBD|TODO|FIXME|hosted control plane exists|billing is available|realtime is available|comments are available|downvotes are available" docs/superpowers/specs/2026-06-08-bugdrop-board-hosted-control-plane-design.md'
+      - 'git diff --check'
+    receipt:
+      summary: 'No review-required edits were needed after T004; spec remained scoped and design-only.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-control-plane-design/notes/T005-worker.md'
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    objective: 'Final audit: decide whether the hosted control-plane design oracle is satisfied.'
+    expected_output: 'Final receipt with pass/fail decision, proof commands, and starter recommendation for Board 3.'
+    verify:
+      - 'test -f docs/superpowers/specs/2026-06-08-bugdrop-board-hosted-control-plane-design.md'
+      - 'rg -n "tenant|app|board|JWKS|GitHub App|origin|CORS|throttl|audit|diagnostic|export|delete|migration path|Board 3|Board 4|Board 5|Board 6" docs/superpowers/specs/2026-06-08-bugdrop-board-hosted-control-plane-design.md'
+      - '! git diff --name-only | rg "^(src|migrations|wrangler.toml|package.json|package-lock.json|public/)"'
+      - 'git diff --check'
+    stop_if:
+      - 'The design remains too broad to implement as a Board 3 scaffold.'
+      - 'The spec requires runtime changes that were made during this design-only board.'
+    receipt:
+      summary: 'Approved. The hosted control-plane design spec exists, contains trust boundaries/threat model/JWKS and GitHub App recommendations/data model/test strategy/Boards 3-6 criteria, and verification proves no runtime, migration, deploy config, package, or public asset files changed.'
+      proof:
+        - command: 'ruby -e ''require "yaml"; YAML.load_file("docs/goals/bugdrop-board-hosted-control-plane-design/state.yaml"); puts "state yaml ok"'''
+          output: 'state yaml ok'
+        - command: 'test -f docs/superpowers/specs/2026-06-08-bugdrop-board-hosted-control-plane-design.md'
+          output: 'file exists'
+        - command: 'rg -n "Threat Model|Trust Boundaries|JWKS|GitHub App|tenant|origin|rate limit|audit|export|delete|Board 3|Board 4|Board 5|Board 6" docs/superpowers/specs/2026-06-08-bugdrop-board-hosted-control-plane-design.md'
+          output: 'found required design sections, recommendations, and Boards 3-6 acceptance criteria'
+        - command: '! rg -n "TBD|TODO|FIXME|hosted control plane exists|billing is available|realtime is available|comments are available|downvotes are available" docs/superpowers/specs/2026-06-08-bugdrop-board-hosted-control-plane-design.md'
+          output: 'no matches'
+        - command: '! git diff --name-only | rg "^(src|migrations|wrangler.toml|package.json|package-lock.json|public/)"'
+          output: 'no runtime, migration, deploy config, package, or public asset changes'
+        - command: 'git diff --check'
+          output: 'no whitespace errors'
+        - command: 'npm run validate'
+          output: 'lint, Prettier, typecheck, workflow guards, and Vitest passed; Test Files 11 passed (11), Tests 76 passed (76)'
+      burden_of_proof: 'Checked the strongest realistic failure mode: design-only Board 2 might sneak runtime/config/package changes or imply hosted control-plane behavior already exists. Scope and overpromise scans disproved both.'
+      next_starter_command: '$goal-prep Build BugDrop Board Hosted Control Plane Board 3: MVP scaffold only, using the approved hosted control-plane design spec, adding tenant/app/board config foundations and isolation tests while preserving self-host behavior and excluding GitHub App integration, onboarding UX, billing, realtime, comments, downvotes, GitHub Projects, deploys, credentials, and package publishing.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-control-plane-design/notes/T999-final-audit.md'
