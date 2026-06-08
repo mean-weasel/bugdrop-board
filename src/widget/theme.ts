@@ -53,20 +53,14 @@ function themeDefaultsCss(): string {
       color-scheme: light;
     }
     :host([data-bugdrop-board-density="compact"]) {
-      --bugdrop-board-font-size: 13px;
-      --bugdrop-board-heading-size: 18px;
-      --bugdrop-board-gap: 8px;
-      --bugdrop-board-item-padding: 9px;
-      --bugdrop-board-field-padding: 6px 8px;
-      --bugdrop-board-button-padding: 6px 8px;
+      --bugdrop-board-font-size: 13px; --bugdrop-board-heading-size: 18px;
+      --bugdrop-board-gap: 8px; --bugdrop-board-item-padding: 9px;
+      --bugdrop-board-field-padding: 6px 8px; --bugdrop-board-button-padding: 6px 8px;
     }
     :host([data-bugdrop-board-density="spacious"]) {
-      --bugdrop-board-font-size: 15px;
-      --bugdrop-board-heading-size: 24px;
-      --bugdrop-board-gap: 14px;
-      --bugdrop-board-item-padding: 16px;
-      --bugdrop-board-field-padding: 10px 12px;
-      --bugdrop-board-button-padding: 10px 14px;
+      --bugdrop-board-font-size: 15px; --bugdrop-board-heading-size: 24px;
+      --bugdrop-board-gap: 14px; --bugdrop-board-item-padding: 16px;
+      --bugdrop-board-field-padding: 10px 12px; --bugdrop-board-button-padding: 10px 14px;
     }
   `;
 }
@@ -99,7 +93,11 @@ function shellCss(): string {
       font-size: var(--bugdrop-board-heading-size);
       font-weight: 700;
       line-height: 1.2;
-      margin: 0 0 12px;
+      margin: 0 0 6px;
+    }
+    .bugdrop-board__description {
+      color: var(--bugdrop-board-muted); font-size: 14px; line-height: 1.45;
+      margin: 0 0 14px;
     }
     .bugdrop-board__list {
       display: grid;
@@ -123,19 +121,23 @@ function shellCss(): string {
       padding: var(--bugdrop-board-item-padding);
     }
     .bugdrop-board__lane--compact-empty {
-      align-content: start;
-      min-height: 0;
+      align-content: start; min-height: 0;
     }
     .bugdrop-board__lane-header {
-      align-items: center; display: flex;
+      align-items: center; border-bottom: var(--bugdrop-board-border-width) solid var(--bugdrop-board-border);
+      display: flex;
       justify-content: space-between;
+      padding: 0 2px 9px;
     }
     .bugdrop-board__lane-title {
-      font-size: 13px;
+      font-size: 14px; font-weight: 750;
       margin: 0;
     }
     .bugdrop-board__lane-count {
-      color: var(--bugdrop-board-muted); font-size: 12px; font-weight: 700;
+      background: var(--bugdrop-board-surface);
+      border: var(--bugdrop-board-border-width) solid var(--bugdrop-board-border);
+      border-radius: 999px; color: var(--bugdrop-board-muted); font-size: 12px;
+      font-weight: 750; min-width: 24px; padding: 2px 7px; text-align: center;
     }
   `;
 }
@@ -212,10 +214,13 @@ function itemCss(): string {
       background: var(--bugdrop-board-surface-alt);
     }
     :host([data-bugdrop-board-layout="kanban"]) .bugdrop-board__item {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+    :host([data-bugdrop-board-layout="kanban"]) .bugdrop-board__item-content {
+      min-width: 0; order: 1;
     }
     :host([data-bugdrop-board-layout="kanban"]) .bugdrop-board__upvote {
-      justify-self: start;
+      align-self: start; justify-self: end; order: 2;
     }
     .bugdrop-board__item h3 {
       font-size: 16px; line-height: 1.25;
@@ -229,7 +234,7 @@ function itemCss(): string {
     :host([data-bugdrop-board-layout="kanban"]) .bugdrop-board__item p {
       display: -webkit-box;
       -webkit-box-orient: vertical;
-      -webkit-line-clamp: 3;
+      -webkit-line-clamp: 2;
       overflow: hidden;
     }
     .bugdrop-board__meta {
@@ -238,8 +243,7 @@ function itemCss(): string {
     }
     .bugdrop-board__meta a,
     .bugdrop-board__status {
-      color: var(--bugdrop-board-muted);
-      font-size: 12px;
+      color: var(--bugdrop-board-muted); font-size: 12px;
     }
     .bugdrop-board__status {
       text-transform: uppercase;
@@ -256,8 +260,7 @@ function stateCss(): string {
     .bugdrop-board__form input:focus-visible,
     .bugdrop-board__form textarea:focus-visible,
     .bugdrop-board__meta a:focus-visible {
-      outline: 2px solid var(--bugdrop-board-focus);
-      outline-offset: 2px;
+      outline: 2px solid var(--bugdrop-board-focus); outline-offset: 2px;
     }
     .bugdrop-board__empty,
     .bugdrop-board__loading,
@@ -266,10 +269,7 @@ function stateCss(): string {
       margin: 0;
     }
     .bugdrop-board__error {
-      align-items: start;
-      color: var(--bugdrop-board-danger);
-      display: grid;
-      gap: 6px;
+      align-items: start; color: var(--bugdrop-board-danger); display: grid; gap: 6px;
       margin-bottom: 12px;
     }
     .bugdrop-board__error-title {
@@ -279,9 +279,7 @@ function stateCss(): string {
       justify-self: start;
     }
     .bugdrop-board__lane-empty {
-      color: var(--bugdrop-board-muted);
-      font-size: 13px;
-      margin: 0;
+      color: var(--bugdrop-board-muted); font-size: 13px; margin: 0;
     }
   `;
 }
@@ -290,14 +288,15 @@ function upvoteCss(): string {
   return `
     .bugdrop-board__upvote {
       background: var(--bugdrop-board-upvote-background);
-      border-color: var(--bugdrop-board-upvote-border);
-      color: var(--bugdrop-board-upvote-text);
+      border-color: var(--bugdrop-board-upvote-border); color: var(--bugdrop-board-upvote-text);
       white-space: nowrap;
     }
     .bugdrop-board__upvote[aria-pressed="true"] {
-      background: var(--bugdrop-board-accent-soft);
-      border-color: var(--bugdrop-board-accent);
+      background: var(--bugdrop-board-accent-soft); border-color: var(--bugdrop-board-accent);
       color: var(--bugdrop-board-accent);
+    }
+    :host([data-bugdrop-board-layout="kanban"]) .bugdrop-board__upvote {
+      border-radius: 999px; font-size: 12px; min-height: 30px; padding: 5px 9px;
     }
   `;
 }

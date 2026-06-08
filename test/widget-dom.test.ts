@@ -112,6 +112,9 @@ describe('widget DOM rendering', () => {
     expect(lanes[2].textContent).not.toContain('In progress');
     expect(lanes[3].querySelector('.bugdrop-board__lane-title')?.textContent).toBe('Shipped');
     expect(lanes[3].textContent).toContain('Public changelog');
+    expect(lanes[0].querySelector<HTMLButtonElement>('.bugdrop-board__upvote')?.textContent).toBe(
+      'Upvote 12'
+    );
   });
 
   it('can collapse the composer so the board list is not pushed below a large form', () => {
@@ -167,7 +170,7 @@ describe('widget DOM rendering', () => {
     expect(root.querySelector('a')).toBeNull();
     expect(root.querySelector('.bugdrop-board__status')).toBeNull();
     expect(root.querySelector<HTMLButtonElement>('.bugdrop-board__upvote')?.textContent).toBe(
-      'Upvote 1 vote'
+      'Upvote 1'
     );
   });
 
@@ -187,6 +190,7 @@ describe('widget DOM rendering', () => {
     expect(css).toContain(':host([data-bugdrop-board-layout="kanban"])');
     expect(css).toContain('data-bugdrop-board-empty-lane-display="hidden"');
     expect(css).toContain('.bugdrop-board__composer-summary');
+    expect(css).toContain('.bugdrop-board__description');
   });
 
   it('renders configurable copy while preserving accessible upvote labels', () => {
@@ -218,10 +222,14 @@ describe('widget DOM rendering', () => {
         issuePrefix: 'GH-',
         upvoteLabel: 'Boost',
         upvotedLabel: 'Boosted',
+        description: 'Vote on the ideas that should move next.',
       }
     );
 
     expect(root.querySelector('h2')?.textContent).toBe('Roadmap requests');
+    expect(root.querySelector('.bugdrop-board__description')?.textContent).toBe(
+      'Vote on the ideas that should move next.'
+    );
     expect(root.querySelector('label')?.textContent).toContain('Request');
     expect(root.querySelector<HTMLInputElement>('input')?.placeholder).toBe('Short request');
     expect(root.querySelector<HTMLTextAreaElement>('textarea')?.placeholder).toBe('Add context');

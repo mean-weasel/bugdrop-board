@@ -50,6 +50,13 @@ export function renderBoard(
   heading.textContent = copy.heading;
   header.append(heading);
 
+  if (copy.description.trim()) {
+    const description = document.createElement('p');
+    description.className = 'bugdrop-board__description';
+    description.textContent = copy.description;
+    header.append(description);
+  }
+
   const composer = createComposer(
     handlers,
     Boolean(state.submitting),
@@ -256,9 +263,7 @@ function renderItem(
   const vote = document.createElement('button');
   vote.type = 'button';
   vote.className = 'bugdrop-board__upvote';
-  vote.textContent = `${item.viewerHasUpvoted ? copy.upvotedLabel : copy.upvoteLabel} ${voteCount(
-    item.upvoteCount
-  )}`;
+  vote.textContent = voteText(item, copy, options.layout);
   vote.setAttribute('aria-pressed', String(Boolean(item.viewerHasUpvoted)));
   vote.setAttribute('aria-label', voteLabel(item, copy));
   vote.addEventListener('click', () => handlers.onUpvote(item.id));
@@ -305,6 +310,14 @@ function renderItem(
 
 function voteCount(count: number): string {
   return `${count} ${count === 1 ? 'vote' : 'votes'}`;
+}
+
+function voteText(item: BoardItemView, copy: BoardWidgetCopy, layout: BoardWidgetLayout): string {
+  const label = item.viewerHasUpvoted ? copy.upvotedLabel : copy.upvoteLabel;
+  if (layout === 'kanban') {
+    return `${label} ${item.upvoteCount}`;
+  }
+  return `${label} ${voteCount(item.upvoteCount)}`;
 }
 
 function voteLabel(item: BoardItemView, copy: BoardWidgetCopy): string {
