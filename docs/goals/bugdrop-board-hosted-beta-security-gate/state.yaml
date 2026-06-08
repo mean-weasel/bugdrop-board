@@ -1,0 +1,191 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Hosted Beta Security Gate'
+  slug: 'bugdrop-board-hosted-beta-security-gate'
+  kind: existing_plan
+  tranche: 'Local hosted beta security gate only.'
+  status: done
+  oracle:
+    signal: 'A focused local gate proves hosted CORS, tokens, GitHub repo isolation, throttles, event redaction, and manual dogfood readiness.'
+    cadence: 'after scout, red tests, green implementation/docs, and final audit'
+    final_proof: 'Focused security-gate tests, full repo gates, manual dogfood script, go/no-go receipt, redaction scans, and scope scans.'
+  intake:
+    original_request: 'Continue the hosted control-plane conveyor.'
+    interpreted_outcome: 'Build the hosted beta security gate after hosted provisioning.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers preparing the first non-dogfood hosted beta tenant'
+    authority: requested
+    proof_type: test
+    completion_proof: 'Committed gate tests and docs proving hosted security boundaries locally.'
+    likely_misfire: 'Claiming hosted beta readiness from scattered happy-path tests without a consolidated go/no-go gate.'
+    blind_spots_considered:
+      - 'CORS is not auth, but origin allow/deny must still be proven for browser embeds.'
+      - 'Token TTL, issuer, audience, key id, tenant, app, and board scope must fail closed.'
+      - 'GitHub repo mismatch must fail before D1 persistence.'
+      - 'Events and setup docs must not leak signed host user identifiers.'
+    hard_constraints:
+      - 'No deploys, remote D1 mutation, credential changes, real GitHub App installation smoke, hosted public admin UI, billing, realtime, comments, downvotes, GitHub Projects, npm publishing, or package version bumps.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: active
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-hosted-beta-security-gate/'
+    command: 'npx goalbuddy board docs/goals/bugdrop-board-hosted-beta-security-gate'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: PM
+    status: done
+    objective: 'Map current coverage and exact insertion points for the hosted beta gate.'
+    allowed_files:
+      - 'docs/superpowers/specs/2026-06-08-bugdrop-board-hosted-control-plane-design.md'
+      - 'src/routes/api.ts'
+      - 'src/routes/api-helpers.ts'
+      - 'src/lib/hosted-token-verifier.ts'
+      - 'src/lib/request-throttle.ts'
+      - 'test/routes.test.ts'
+      - 'test/hosted-token-verifier.test.ts'
+      - 'docs/goals/bugdrop-board-hosted-beta-security-gate/notes/T001-scout.md'
+      - 'docs/goals/bugdrop-board-hosted-beta-security-gate/state.yaml'
+    expected_output: 'Scout receipt naming current proof, gaps, and test/doc targets.'
+    verify:
+      - 'Direct inspection of spec, route auth/CORS/throttle, hosted token verifier, and current tests.'
+    receipt:
+      summary: 'Mapped existing hosted coverage and identified the missing consolidated security gate and manual dogfood/go-no-go docs.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-beta-security-gate/notes/T001-scout.md'
+
+  - id: T002
+    type: worker
+    assignee: PM
+    status: done
+    objective: 'Write failing hosted beta security gate tests.'
+    allowed_files:
+      - 'test/hosted-beta-security-gate.test.ts'
+      - 'docs/goals/bugdrop-board-hosted-beta-security-gate/notes/T002-red-tests.md'
+      - 'docs/goals/bugdrop-board-hosted-beta-security-gate/state.yaml'
+    acceptance:
+      - 'Tests cover CORS allow/deny, token TTL/issuer/audience/key/scope denial, GitHub repo mismatch atomicity, read/event throttles, and event payload privacy.'
+      - 'Tests fail before any required new gate behavior or helper exists.'
+    verify:
+      - 'npm run test -- test/hosted-beta-security-gate.test.ts'
+    receipt:
+      summary: 'Added a consolidated hosted beta security gate test suite for CORS, token drift, GitHub repo mismatch atomicity, throttles, and event payload privacy.'
+      proof:
+        - command: 'npm run test -- test/hosted-beta-security-gate.test.ts'
+          output: 'passed after fixing test-shape issues: 1 file, 5 tests'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-beta-security-gate/notes/T002-red-tests.md'
+
+  - id: T003
+    type: worker
+    assignee: PM
+    status: done
+    objective: 'Make the hosted beta security gate tests pass with minimal product changes.'
+    allowed_files:
+      - 'test/hosted-beta-security-gate.test.ts'
+      - 'src/routes/api.ts'
+      - 'src/routes/api-helpers.ts'
+      - 'src/lib/hosted-token-verifier.ts'
+      - 'src/lib/request-throttle.ts'
+      - 'docs/goals/bugdrop-board-hosted-beta-security-gate/notes/T003-green.md'
+      - 'docs/goals/bugdrop-board-hosted-beta-security-gate/state.yaml'
+    acceptance:
+      - 'Gate tests pass.'
+      - 'Existing route and hosted verifier tests still pass.'
+      - 'No deploy/package/workflow behavior changes.'
+    verify:
+      - 'npm run test -- test/hosted-beta-security-gate.test.ts test/routes.test.ts test/hosted-token-verifier.test.ts'
+    receipt:
+      summary: 'No runtime changes were needed; existing behavior satisfied the consolidated hosted beta gate.'
+      proof:
+        - command: 'npm run test -- test/hosted-beta-security-gate.test.ts test/routes.test.ts test/hosted-token-verifier.test.ts'
+          output: 'passed: 3 files, 32 tests'
+        - command: 'npm run lint -- test/hosted-beta-security-gate.test.ts'
+          output: 'passed'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-beta-security-gate/notes/T003-green.md'
+
+  - id: T004
+    type: worker
+    assignee: PM
+    status: done
+    objective: 'Add manual hosted dogfood script and go/no-go release receipt.'
+    allowed_files:
+      - 'docs/hosted-beta-dogfood-script.md'
+      - 'docs/release-readiness-results/2026-06-08-hosted-beta-security-gate.md'
+      - 'docs/goals/bugdrop-board-hosted-beta-security-gate/notes/T004-docs.md'
+      - 'docs/goals/bugdrop-board-hosted-beta-security-gate/state.yaml'
+    acceptance:
+      - 'Manual script covers provisioning dry-run, local/remote apply decision, hosted token endpoint, CORS allow/deny, create/upvote/polling, GitHub issue mirror, and privacy checks.'
+      - 'Go/no-go receipt states what is proven locally and what remains blocked on real credentials/tenant target.'
+    verify:
+      - 'rg -n "go/no-go|CORS|issuer|audience|GitHub|throttle|privacy|token endpoint" docs/hosted-beta-dogfood-script.md docs/release-readiness-results/2026-06-08-hosted-beta-security-gate.md'
+    receipt:
+      summary: 'Added manual hosted dogfood script and go/no-go release receipt for the first non-dogfood hosted tenant.'
+      proof:
+        - command: 'rg -n "go/no-go|CORS|issuer|audience|GitHub|throttle|privacy|token endpoint" docs/hosted-beta-dogfood-script.md docs/release-readiness-results/2026-06-08-hosted-beta-security-gate.md'
+          output: 'found go/no-go, CORS, issuer, audience, GitHub, throttle, privacy, and token endpoint coverage'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-beta-security-gate/notes/T004-docs.md'
+
+  - id: T999
+    type: judge
+    assignee: PM
+    status: done
+    objective: 'Final audit against the hosted beta security gate oracle.'
+    expected_output: 'Final receipt with commands, proof, scope scans, and residual risks.'
+    verify:
+      - 'npm run test -- test/hosted-beta-security-gate.test.ts test/routes.test.ts test/hosted-token-verifier.test.ts'
+      - 'npm run validate'
+      - 'make check'
+      - 'ruby -e ''require "yaml"; YAML.load_file("docs/goals/bugdrop-board-hosted-beta-security-gate/state.yaml"); puts "state yaml ok"'''
+      - 'git diff --check'
+      - '! git diff --name-only origin/main...HEAD | rg "^(package-lock.json|wrangler.toml|public/|.github/workflows/)"'
+      - '! rg -n "ghs_|ghp_" docs/hosted-beta-dogfood-script.md docs/release-readiness-results/2026-06-08-hosted-beta-security-gate.md test/hosted-beta-security-gate.test.ts'
+      - '! rg -n "BEGIN PRIVATE" docs/hosted-beta-dogfood-script.md docs/release-readiness-results/2026-06-08-hosted-beta-security-gate.md'
+    stop_if:
+      - 'Gate tests do not cover a required acceptance criterion.'
+      - 'Verification requires deploys, remote D1 mutation, or real credentials.'
+    receipt:
+      summary: 'Approved for local hosted beta gate. Consolidated tests and docs now prove hosted CORS, token drift denial, GitHub repo mismatch atomicity, throttles, event payload privacy, and manual dogfood go/no-go boundaries.'
+      proof:
+        - command: 'npm run test -- test/hosted-beta-security-gate.test.ts test/routes.test.ts test/hosted-token-verifier.test.ts'
+          output: 'passed: 3 test files, 32 tests'
+        - command: 'npm run validate'
+          output: 'passed: lint, Prettier, typecheck, workflow checks, and Vitest; 15 files, 106 tests'
+        - command: 'make check'
+          output: 'passed: ESLint, Prettier, typecheck, knip, critical audit, and Actions Node 24 guard'
+        - command: 'ruby -e ''require "yaml"; YAML.load_file("docs/goals/bugdrop-board-hosted-beta-security-gate/state.yaml"); puts "state yaml ok"'''
+          output: 'state yaml ok'
+        - command: 'git diff --check'
+          output: 'no whitespace errors'
+        - command: 'git diff --name-only origin/main...HEAD | rg "^(package-lock.json|wrangler.toml|public/|.github/workflows/)"'
+          output: 'no matches'
+        - command: 'rg -n "ghs_|ghp_" docs/hosted-beta-dogfood-script.md docs/release-readiness-results/2026-06-08-hosted-beta-security-gate.md test/hosted-beta-security-gate.test.ts'
+          output: 'no matches'
+        - command: 'rg -n "BEGIN PRIVATE" docs/hosted-beta-dogfood-script.md docs/release-readiness-results/2026-06-08-hosted-beta-security-gate.md'
+          output: 'no matches'
+      burden_of_proof: 'Checked scattered-proof risk, live-credential/deploy risk, and token/private-key leakage risk. Consolidated local tests, no-deploy docs, and marker scans rule them out for this slice.'
+      residual_risk: 'First external hosted tenant remains no-go until real host origin, JWKS/public key, GitHub App installation, token endpoint, and browser dogfood proof are supplied and recorded.'
+      notes:
+        - 'docs/goals/bugdrop-board-hosted-beta-security-gate/notes/T999-final-audit.md'
