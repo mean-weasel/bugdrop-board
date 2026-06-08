@@ -190,6 +190,7 @@ describe('widget DOM rendering', () => {
     expect(css).toContain(':host([data-bugdrop-board-layout="kanban"])');
     expect(css).toContain('data-bugdrop-board-empty-lane-display="hidden"');
     expect(css).toContain('.bugdrop-board__composer-summary');
+    expect(css).toContain('box-sizing: border-box');
     expect(css).toContain('min-height: 30px');
     expect(css).toContain('.bugdrop-board__description');
   });

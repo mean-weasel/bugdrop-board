@@ -160,7 +160,7 @@ function formCss(): string {
       padding: var(--bugdrop-board-button-padding);
     }
     :host([data-bugdrop-board-layout="kanban"]) .bugdrop-board__composer-summary {
-      font-size: 13px; min-height: 30px; padding: 5px 9px;
+      box-sizing: border-box; font-size: 13px; min-height: 30px; padding: 5px 9px;
     }
     .bugdrop-board__composer-summary::-webkit-details-marker {
       display: none;
