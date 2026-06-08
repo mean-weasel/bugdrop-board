@@ -69,14 +69,10 @@ function shellCss(): string {
   return `
     .bugdrop-board {
       background: var(--bugdrop-board-background);
-      border-radius: var(--bugdrop-board-radius);
-      box-shadow: var(--bugdrop-board-shadow);
-      color: var(--bugdrop-board-text);
-      font-family: var(--bugdrop-board-font-family);
-      font-size: var(--bugdrop-board-font-size);
-      line-height: var(--bugdrop-board-line-height);
-      max-width: var(--bugdrop-board-max-width);
-      padding: var(--bugdrop-board-padding);
+      border-radius: var(--bugdrop-board-radius); box-shadow: var(--bugdrop-board-shadow);
+      color: var(--bugdrop-board-text); font-family: var(--bugdrop-board-font-family);
+      font-size: var(--bugdrop-board-font-size); line-height: var(--bugdrop-board-line-height);
+      max-width: var(--bugdrop-board-max-width); padding: var(--bugdrop-board-padding);
     }
     :host([data-bugdrop-board-layout="panel"]) .bugdrop-board {
       background: var(--bugdrop-board-surface);
@@ -85,27 +81,23 @@ function shellCss(): string {
     }
     :host([data-bugdrop-board-layout="kanban"]) .bugdrop-board {
       --bugdrop-board-max-width: 1120px;
-      background: var(--bugdrop-board-surface);
+      background: var(--bugdrop-board-background);
       border: var(--bugdrop-board-border-width) solid var(--bugdrop-board-border);
       padding: var(--bugdrop-board-item-padding);
     }
     .bugdrop-board__header h2 {
-      font-size: var(--bugdrop-board-heading-size);
-      font-weight: 700;
-      line-height: 1.2;
-      margin: 0 0 6px;
+      font-size: var(--bugdrop-board-heading-size); font-weight: 700;
+      line-height: 1.2; margin: 0 0 6px;
     }
     .bugdrop-board__description {
       color: var(--bugdrop-board-muted); font-size: 14px; line-height: 1.45;
       margin: 0 0 14px;
     }
     .bugdrop-board__list {
-      display: grid;
-      gap: var(--bugdrop-board-gap);
+      display: grid; gap: var(--bugdrop-board-gap);
     }
     .bugdrop-board__kanban {
-      align-items: start;
-      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      align-items: start; grid-template-columns: repeat(4, minmax(180px, 1fr));
       overflow-x: auto;
     }
     :host([data-bugdrop-board-empty-lane-display="hidden"]) .bugdrop-board__kanban {
@@ -114,11 +106,8 @@ function shellCss(): string {
     .bugdrop-board__lane {
       background: var(--bugdrop-board-surface-alt);
       border: var(--bugdrop-board-border-width) solid var(--bugdrop-board-border);
-      border-radius: var(--bugdrop-board-item-radius);
-      display: grid;
-      gap: var(--bugdrop-board-gap);
-      min-width: 180px;
-      padding: var(--bugdrop-board-item-padding);
+      border-radius: var(--bugdrop-board-item-radius); display: grid; gap: var(--bugdrop-board-gap);
+      min-width: 180px; padding: var(--bugdrop-board-item-padding);
     }
     .bugdrop-board__lane--compact-empty {
       align-content: start; min-height: 0;
@@ -156,6 +145,7 @@ function formCss(): string {
       border: var(--bugdrop-board-border-width) solid var(--bugdrop-board-button-border);
       border-radius: var(--bugdrop-board-button-radius);
       color: var(--bugdrop-board-button-text); cursor: pointer; display: inline-flex;
+      transition: filter 120ms ease, transform 120ms ease;
       font-weight: 700; list-style: none; min-height: 36px;
       padding: var(--bugdrop-board-button-padding);
     }
@@ -165,6 +155,7 @@ function formCss(): string {
     .bugdrop-board__composer-summary::-webkit-details-marker {
       display: none;
     }
+    .bugdrop-board__composer-summary:hover { filter: brightness(0.96); }
     .bugdrop-board__composer[open] .bugdrop-board__composer-summary {
       margin-bottom: var(--bugdrop-board-gap);
     }
@@ -290,14 +281,17 @@ function stateCss(): string {
 function upvoteCss(): string {
   return `
     .bugdrop-board__upvote {
-      background: var(--bugdrop-board-upvote-background);
-      border-color: var(--bugdrop-board-upvote-border); color: var(--bugdrop-board-upvote-text);
+      background: var(--bugdrop-board-upvote-background); border-color: var(--bugdrop-board-upvote-border);
+      color: var(--bugdrop-board-upvote-text);
+      align-items: center; display: inline-flex; gap: 4px;
+      transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
       white-space: nowrap;
     }
     .bugdrop-board__upvote[aria-pressed="true"] {
-      background: var(--bugdrop-board-accent-soft); border-color: var(--bugdrop-board-accent);
-      color: var(--bugdrop-board-accent);
+      background: var(--bugdrop-board-accent); border-color: var(--bugdrop-board-accent);
+      box-shadow: 0 0 0 2px var(--bugdrop-board-accent-soft); color: var(--bugdrop-board-accent-text);
     }
+    .bugdrop-board__upvote:hover { border-color: var(--bugdrop-board-accent); }
     :host([data-bugdrop-board-layout="kanban"]) .bugdrop-board__upvote {
       border-radius: 999px; font-size: 12px; min-height: 30px; padding: 5px 9px;
     }

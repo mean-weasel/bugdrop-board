@@ -188,11 +188,17 @@ describe('widget DOM rendering', () => {
     expect(css).toContain('var(--bugdrop-board-danger)');
     expect(css).toContain(':host([data-bugdrop-board-layout="panel"])');
     expect(css).toContain(':host([data-bugdrop-board-layout="kanban"])');
+    expect(css).toContain(
+      ':host([data-bugdrop-board-layout="kanban"]) .bugdrop-board {\n      --bugdrop-board-max-width: 1120px;\n      background: var(--bugdrop-board-background);'
+    );
     expect(css).toContain('data-bugdrop-board-empty-lane-display="hidden"');
     expect(css).toContain('.bugdrop-board__composer-summary');
     expect(css).toContain('box-sizing: border-box');
     expect(css).toContain('min-height: 30px');
     expect(css).toContain('.bugdrop-board__description');
+    expect(css).toContain('background: var(--bugdrop-board-surface)');
+    expect(css).toContain('.bugdrop-board__upvote[aria-pressed="true"]');
+    expect(css).toContain('box-shadow: 0 0 0 2px var(--bugdrop-board-accent-soft)');
   });
 
   it('renders configurable copy while preserving accessible upvote labels', () => {
