@@ -124,11 +124,12 @@ async function createGitHubAppJwt(input: CreateGitHubAppIssueCreatorInput): Prom
 
 async function importPrivateKey(privateKey: string): Promise<CryptoKey> {
   const normalized = privateKey.replaceAll('\\n', '\n');
-  const body = normalized
-    .replace('-----BEGIN PRIVATE KEY-----', '')
-    .replace('-----END PRIVATE KEY-----', '')
-    .replace(/\s+/g, '');
-  const bytes = Uint8Array.from(atob(body), character => character.charCodeAt(0));
+  const isPkcs1 = normalized.includes('-----BEGIN RSA PRIVATE KEY-----');
+  const body = isPkcs1
+    ? pemBody(normalized, 'RSA PRIVATE KEY')
+    : pemBody(normalized, 'PRIVATE KEY');
+  const privateKeyBytes = Uint8Array.from(atob(body), character => character.charCodeAt(0));
+  const bytes = isPkcs1 ? wrapPkcs1RsaPrivateKey(privateKeyBytes) : privateKeyBytes;
   return crypto.subtle.importKey(
     'pkcs8',
     bytes,
@@ -136,6 +137,49 @@ async function importPrivateKey(privateKey: string): Promise<CryptoKey> {
     false,
     ['sign']
   );
+}
+
+function pemBody(pem: string, label: string): string {
+  return pem
+    .replace(`-----BEGIN ${label}-----`, '')
+    .replace(`-----END ${label}-----`, '')
+    .replace(/\s+/g, '');
+}
+
+function wrapPkcs1RsaPrivateKey(pkcs1Bytes: Uint8Array): Uint8Array {
+  const version = der(0x02, new Uint8Array([0x00]));
+  const rsaEncryptionAlgorithm = new Uint8Array([
+    0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00,
+  ]);
+  const privateKey = der(0x04, pkcs1Bytes);
+  return der(0x30, concat(version, rsaEncryptionAlgorithm, privateKey));
+}
+
+function der(tag: number, value: Uint8Array): Uint8Array {
+  return concat(new Uint8Array([tag]), derLength(value.length), value);
+}
+
+function derLength(length: number): Uint8Array {
+  if (length < 0x80) {
+    return new Uint8Array([length]);
+  }
+  const bytes: number[] = [];
+  let remaining = length;
+  while (remaining > 0) {
+    bytes.unshift(remaining & 0xff);
+    remaining >>= 8;
+  }
+  return new Uint8Array([0x80 | bytes.length, ...bytes]);
+}
+
+function concat(...arrays: Uint8Array[]): Uint8Array {
+  const result = new Uint8Array(arrays.reduce((sum, array) => sum + array.length, 0));
+  let offset = 0;
+  for (const array of arrays) {
+    result.set(array, offset);
+    offset += array.length;
+  }
+  return result;
 }
 
 function buildIssueBody(input: CreateIssueInput): string {
