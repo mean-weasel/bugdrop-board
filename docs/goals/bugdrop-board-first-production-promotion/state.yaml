@@ -5,11 +5,11 @@ goal:
   slug: 'bugdrop-board-first-production-promotion'
   kind: existing_plan
   tranche: 'Conveyor Board 13: first production promotion, approval-gated.'
-  status: blocked
+  status: done
   oracle:
-    signal: 'The first production promotion has an exact approval-gated runbook and cannot execute until the maintainer explicitly approves production mutation.'
-    cadence: 'after readiness import, after runbook preparation, and at approval gate'
-    final_proof: 'docs/release-readiness-results/2026-06-04-first-production-promotion.md with exact preflight/deploy/smoke/rollback plan and blocked approval gate.'
+    signal: 'The first production promotion gate preserved explicit approval requirements, and later hosted cutover receipts prove the approved production deploy, smoke, and dogfood path superseded the original blocked deploy task.'
+    cadence: 'after readiness import, after runbook preparation, at approval gate, and at final conveyor cleanup'
+    final_proof: 'docs/release-readiness-results/2026-06-09-final-conveyor-wrap-audit.md records the superseding approved deploy, hosted cutover, and final wrap decision.'
   intake:
     original_request: 'Create these boards and run them autonomously if you can.'
     interpreted_outcome: 'Prepare the first production promotion board while blocking actual production mutation until explicit approval.'
@@ -87,13 +87,33 @@ tasks:
   - id: T003
     type: worker
     assignee: Worker
-    status: blocked
+    status: done
     objective: 'Execute first production promotion.'
     acceptance_criteria:
       - 'Requires explicit maintainer approval after Board 12 readiness is satisfied.'
       - 'Runs Deploy Worker against production only after approval.'
       - 'Runs production smoke and rollback proof after deploy.'
-    blocked_reason: 'Production deploy requires explicit approval, production `CLOUDFLARE_API_TOKEN`, production `ISSUE_ACCESS_TOKEN`, and DNS/route readiness for `board.bugdrop.dev`.'
     receipt:
-      result: blocked
-      summary: 'Actual first production promotion is intentionally blocked until the maintainer explicitly approves production deploy after setting the remaining production tokens and confirming DNS/route readiness.'
+      result: superseded_by_later_approved_deploy
+      summary: 'The original approval gate was valid when written. It is now superseded by later maintainer-approved production deployment, hosted dogfood cutover, GitHub App key compatibility fix, and final wrap-audit proof.'
+      evidence:
+        - 'Deploy Worker run 27177724385 completed successfully on main after explicit maintainer approval and production secret setup.'
+        - 'PR #73 added hosted GitHub App deploy secret support and merged as 7c355e2.'
+        - 'PR #74 fixed PKCS#1 GitHub App private-key import and merged as 83beea3.'
+        - 'PR #75 recorded hosted dogfood cutover and merged as d332ad9.'
+        - 'docs/production-dogfood-results/2026-06-08-hosted-cutover.md records successful production hosted read, CORS negative proof, item create, GitHub Issue mirror, upvote, and browser dogfood proof.'
+
+  - id: T004
+    type: audit
+    assignee: PM
+    status: done
+    objective: 'Reconcile this historical approval gate during final conveyor cleanup.'
+    acceptance_criteria:
+      - 'Historical blocked state is not left as the current top-level board status.'
+      - 'Superseding deploy and dogfood evidence is named without exposing secrets.'
+      - 'Remaining hosted beta work is classified as next-phase, not a stale blocker for this promotion board.'
+    receipt:
+      result: done
+      summary: 'Final conveyor cleanup reconciled the historical approval-gated board with later approved production deployment and hosted dogfood evidence.'
+      evidence:
+        - 'docs/release-readiness-results/2026-06-09-final-conveyor-wrap-audit.md'
