@@ -800,6 +800,9 @@ Environment secrets:
 - `BOARD_TOKEN_SECRET`
 - `ISSUE_ACCESS_TOKEN`, containing the GitHub Issues token. The workflow maps this to the
   deployed Worker secret `GITHUB_ISSUE_ACCESS_TOKEN`.
+- Optional for hosted GitHub App mirroring: `BOARD_GITHUB_APP_ID` and
+  `BOARD_GITHUB_APP_PRIVATE_KEY`. The workflow maps these GitHub-safe secret names to the deployed
+  Worker secrets `GITHUB_APP_ID` and `GITHUB_APP_PRIVATE_KEY`; set both or neither.
 
 Before the first promotion, update `wrangler.toml` for the target environment:
 

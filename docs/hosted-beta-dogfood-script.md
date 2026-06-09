@@ -24,6 +24,11 @@ Expected:
 
 ## 2. Prepare Hosted Config
 
+Confirm the deployed Worker has server-side GitHub App credentials before creating live items. In
+GitHub Actions environments these are named `BOARD_GITHUB_APP_ID` and
+`BOARD_GITHUB_APP_PRIVATE_KEY`; the deploy workflow maps them to Worker secrets `GITHUB_APP_ID` and
+`GITHUB_APP_PRIVATE_KEY`.
+
 Dry-run the hosted provisioner first:
 
 ```bash

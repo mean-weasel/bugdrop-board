@@ -93,6 +93,10 @@ For BugDrop Hosted Beta, BugDrop configures:
 - the hosted Worker secrets, including GitHub App credentials used server-side only;
 - the GitHub App installation metadata used to create issues in the mirrored repo.
 
+For GitHub Actions deployments, store hosted GitHub App credentials as `BOARD_GITHUB_APP_ID` and
+`BOARD_GITHUB_APP_PRIVATE_KEY` because GitHub secret names cannot start with `GITHUB_`. The deploy
+workflow maps them to Worker secrets `GITHUB_APP_ID` and `GITHUB_APP_PRIVATE_KEY`.
+
 Operators should prepare hosted config with a dry run first:
 
 ```bash
