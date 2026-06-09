@@ -176,7 +176,12 @@ Before using a hosted beta board with real users, confirm:
 
 ## Follow-On Work
 
-The next board is
-[`bugdrop-board-hosted-control-plane-design`](goals/bugdrop-board-hosted-control-plane-design/goal.md).
-It should design the true multi-tenant hosted mode before any hosted control-plane implementation
-starts.
+The hosted control-plane design board has already run. The next hosted-beta board should be a
+first external hosted tenant invite gate: select a real tenant/app target, choose JWKS/public-key
+verification or explicitly accept the dogfood-only HMAC legacy verifier, install the GitHub App on
+the intended repo, run the hosted dogfood script from the target host page, and record a redacted
+go/conditional-go/no-go receipt.
+
+True hosted SaaS layers still belong in later product boards: self-service tenant admin,
+origin/token/GitHub connection management, billing, audit logs, monitoring, backup/export/restore,
+and incident tooling.
