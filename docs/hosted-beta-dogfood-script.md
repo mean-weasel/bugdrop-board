@@ -29,6 +29,10 @@ GitHub Actions environments these are named `BOARD_GITHUB_APP_ID` and
 `BOARD_GITHUB_APP_PRIVATE_KEY`; the deploy workflow maps them to Worker secrets `GITHUB_APP_ID` and
 `GITHUB_APP_PRIVATE_KEY`.
 
+GitHub may download App private keys as `BEGIN RSA PRIVATE KEY` (PKCS#1). The Worker accepts that
+format as well as `BEGIN PRIVATE KEY` (PKCS#8), so operators should not manually paste or convert key
+material in receipts.
+
 Dry-run the hosted provisioner first:
 
 ```bash
