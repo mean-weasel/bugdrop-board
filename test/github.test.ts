@@ -118,6 +118,40 @@ describe('createGitHubAppIssueCreator', () => {
     expect(issueInit.headers).toMatchObject({ Authorization: 'Bearer ghs_installation_token' });
   });
 
+  it('accepts GitHub App RSA private keys in PKCS#1 PEM format', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ token: 'ghs_installation_token' }), { status: 201 })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ number: 10, html_url: 'https://github.com/o/r/issues/10' }), {
+          status: 201,
+        })
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    const issueCreator = createGitHubAppIssueCreator({
+      appId: '12345',
+      privateKey: RSA_PRIVATE_KEY_PEM,
+      installationId: '98765',
+      now: new Date('2026-06-08T12:00:00Z'),
+    });
+
+    const issue = await issueCreator.createIssue({
+      owner: 'o',
+      repo: 'r',
+      title: 'Add SSO',
+      description: 'Enterprise users need it.',
+      boardItemId: 'item_1',
+    });
+
+    expect(issue).toEqual({ number: 10, htmlUrl: 'https://github.com/o/r/issues/10' });
+    const [, tokenInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(String((tokenInit.headers as Record<string, string>).Authorization)).toMatch(
+      /^Bearer [^.]+\.[^.]+\.[^.]+$/
+    );
+  });
+
   it('fails closed when the installation-token response is malformed', async () => {
     const keyPair = await generateKeyPair();
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 201 })));
@@ -160,3 +194,31 @@ async function privateKeyPem(privateKey: CryptoKey): Promise<string> {
       ?.join('\n') ?? '';
   return `-----BEGIN PRIVATE KEY-----\n${body}\n-----END PRIVATE KEY-----`;
 }
+
+const RSA_PRIVATE_KEY_PEM = `-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEAz4eykM0nKdvAwMHnasBMGsU4B0+RwgvVv6pz+KBb4T1Pu/Tt
+OfaycnQpA+R3F0Gj1t+WVTDG8GASIms+DjD90hYgIp613yy5YU8VUlyY4sAimF2X
+Cg4kJXRe8GIApGo1JztH48YHn/z0iiBp7+np7reUaCjABtx+NThjZ2YRhl5pa5+0
+T35hwEyg/zquY2zQw9zi3epUNtaUk9bJ8ND/mQGK70dOLLmtBpOcRo6n7CgJ4aEO
+7qcrt0V+WS2pZOQ1FW57HVlG/4QAdW1FAyR/f/5rT7NtFO3MLvtFviWMXzKk+iYE
+QRk+zHHsR3iyNI4smnDCgR82EBA+lTB+Y2MVAwIDAQABAoIBACyrDnowTg+qZxCW
+K9NEVJ0meerI65ySo40/iPqouV3/rlvMWgsx2DLeYb2evStaS4OCWH85ong2lXCn
+GJJBZUCE1qHc+1Rv8e7J8NLrb1TO+iNFca8OYCVXqN+gmHbLDWnGTrDt/NIoxhG8
+7FBhTqK9DMpmiv5vExMtcefdhkQfRrNXX39RH3u5YqfYWZQY6icMsO5tvMhC0rob
+BEh2/eFGyBCdeDxGyq60mWt5x1tJQhYzlDju/TtRelXfGBW3CJlbeKWf5LOd4ByR
+xN7S4JJxwUpaTj/FqIx0nS2G89eku2pWV4sBqiv2L2Io8Dc7MM6e8N1y7Rrra1v0
+LAkcakECgYEA9UNWjgM83wVZVxHHMzfAkeYwgAUZd1LJ1DysPLhxHUdI04gJKV5w
+BIYTM/TV4p6A72ojSmP9ahVjzYAT+Lo3CUdmiHyGo6Vf15x0Btk9yMr7yb82zF9k
+6Jd/OEIBlvLQVNAtIvbdMpzzU2J9LdZdrRTTDokn3yCRLMj8LIzhRRMCgYEA2J18
+dTG2Od4bIrRyeaygMMiR2ohoIAoh0lzxKN6XAymspD/n2e41yVwJWjLPxIWTHYaG
+Lkz5IlIpT3CTky3eT59aMiCdBab4f+pAwd+SAiTMQ3tMBAPmmd8KV5BRquVHEkuN
+C4PHcQY4AyDdtfIudv7jOGhqt2orXU5WE2JsHlECgYEAwQu/lQf3YZNUPrQ/lpDL
+ggstIZbh9Im1UthuuVxzrBfvuo/Ypjcu9GCTvNF5iGY6Fjf0jxkk3dr4M0gccCoi
+J6uLiOJ7F1OTnKIIsVtMxj7+8E0RVMvBIVIdUKqjlayJTjiNTngAo1XmMDvVS77u
+/MznUwmh2H5JxnZsBqTcqwECgYBfPzhni7lVzpzd8LxZVheF+9tuXQZz+CCRED8W
+OnHqeRupiVQYVo8eADM4jxkej6F1nR5JI510gu4ZOSYa1FNpbWdKnV6OCrJABK/+
+z6CzAp0ymvd82H5AcHtqr1HJtFFA8SmOw54hy5s7fOsgQuI9fqxItFkgVzXELFra
+4S8rUQKBgDUUvxdq1fMhehwWztOOVss6juWyLMpUKBiLnmO1yotjmkOcP7F/vXZg
+S+YRRcc73bmT2258zb/XOhVEIip/S+MWXdS9iIjRIcTdSoFkDCXZr+kPYJEIHB8K
+Bs01UJC7GPCrxRGXM1m8orO8NnLJDLubUCZ8YdTa/p5hVJybj/VZ
+-----END RSA PRIVATE KEY-----`;
