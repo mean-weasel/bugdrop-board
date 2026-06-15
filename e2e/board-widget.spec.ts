@@ -14,9 +14,7 @@ test('embedded board creates, upvotes, and syncs through polling', async ({ brow
     await expect(page.getByRole('heading', { name: 'Dummy App' })).toBeVisible();
     await expect(secondPage.getByRole('heading', { name: 'Dummy App' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Feedback' })).toBeVisible();
-    await expect(
-      page.getByText('No feedback yet. Share the first idea to help prioritize what comes next.')
-    ).toBeVisible();
+    await expect(page.getByText('Tell us what you want to see next.')).toBeVisible();
 
     await page.getByLabel('Idea title').fill('Add dark mode');
     await page.getByLabel('Context').fill('The app should be easier to use at night.');

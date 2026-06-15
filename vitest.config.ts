@@ -9,6 +9,7 @@ export default defineConfig({
   plugins: [
     cloudflareTest(async () => ({
       miniflare: {
+        compatibilityDate: '2024-01-29',
         bindings: {
           TEST_MIGRATIONS: await readD1Migrations(join(rootDir, 'migrations')),
         },

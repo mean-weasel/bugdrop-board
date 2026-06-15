@@ -64,7 +64,7 @@ export const DEFAULT_COPY: BoardWidgetCopy = {
   submitLabel: 'Submit',
   submittingLabel: 'Working...',
   loadingLabel: 'Loading feedback...',
-  emptyLabel: 'No feedback yet. Share the first idea to help prioritize what comes next.',
+  emptyLabel: 'Tell us what you want to see next.',
   errorTitle: "We couldn't load feedback.",
   retryLabel: 'Retry',
   issuePrefix: 'Issue #',
