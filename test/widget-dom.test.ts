@@ -23,7 +23,7 @@ describe('widget DOM rendering', () => {
     const root = render(state({ loading: false }));
 
     expect(root.querySelector('.bugdrop-board__empty')?.textContent).toBe(
-      'No feedback yet. Share the first idea to help prioritize what comes next.'
+      'Tell us what you want to see next.'
     );
   });
 

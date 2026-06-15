@@ -326,6 +326,9 @@ inserts its generated root immediately after the script tag, which keeps the boa
 snippet. If the script is outside body content, it falls back to appending to the body. When
 `data-mount-selector` is provided, the generated root is appended inside that target element.
 
+When a board has no items, the default empty message is "Tell us what you want to see next." Hosts
+can override that invitation with `copy.emptyLabel`.
+
 Host CSS does not style internals directly. That keeps the embedded board from accidentally
 breaking when it is installed in a user's app. Use the stable customization contract instead:
 
