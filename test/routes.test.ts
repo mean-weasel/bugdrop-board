@@ -414,6 +414,35 @@ describe('api routes', () => {
     expect(res.status).toBe(400);
   });
 
+  it('rejects wrong-scope event polling without exposing another board event log', async () => {
+    const boardA = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName: `${repoName}_a` });
+    const boardB = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName: `${repoName}_b` });
+    const item = await repo.createItem({
+      boardId: boardA.id,
+      title: 'Private roadmap item',
+      description: 'Only board A viewers should poll this.',
+      externalUserId: 'user_1',
+    });
+    const boardAToken = await boardToken(boardA.id);
+    const api = createApi();
+
+    const res = await api.request(
+      `/boards/${boardB.id}/events?since=0`,
+      { headers: { Authorization: `Bearer ${boardAToken}` } },
+      env()
+    );
+
+    expect(res.status).toBe(401);
+    const body = await res.text();
+    expect(body).not.toContain(item.id);
+    expect(body).not.toContain('item_created');
+    expect(body).not.toContain('Private roadmap item');
+    await expect(repo.listEvents(boardA.id, 0)).resolves.toMatchObject([
+      { eventType: 'item_created', itemId: item.id },
+    ]);
+    await expect(repo.listEvents(boardB.id, 0)).resolves.toHaveLength(0);
+  });
+
   it('rejects wrong-scope board reads and upvotes', async () => {
     const boardA = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName: `${repoName}_a` });
     const boardB = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName: `${repoName}_b` });
