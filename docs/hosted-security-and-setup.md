@@ -181,11 +181,11 @@ mocked fetches, and a dummy host whose `/board.js` is not served by the Worker. 
 must still prove its live D1/GitHub/configuration boundaries and fetch `/board.js` from its actual
 Worker origin. Worker-hosted `/board.js` is the sole supported widget distribution path.
 
-GitHub Advanced Security is recommended as additive detection through CodeQL default setup for
-JavaScript/TypeScript, dependency review, Dependabot alerts and security updates, secret scanning,
-and push protection. It was not enabled or configured by the local hardening goal because repository
-settings require repository-admin authority. It does not prove auth, CORS, D1 isolation, deployment,
-Worker asset delivery, or two-viewer behavior.
+GitHub Advanced Security is enabled as additive detection through CodeQL default setup for
+JavaScript/TypeScript and GitHub Actions, pull-request dependency review, Dependabot alerts and
+security updates, secret scanning, and push protection. The active `main` ruleset requires both CI
+jobs and blocks medium-or-higher CodeQL security findings. These repository controls do not prove
+auth, CORS, D1 isolation, deployment, Worker asset delivery, or two-viewer behavior.
 
 ## Follow-On Work
 

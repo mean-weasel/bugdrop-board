@@ -55,9 +55,11 @@ changes in this repo. Examples:
 
 ## Advanced Security
 
-GitHub Advanced Security is recommended as additive detection: enable CodeQL default setup for
-JavaScript/TypeScript, dependency review, Dependabot alerts and security updates, secret scanning,
-and push protection when repository policy and licensing allow. This local goal did not enable or
-configure repository settings because it had no repository-admin authority. These signals do not
-prove authorization, CORS, D1 isolation, deployment correctness, a real Worker-hosted `/board.js`
-fetch, or two-viewer behavior; the evidence and per-install gates above remain required.
+GitHub Advanced Security is enabled as additive detection. CodeQL default setup covers
+JavaScript/TypeScript and GitHub Actions; dependency review runs on pull requests; Dependabot alerts
+and security updates, secret scanning, and push protection are enabled. The active `main` ruleset
+requires `Lint, Typecheck, Knip, Audit` and `Unit Tests & Build`, and its native CodeQL rule blocks
+medium-or-higher security findings. Dependency Review remains pull-request-only rather than a
+merge-queue requirement because its workflow does not run for `merge_group` commits. These signals
+do not prove authorization, CORS, D1 isolation, deployment correctness, a real Worker-hosted
+`/board.js` fetch, or two-viewer behavior; the evidence and per-install gates above remain required.

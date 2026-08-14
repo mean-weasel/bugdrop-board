@@ -29,3 +29,15 @@ beta readiness.
 - Do not change Cloudflare deployments, credentials, D1 data, or beta-user access.
 - Do not claim that Advanced Security replaces auth, CORS, D1 isolation, deployed `/board.js`,
   GitHub mirroring, or two-viewer dogfood proof.
+
+## Outcome
+
+- Dependabot alerts and security updates are enabled.
+- Secret scanning, push protection, non-provider pattern detection, and validity checks are enabled.
+- CodeQL default setup covers JavaScript/TypeScript and GitHub Actions; its first two medium findings
+  were resolved by explicitly limiting the CI workflow token to read-only repository contents.
+- The active `main-protection` ruleset preserves pull-request, merge-queue, deletion, and force-push
+  protections; requires `Lint, Typecheck, Knip, Audit` and `Unit Tests & Build`; and blocks
+  medium-or-higher CodeQL security findings.
+- Dependency Review remains a pull-request signal rather than a required merge-queue check because
+  its workflow is intentionally scoped to `pull_request`, not `merge_group`.
