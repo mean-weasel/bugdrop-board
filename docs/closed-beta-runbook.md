@@ -37,7 +37,11 @@ Closed beta is ready for a specific app only when a maintainer can show:
    npm run validate
    make check
    npm run deploy:check:production
+   npm audit --json
    ```
+
+   The verified hardening baseline reported zero vulnerabilities. Treat a later nonzero full audit
+   as a new risk requiring remediation or an explicit owner and beta disposition.
 
 6. Run the self-host doctor against the intended environment, host origin, repo, board id, Worker
    URL, and token endpoint. It should pass before remote migrations or deploys:
@@ -57,6 +61,11 @@ Closed beta is ready for a specific app only when a maintainer can show:
 9. Review [Closed Beta Ops Runbook](closed-beta-ops-runbook.md) so support, rollback, and manual
    backup/export boundaries are understood.
 10. Make the [Closed Beta Final Acceptance](closed-beta-final-acceptance.md) decision.
+
+    Local Playwright uses the dummy host's `/board.js`, so it proves the embedded interaction but
+    not asset delivery from a deployed Worker. Before invitation, record a real `/board.js` fetch
+    from the target Worker origin. Worker hosting is the sole supported widget distribution path.
+
 11. Review [Closed Beta Risks](closed-beta-risks.md) with the beta user.
 
 ## Evidence To Capture

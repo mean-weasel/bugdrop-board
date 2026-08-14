@@ -82,6 +82,15 @@ npm run deploy:smoke -- \
   --cors-token-endpoint https://app.example.com/api/bugdrop-board-token
 ```
 
+The deployed request must fetch `/board.js` from the actual Worker origin. Local browser tests use
+the dummy host's `/board.js`; they are interaction proof, not a substitute for this per-install
+asset check. Worker hosting is the sole supported widget distribution path.
+
+When diagnosing a dependency-security concern, run the full `npm audit --json` against the committed
+lockfile. The verified hardening baseline contained zero vulnerabilities. Record any later advisory,
+dependency path, fix availability, owner, and beta disposition without treating a severity threshold
+as a clean audit.
+
 For a target-app readiness decision, finish the [Closed Beta Dogfood Script](closed-beta-dogfood-script.md)
 with two signed-in viewers.
 

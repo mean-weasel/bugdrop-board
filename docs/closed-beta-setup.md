@@ -29,7 +29,11 @@ dogfood-style setup in a new app. It is intentionally limited to setup safety an
   ```bash
   npm run validate
   npm run deploy:check:production
+  npm audit --json
   ```
+
+  The closed-beta hardening baseline reported zero vulnerabilities in the full audit. Rerun it for
+  the exact lockfile being deployed; do not rely only on a severity threshold.
 
 - After `wrangler.toml` contains the intended production vars and D1 id, run the non-mutating
   setup doctor:
@@ -122,6 +126,10 @@ dogfood-style setup in a new app. It is intentionally limited to setup safety an
     --url https://bugdrop-board.example.workers.dev \
     --expect-environment production
   ```
+
+  This real Worker request is required. The local Playwright host serves its own `/board.js` and
+  does not prove deployed asset delivery. Worker-hosted `/board.js` is the sole supported widget
+  distribution path.
 
 - Verify browser CORS and authenticated read surfaces from the host app:
 

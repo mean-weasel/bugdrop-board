@@ -174,6 +174,19 @@ Before using a hosted beta board with real users, confirm:
 - two signed-in viewers can see the same board and observe upvote changes after polling;
 - browser source, network logs, screenshots, and receipts do not expose secrets.
 
+The repository hardening baseline has a zero-vulnerability full npm audit and focused local proof
+for missing, expired, malformed, forged, wrong-key, and wrong-scope tokens, allowed/disallowed CORS,
+throttling, and two-viewer polling/upvotes. That proof uses fixtures, local D1, generated keys,
+mocked fetches, and a dummy host whose `/board.js` is not served by the Worker. Each hosted install
+must still prove its live D1/GitHub/configuration boundaries and fetch `/board.js` from its actual
+Worker origin. Worker-hosted `/board.js` is the sole supported widget distribution path.
+
+GitHub Advanced Security is recommended as additive detection through CodeQL default setup for
+JavaScript/TypeScript, dependency review, Dependabot alerts and security updates, secret scanning,
+and push protection. It was not enabled or configured by the local hardening goal because repository
+settings require repository-admin authority. It does not prove auth, CORS, D1 isolation, deployment,
+Worker asset delivery, or two-viewer behavior.
+
 ## Follow-On Work
 
 The hosted control-plane design board has already run. The next hosted-beta board should be a

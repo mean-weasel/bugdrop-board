@@ -14,16 +14,18 @@ invite a beta user, or perform production data changes by itself.
 
 ## Already Proven Globally
 
-| Area               | Status | Evidence                                                                                                                                                                                                 |
-| ------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Setup safety       | Pass   | [Closed Beta Setup Checklist](closed-beta-setup.md), `docs/goals/bugdrop-board-closed-beta-setup-safety/`                                                                                                |
-| Self-host doctor   | Pass   | `npm run doctor:selfhost`, `docs/goals/bugdrop-board-selfhost-doctor/`                                                                                                                                   |
-| Security controls  | Pass   | `docs/goals/bugdrop-board-closed-beta-security-abuse/`                                                                                                                                                   |
-| Widget delivery    | Pass   | Worker build, deploy dry-run, and `/board.js` deployed smoke                                                                                                                                             |
-| Customization      | Pass   | [v0.2.0 Customization Release Prep](release-readiness-results/2026-06-06-v0.2.0-customization-release.md), [Full UX Customization](release-readiness-results/2026-06-06-full-ux-customization.md)        |
-| Production dogfood | Pass   | [Chrome Upvote Issue 9](production-dogfood-results/2026-06-06-chrome-upvote-issue-9.md), [Production Dogfood](production-dogfood.md)                                                                     |
-| Handoff docs       | Pass   | [Closed Beta Runbook](closed-beta-runbook.md), [Closed Beta Dogfood Script](closed-beta-dogfood-script.md), [Closed Beta Readiness](closed-beta-readiness.md), [Closed Beta Risks](closed-beta-risks.md) |
-| Ops handoff        | Pass   | [Closed Beta Ops Runbook](closed-beta-ops-runbook.md)                                                                                                                                                    |
+| Area               | Status              | Evidence                                                                                                                                                                                                 |
+| ------------------ | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setup safety       | Pass                | [Closed Beta Setup Checklist](closed-beta-setup.md), `docs/goals/bugdrop-board-closed-beta-setup-safety/`                                                                                                |
+| Self-host doctor   | Pass                | `npm run doctor:selfhost`, `docs/goals/bugdrop-board-selfhost-doctor/`                                                                                                                                   |
+| Dependency audit   | Pass                | Beta security hardening T008: full `npm audit --json` reported zero vulnerabilities; type, repository, unit, browser, and production deploy-dry-run gates passed                                         |
+| Security controls  | Pass                | Beta security hardening T009: 56 focused Vitest cases plus the focused two-viewer Playwright workflow proved the requested local auth, CORS, throttling, polling, and upvote cases                       |
+| Widget packaging   | Pass                | Worker asset configuration, production deploy dry-run, and mocked deploy-smoke verifier tests                                                                                                            |
+| Deployed widget    | Pending per install | The local browser fixture serves `/board.js` from the dummy host; fetch `/board.js` from the actual target Worker and record deployed smoke before invitation                                            |
+| Customization      | Pass                | [v0.2.0 Customization Release Prep](release-readiness-results/2026-06-06-v0.2.0-customization-release.md), [Full UX Customization](release-readiness-results/2026-06-06-full-ux-customization.md)        |
+| Production dogfood | Pass                | [Chrome Upvote Issue 9](production-dogfood-results/2026-06-06-chrome-upvote-issue-9.md), [Production Dogfood](production-dogfood.md)                                                                     |
+| Handoff docs       | Pass                | [Closed Beta Runbook](closed-beta-runbook.md), [Closed Beta Dogfood Script](closed-beta-dogfood-script.md), [Closed Beta Readiness](closed-beta-readiness.md), [Closed Beta Risks](closed-beta-risks.md) |
+| Ops handoff        | Pass                | [Closed Beta Ops Runbook](closed-beta-ops-runbook.md)                                                                                                                                                    |
 
 ## Required Per-Install Proof
 
@@ -38,6 +40,8 @@ Complete these for each target app before sending an invite:
 - `npm run doctor:selfhost` passes for the target Worker URL, host origin, repo, board id, and token
   endpoint.
 - `npm run deploy:smoke` passes with allowed and disallowed origins.
+- The embed loads `/board.js` from the actual deployed Worker origin, the sole supported widget
+  distribution path; the dummy host's local `/board.js` does not satisfy this item.
 - One board is provisioned for the target mirror repo.
 - The host page embeds the widget in the expected place with accepted styling/copy.
 - Two signed-in viewers complete item creation, GitHub Issue mirror proof, polling visibility,
@@ -68,6 +72,12 @@ or docs changes. Acceptable examples:
 
 Do not convert code, security, deployment, or documentation uncertainty into conditional go. Those are
 no-go until fixed or explicitly reclassified by a maintainer.
+
+GitHub Advanced Security is recommended additive detection, including CodeQL default setup for
+JavaScript/TypeScript, dependency review, Dependabot alerts/security updates, secret scanning, and
+push protection. The local hardening goal did not enable or configure it because no repository-admin
+authority was granted. Its alerts cannot substitute for auth/CORS tests, D1 isolation evidence,
+deployment smoke, a live Worker `/board.js` fetch, or two-viewer dogfood proof.
 
 ## No-Go Criteria
 

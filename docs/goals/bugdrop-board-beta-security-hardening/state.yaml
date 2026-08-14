@@ -1,0 +1,784 @@
+version: 2
+
+goal:
+  title: 'BugDrop Board Beta Security Hardening'
+  slug: 'bugdrop-board-beta-security-hardening'
+  kind: existing_plan
+  tranche: 'Preserve and land the npm-distribution removal, remediate dependency risk, prove the beta security/build paths, and reconcile readiness claims.'
+  status: done
+  oracle:
+    signal: 'A final audit shows the npm-removal change is isolated and preserved, actionable dependency vulnerabilities are remediated or explicitly risk-accepted, the full beta verification suite passes with adversarial auth/CORS coverage, and readiness docs match the evidence.'
+    cadence: 'after each Worker package and at final audit'
+    final_proof: 'Receipt-backed commit/diff evidence, audit output, full verification results, adversarial security test results, and a final Judge receipt with full_outcome_complete: true.'
+  intake:
+    original_request: 'Do steps one through four as a GoalBuddy prep board and advise whether to set up Advanced Security in this repo.'
+    interpreted_outcome: 'Prepare a safe execution board that lands the npm-removal work, closes actionable dependency security gaps, proves the result, and makes beta-readiness claims honest.'
+    input_shape: existing_plan
+    audience: 'BugDrop Board maintainers and first closed-beta operators'
+    authority: requested
+    proof_type: test
+    completion_proof: 'The four requested steps have receipt-backed proof and final security/readiness review finds no unaddressed beta blocker within scope.'
+    likely_misfire: 'Claiming security readiness because the critical-only audit gate passes, while high-severity advisories or contradictory readiness claims remain.'
+    blind_spots_considered:
+      - 'Advanced Security can add useful signals but cannot replace runtime authorization, CORS, dependency, deployment, and two-user workflow proof.'
+      - 'The npm-removal changes are currently part of a dirty worktree and must not be mixed with unrelated hardening changes without an explicit boundary.'
+      - 'Automated dependency upgrades may introduce Cloudflare Worker, test-pool, or browser workflow regressions.'
+    existing_plan_facts:
+      - 'First preserve the completed npm-distribution removal as one focused change.'
+      - 'Then update vulnerable dependencies, prioritizing direct runtime and Cloudflare tooling dependencies.'
+      - 'Run the complete repository, browser, deployment-dry-run, and adversarial auth/CORS proof.'
+      - 'Reconcile readiness documentation with actual security evidence.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  exact_human_approval_can_terminal_wait: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: live
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-beta-security-hardening/'
+    command: 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.4.3/skills/goal-prep/surfaces/local-goal-board/scripts/local-goal-board.mjs --goal docs/goals/bugdrop-board-beta-security-hardening'
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Validate the four-step plan against the dirty worktree, security risk, and available proof before any execution.'
+    inputs:
+      - 'User-provided four-step sequence'
+      - 'Current git status and npm-removal plan'
+      - 'Repository verification scripts'
+    constraints:
+      - 'Read-only.'
+      - "Preserve the user's sequence unless evidence requires a safer boundary."
+      - 'Do not treat a critical-only audit pass as proof that high-severity risk is acceptable.'
+    expected_output:
+      - 'Validated or corrected execution sequence'
+      - 'Exact scope for preserving the npm-removal work'
+      - 'Security upgrade boundary and rollback conditions'
+      - 'Advanced Security recommendation and proposed configuration scope'
+      - 'Required verification and stop conditions'
+    receipt:
+      result: done
+      task_id: T001
+      board_path: docs/goals/bugdrop-board-beta-security-hardening/state.yaml
+      decision: approved
+      full_outcome_complete: false
+      rationale: 'The sequence is safe and outcome-moving: first isolate the already-verified npm-removal diff, then remediate dependencies, prove adversarial behavior, reconcile claims, and audit completion. The npm change has one clear tracked-file boundary; the GoalBuddy board itself must be excluded. Security work must prioritize the vulnerable Hono runtime and coupled Cloudflare tooling without an unrelated upgrade sweep. Advanced Security is recommended as additive detection, but enabling remote settings requires separate repository-admin authority and cannot substitute for runtime proof.'
+      evidence:
+        - "Current status shows 21 tracked npm-removal files plus the new removal plan; docs/goals/bugdrop-board-beta-security-hardening/ is separate untracked board state and must not enter T002's commit."
+        - "T002's allowed_files cover the tracked npm-removal diff and docs/superpowers/plans/2026-08-14-remove-npm-distribution.md; exclude every other path, especially docs/goals/. Preserve Worker-hosted /board.js, npm tooling, private:true, and the explicit prepublishOnly refusal."
+        - 'Current full `npm audit --json` exits 1 with 13 vulnerabilities: 10 high, 2 moderate, 1 low. All report fixes available; therefore `npm run audit` using `--audit-level=critical` is not sufficient evidence.'
+        - 'The direct runtime dependency Hono is affected through 4.12.33, including a high-severity CORS advisory; current installed Hono is 4.12.23 and the compatible wanted release is 4.13.2.'
+        - 'The direct toolchain includes esbuild 0.28.0 (fixed compatible release 0.28.2), Wrangler 4.98.0 (advisory range through 4.119.0; wanted 4.123.0), and @cloudflare/vitest-pool-workers 0.16.13 (audit range through 0.20.2; latest 0.21.3). Treat the Cloudflare pool/Miniflare/Wrangler upgrade as one coupled compatibility boundary.'
+        - 'T003 must change only package.json/package-lock.json, avoid unrelated latest-version churn, accept only lockfile changes explained by the selected direct upgrades, and stop for any required major upgrade, force/downgrade, config/source change, or repeated Worker/D1/widget/browser regression.'
+        - 'Advanced Security recommendation: enable CodeQL default setup for JavaScript/TypeScript, dependency review on pull requests, Dependabot alerts and security updates, secret scanning, and push protection; make relevant checks required where repository policy allows. This is additive detection, not evidence for auth, CORS, D1 isolation, deployment, or two-viewer behavior.'
+        - 'Required proof remains sequential: T002 diff/commit plus all listed checks and expected publish refusal; T003 before/after full audit plus full regression suite; T004 explicit missing/expired/malformed/forged/wrong-scope token and allowed/disallowed-origin cases; T005 evidence-matched docs; T999 current-state completion audit.'
+      missing_evidence:
+        - 'Focused T002 commit identifier and exclusion proof'
+        - 'Post-remediation full audit inventory and any explicit residual-risk acceptance'
+        - 'Current adversarial auth/CORS and complete browser/deployment verification'
+        - 'Evidence-matched final readiness documentation'
+        - 'Repository-admin confirmation and authorization before any Advanced Security remote configuration'
+      required_board_updates:
+        - 'Record this receipt on T001 and mark T001 done.'
+        - 'Activate T002 only; keep T003-T005 and T999 sequential because each consumes the preceding receipt.'
+        - 'Clarify T003 execution notes: prioritize Hono first, treat Wrangler/vitest-pool/Miniflare as a coupled upgrade, avoid unrelated dependency modernization, and use full `npm audit` rather than the critical-only script as the security gate.'
+        - 'Keep Advanced Security configuration outside the four local Worker tasks until explicit remote-mutation authority and repository-plan availability are confirmed.'
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: blocked
+    reasoning_hint: medium
+    objective: 'Preserve the completed npm-distribution removal as one focused, verified commit without absorbing unrelated work.'
+    inputs:
+      - 'T001 validated sequence and scope receipt'
+      - 'docs/superpowers/plans/2026-08-14-remove-npm-distribution.md'
+      - 'Current dirty worktree'
+    constraints:
+      - 'Do not rewrite, amend, push, or deploy.'
+      - 'Keep npm as the repository toolchain while keeping package publication disabled.'
+      - 'Keep Worker-hosted /board.js as the sole supported widget distribution path.'
+    expected_output:
+      - 'Focused commit identifier'
+      - 'Files included and excluded'
+      - 'Verification results'
+    allowed_files:
+      - '.github/workflows/install-smoke.yml'
+      - '.github/workflows/package.yml'
+      - 'Makefile'
+      - 'README.md'
+      - 'docs/closed-beta-dogfood-script.md'
+      - 'docs/closed-beta-final-acceptance.md'
+      - 'docs/closed-beta-ops-runbook.md'
+      - 'docs/closed-beta-readiness.md'
+      - 'docs/closed-beta-runbook.md'
+      - 'docs/closed-beta-setup.md'
+      - 'docs/hosted-security-and-setup.md'
+      - 'docs/staging-dogfood.md'
+      - 'docs/superpowers/plans/2026-08-14-remove-npm-distribution.md'
+      - 'package-lock.json'
+      - 'package.json'
+      - 'scripts/build-widget.js'
+      - 'scripts/verify-clean-room-install-core.js'
+      - 'scripts/verify-clean-room-install.js'
+      - 'scripts/verify-install-smoke-workflow.js'
+      - 'scripts/verify-package-install.js'
+      - 'scripts/verify-package-workflow.js'
+      - 'test/verify-clean-room-install.test.ts'
+    verify:
+      - 'git diff --check'
+      - 'make check'
+      - 'npm run test'
+      - 'npm run test:e2e'
+      - 'npm run deploy:check:production'
+      - 'npm publish --dry-run (must fail through the explicit prepublishOnly refusal)'
+    stop_if:
+      - 'The proposed commit includes files outside the validated npm-removal scope.'
+      - 'Any required verification fails twice after one bounded correction.'
+      - 'The only way forward would rewrite or discard user history.'
+    receipt:
+      result: blocked
+      task_id: T002
+      board_path: docs/goals/bugdrop-board-beta-security-hardening/state.yaml
+      changed_files: []
+      commands:
+        - command: git diff --check
+          result: passed
+          status: pass
+        - command: make check
+          result: 'failed: prettier --check . reported docs/goals/bugdrop-board-beta-security-hardening/state.yaml'
+          status: fail
+      summary: 'T002 cannot proceed because the exact make check verifier fails on the GoalBuddy state file, which is outside T002 allowed_files and explicitly prohibited from editing or staging. The tracked npm-removal diff otherwise matched the validated allowed-file boundary, and git diff --check passed. No files were edited or staged, no commit was created, and later verifiers—including the expected npm publish refusal—were not run after the mandatory stop condition.'
+      remaining_blockers:
+        - 'An authorized PM must correct or exempt formatting for docs/goals/bugdrop-board-beta-security-hardening/state.yaml, then reactivate T002.'
+      verification_attempts: 1
+      stopped_because: 'Required verification needs a change to a file outside allowed_files.'
+  - id: T006
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Retry the focused npm-distribution removal commit after PM repaired the out-of-scope GoalBuddy formatting failure.'
+    inputs:
+      - 'T001 validated sequence and scope receipt'
+      - 'T002 blocked receipt and PM formatting repair'
+      - 'docs/superpowers/plans/2026-08-14-remove-npm-distribution.md'
+      - 'Current dirty worktree'
+    constraints:
+      - 'Do not rewrite, amend, push, or deploy.'
+      - 'Keep npm as the repository toolchain while keeping package publication disabled.'
+      - 'Keep Worker-hosted /board.js as the sole supported widget distribution path.'
+      - 'Do not edit or stage GoalBuddy control files.'
+    expected_output:
+      - 'Focused commit identifier'
+      - 'Files included and excluded'
+      - 'Verification results'
+    allowed_files:
+      - '.github/workflows/install-smoke.yml'
+      - '.github/workflows/package.yml'
+      - 'Makefile'
+      - 'README.md'
+      - 'docs/closed-beta-dogfood-script.md'
+      - 'docs/closed-beta-final-acceptance.md'
+      - 'docs/closed-beta-ops-runbook.md'
+      - 'docs/closed-beta-readiness.md'
+      - 'docs/closed-beta-runbook.md'
+      - 'docs/closed-beta-setup.md'
+      - 'docs/hosted-security-and-setup.md'
+      - 'docs/staging-dogfood.md'
+      - 'docs/superpowers/plans/2026-08-14-remove-npm-distribution.md'
+      - 'package-lock.json'
+      - 'package.json'
+      - 'scripts/build-widget.js'
+      - 'scripts/verify-clean-room-install-core.js'
+      - 'scripts/verify-clean-room-install.js'
+      - 'scripts/verify-install-smoke-workflow.js'
+      - 'scripts/verify-package-install.js'
+      - 'scripts/verify-package-workflow.js'
+      - 'test/verify-clean-room-install.test.ts'
+    verify:
+      - 'git diff --check'
+      - 'make check'
+      - 'npm run test'
+      - 'npm run test:e2e'
+      - 'npm run deploy:check:production'
+      - 'npm publish --dry-run (must fail through the explicit prepublishOnly refusal)'
+    stop_if:
+      - 'The proposed commit includes files outside the validated npm-removal scope.'
+      - 'Any required verification fails twice after one bounded correction.'
+      - 'The only way forward would rewrite or discard user history.'
+    receipt:
+      result: done
+      task_id: T006
+      board_path: docs/goals/bugdrop-board-beta-security-hardening/state.yaml
+      changed_files:
+        - .github/workflows/install-smoke.yml
+        - .github/workflows/package.yml
+        - Makefile
+        - README.md
+        - docs/closed-beta-dogfood-script.md
+        - docs/closed-beta-final-acceptance.md
+        - docs/closed-beta-ops-runbook.md
+        - docs/closed-beta-readiness.md
+        - docs/closed-beta-runbook.md
+        - docs/closed-beta-setup.md
+        - docs/hosted-security-and-setup.md
+        - docs/staging-dogfood.md
+        - docs/superpowers/plans/2026-08-14-remove-npm-distribution.md
+        - package-lock.json
+        - package.json
+        - scripts/build-widget.js
+        - scripts/verify-clean-room-install-core.js
+        - scripts/verify-clean-room-install.js
+        - scripts/verify-install-smoke-workflow.js
+        - scripts/verify-package-install.js
+        - scripts/verify-package-workflow.js
+        - test/verify-clean-room-install.test.ts
+      commands:
+        - command: git diff --check
+          result: passed
+          status: pass
+        - command: make check
+          result: passed
+          status: pass
+        - command: npm run test
+          result: 'passed: 14 files, 108 tests'
+          status: pass
+        - command: npm run test:e2e
+          result: 'passed: 12 tests'
+          status: pass
+        - command: npm run deploy:check:production
+          result: 'passed: widget built and Wrangler production dry-run exited successfully'
+          status: pass
+        - command: npm publish --dry-run
+          result: 'passed expected refusal: prepublishOnly printed "BugDrop Board is deployed as a Worker and is not published to npm." and exited 1'
+          status: pass
+        - command: git diff --cached --check
+          result: passed
+          status: pass
+        - command: 'git commit -m "chore: remove npm distribution"'
+          result: 'passed: ac97dcc41a5b8991b7c65762193be871cb28d213'
+          status: pass
+      summary: 'Created focused local commit ac97dcc41a5b8991b7c65762193be871cb28d213 containing only the validated npm-distribution-removal paths. GoalBuddy control files remain untracked and excluded. All required verification passed, including the explicit prepublishOnly npm publication refusal. No push, deployment, amendment, or GoalBuddy control-file edit was performed.'
+      remaining_blockers: []
+      verification_attempts: 1
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: blocked
+    reasoning_hint: medium
+    objective: 'Remediate actionable dependency advisories with the smallest compatible upgrade set and document any residual risk.'
+    inputs:
+      - 'T001 dependency boundary'
+      - 'T006 focused commit receipt'
+      - 'Current npm audit and outdated reports'
+    constraints:
+      - 'Prioritize direct runtime dependencies and Cloudflare execution tooling.'
+      - 'Upgrade Hono first; treat Wrangler, @cloudflare/vitest-pool-workers, and their Miniflare dependency as one coupled compatibility boundary.'
+      - 'Prefer compatible upgrades; do not cross a major-version boundary without a Judge-approved follow-up task.'
+      - 'Avoid unrelated dependency modernization and explain every selected direct and lockfile change.'
+      - 'Do not use audit thresholds to hide high-severity findings.'
+      - 'Do not deploy or change production state.'
+    expected_output:
+      - 'Before-and-after advisory inventory'
+      - 'Dependency changes and rationale'
+      - 'Residual advisories with reachability, exposure, fix availability, owner, and beta disposition'
+      - 'Verification results'
+    allowed_files:
+      - 'package.json'
+      - 'package-lock.json'
+    verify:
+      - 'npm ci'
+      - 'npm audit'
+      - 'npm run typecheck'
+      - 'npm run test'
+      - 'npm run test:e2e'
+      - 'npm run deploy:check:production'
+    stop_if:
+      - 'A required fix needs a major dependency upgrade or implementation changes outside package files.'
+      - 'The audit proposes a force upgrade or downgrade with unclear behavior.'
+      - 'Worker, D1, widget, or browser verification fails twice.'
+    receipt:
+      result: blocked
+      task_id: T003
+      board_path: docs/goals/bugdrop-board-beta-security-hardening/state.yaml
+      changed_files:
+        - package.json
+        - package-lock.json
+      commands:
+        - cmd: npm audit --json
+          status: fail
+        - cmd: >-
+            node -e "const p=require('./package.json'); console.log(JSON.stringify({dependencies:p.dependencies,devDependencies:p.devDependencies,overrides:p.overrides},null,2))" && npm outdated --json
+          status: fail
+        - cmd: npm install --save-exact hono@4.13.2
+          status: pass
+        - cmd: >-
+            npm install "hono@^4.13.2" && npm install --save-dev "@cloudflare/vitest-pool-workers@^0.21.3" "wrangler@^4.123.0" "esbuild@^0.28.2"
+          status: fail
+        - cmd: >-
+            npm view @cloudflare/vitest-pool-workers@0.21.3 dependencies peerDependencies --json && npm view @cloudflare/vitest-pool-workers@0.21.0 dependencies peerDependencies --json && npm view wrangler@4.120.0 peerDependencies --json && npm view wrangler@4.119.1 peerDependencies --json && git diff -- package.json package-lock.json
+          status: fail
+        - cmd: >-
+            git diff -- package.json package-lock.json && node -e "const p=require('./package.json'); const l=require('./package-lock.json'); console.log(JSON.stringify({hono:p.dependencies.hono,lockHono:l.packages[''].dependencies.hono,installed:l.packages['node_modules/hono'].version},null,2))"
+          status: pass
+      summary: 'Before remediation, full npm audit reported 13 vulnerable packages: 10 high, 2 moderate, and 1 low. Hono was upgraded first from 4.12.23 to 4.13.2, reducing the install-time inventory to 12 and changing only its manifest constraint and lockfile package record. The coupled Cloudflare upgrade was rejected by npm: fixed pool 0.21.x requires Wrangler 4.120+, whose optional peer requires @cloudflare/workers-types 5.x; the repo directly uses 4.x. No force or legacy-peer bypass was used. Exact verifiers were not run because the task requires immediate stop when remediation needs a major dependency upgrade.'
+      remaining_blockers:
+        - 'Judge-approved follow-up authority is required to upgrade @cloudflare/workers-types from 4.x to 5.x as part of the coupled pool/Wrangler/Miniflare boundary. Until then, 12 advisories remain and T003 cannot complete.'
+      verification_attempts: 0
+      stopped_because: 'The required fixed Cloudflare tooling boundary needs a direct major-version upgrade of @cloudflare/workers-types; proceeding would violate T003 stop_if and constraints.'
+  - id: T007
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Decide whether the required @cloudflare/workers-types 5.x upgrade is a safe part of the coupled Cloudflare security remediation and specify the follow-up Worker boundary.'
+    inputs:
+      - 'T001 security boundary receipt'
+      - 'T003 blocked receipt and current package diff'
+      - 'Current package manifests, audit inventory, peer constraints, and repository verification commands'
+    constraints:
+      - 'Read-only.'
+      - 'Do not approve a major upgrade solely to make npm audit green; assess Worker API compatibility and rollback proof.'
+      - 'Preserve the already-applied compatible Hono fix unless evidence shows it is unsafe.'
+      - 'Keep unrelated dependency modernization out of scope.'
+    expected_output:
+      - 'Approve or reject the workers-types 5.x boundary'
+      - 'Exact follow-up Worker allowed_files, versions or constraints, verify commands, and stop conditions'
+      - 'Disposition of the current Hono-only diff'
+      - 'Residual advisory strategy if the major boundary is rejected'
+    receipt:
+      result: done
+      task_id: T007
+      board_path: docs/goals/bugdrop-board-beta-security-hardening/state.yaml
+      decision: approved
+      full_outcome_complete: false
+      rationale: 'Approve the coupled boundary. workers-types 5 is a development-only type-package major that removes dated entrypoints; this repository uses only the default entrypoint, and its D1Database and Fetcher globals remain available. Pool 0.21.3 retains the two APIs used by vitest.config.ts and requires the matching Wrangler/Miniflare generation. The change is reversible within two package files, but typecheck, Worker tests, browser tests, and deployment dry-run are mandatory rollback gates. Preserve the Hono 4.13.2 diff: it removed the direct advisory with no contrary compatibility evidence.'
+      evidence:
+        - 'T003 left only package.json and package-lock.json modified; the diff is the compatible Hono constraint change from ^4.12.19 to ^4.13.2 and lock resolution from 4.12.23 to 4.13.2.'
+        - 'The current full audit is 12 vulnerabilities (9 high, 2 moderate, 1 low), down from 13 after Hono remediation; Hono is absent from the remaining inventory.'
+        - 'Wrangler 4.123.0 declares optional peer @cloudflare/workers-types ^5.20260811.1 and Node >=22; the repository declares Node >=22.12.0 <23.'
+        - '@cloudflare/vitest-pool-workers 0.21.3 depends on Wrangler 4.123.0, Miniflare 5.20260811.1-alpha, and esbuild 0.28.1, while retaining exported cloudflareTest and readD1Migrations used by vitest.config.ts.'
+        - 'Cloudflare documents that workers-types v5 removes dated entrypoints and exposes latest runtime types: https://developers.cloudflare.com/workers/languages/typescript/'
+        - 'tsconfig.json references only @cloudflare/workers-types, with no dated entrypoint; repository source usage is limited to standard Worker globals including D1Database and Fetcher, both present in workers-types 5.20260814.1.'
+        - 'The repository compatibility date remains 2024-01-29. Version 5 does not make types compatibility-date-specific, but the current default v4 package already resolves to 2026-era latest types; generated wrangler types are a separate future fidelity improvement, not required for this security boundary.'
+      subgoal_contract:
+        kind: worker_package
+        objective: 'Complete the dependency-security remediation by preserving Hono 4.13.2, upgrading the coupled Cloudflare pool/Workers-types/Wrangler/Miniflare boundary, applying only compatible audit-driven transitive fixes, and proving Worker, D1, widget, and browser compatibility.'
+        allowed_files:
+          - package.json
+          - package-lock.json
+        versions_or_constraints:
+          hono: ^4.13.2
+          '@cloudflare/vitest-pool-workers': ^0.21.3
+          '@cloudflare/workers-types': ^5.20260814.1
+          wrangler: ^4.123.0
+          esbuild: ^0.28.2
+        implementation:
+          - 'Preserve the existing Hono-only diff and include it in the completed dependency remediation.'
+          - 'Install only the listed direct constraints; allow their normal lockfile resolution, including the pool-owned Miniflare 5 generation.'
+          - 'After direct upgrades, npm audit fix --package-lock-only may be used without --force solely for compatible transitive advisory fixes.'
+          - 'Do not add overrides, use --legacy-peer-deps, downgrade packages, modernize unrelated direct dependencies, or edit source/config/test files.'
+          - 'Explain every direct change and map every security-driven transitive change or remaining advisory to its dependency path.'
+        verify:
+          - git diff --check
+          - npm ci
+          - npm ls @cloudflare/vitest-pool-workers @cloudflare/workers-types wrangler miniflare esbuild hono
+          - npm audit --json
+          - npm run typecheck
+          - make check
+          - npm run test
+          - npm run test:e2e
+          - npm run deploy:check:production
+        stop_if:
+          - 'Resolution requires --force, --legacy-peer-deps, an override, a downgrade, or another direct major-version upgrade.'
+          - 'Any file outside package.json and package-lock.json would need to change.'
+          - 'Hono 4.13.2 would need to be reverted or changed to complete the boundary.'
+          - 'A remaining advisory still traverses Hono, the Cloudflare pool, Wrangler, Miniflare, workers-types, or direct esbuild after compatible remediation.'
+          - 'Any typecheck, Worker/D1 test, browser test, or production deployment dry-run failure repeats after one bounded package-only correction.'
+          - 'The lockfile contains unexplained unrelated direct-dependency churn.'
+        expected_output:
+          - 'Before-and-after full advisory inventory'
+          - 'Exact resolved dependency and peer graph'
+          - 'Direct and transitive change rationale'
+          - 'Full verification results'
+          - 'Any residual advisory with path, reachability, exposure, fix availability, owner, and beta disposition'
+      parallel_safety:
+        safe: false
+        reason: 'The package files are the sole dependency boundary, and T004 consumes the resulting installed Worker test stack. Keep downstream security proof sequential.'
+      blocked_tasks:
+        - T003
+      missing_evidence:
+        - 'Successful peer-compatible lock resolution for the approved versions'
+        - 'Post-upgrade full audit inventory'
+        - 'Combined Hono and Cloudflare typecheck/test/browser/deployment proof'
+        - 'Disposition for any advisory remaining outside the approved direct dependency paths'
+      required_board_updates:
+        - 'Record this receipt on T007 and mark T007 done.'
+        - 'Create and activate one follow-up Worker task using the exact worker_package contract above; retain T003 as the historical blocked receipt.'
+        - 'Keep T004, T005, and T999 queued until the follow-up dependency Worker completes.'
+        - 'Change T004 and T005 dependency inputs to consume the completed follow-up dependency receipt instead of the blocked T003 receipt.'
+  - id: T008
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Complete the dependency-security remediation by preserving Hono 4.13.2, upgrading the coupled Cloudflare pool/Workers-types/Wrangler/Miniflare boundary, applying only compatible audit-driven transitive fixes, and proving Worker, D1, widget, and browser compatibility.'
+    inputs:
+      - 'T003 blocked dependency receipt and existing Hono-only diff'
+      - 'T007 approved coupled-major boundary and Worker package'
+      - 'Current package manifests and lockfile'
+    constraints:
+      - 'Preserve the existing Hono-only diff and include it in the completed dependency remediation.'
+      - 'Install only the approved direct constraints; allow their normal lockfile resolution, including the pool-owned Miniflare 5 generation.'
+      - 'After direct upgrades, npm audit fix --package-lock-only may be used without --force solely for compatible transitive advisory fixes.'
+      - 'Do not add overrides, use --legacy-peer-deps, downgrade packages, modernize unrelated direct dependencies, or edit source/config/test files.'
+      - 'Explain every direct change and map every security-driven transitive change or remaining advisory to its dependency path.'
+    expected_output:
+      - 'Before-and-after full advisory inventory'
+      - 'Exact resolved dependency and peer graph'
+      - 'Direct and transitive change rationale'
+      - 'Full verification results'
+      - 'Any residual advisory with path, reachability, exposure, fix availability, owner, and beta disposition'
+    allowed_files:
+      - package.json
+      - package-lock.json
+    verify:
+      - git diff --check
+      - npm ci
+      - npm ls @cloudflare/vitest-pool-workers @cloudflare/workers-types wrangler miniflare esbuild hono
+      - npm audit --json
+      - npm run typecheck
+      - make check
+      - npm run test
+      - npm run test:e2e
+      - npm run deploy:check:production
+    stop_if:
+      - 'Resolution requires --force, --legacy-peer-deps, an override, a downgrade, or another direct major-version upgrade.'
+      - 'Any file outside package.json and package-lock.json would need to change.'
+      - 'Hono 4.13.2 would need to be reverted or changed to complete the boundary.'
+      - 'A remaining advisory still traverses Hono, the Cloudflare pool, Wrangler, Miniflare, workers-types, or direct esbuild after compatible remediation.'
+      - 'Any typecheck, Worker/D1 test, browser test, or production deployment dry-run failure repeats after one bounded package-only correction.'
+      - 'The lockfile contains unexplained unrelated direct-dependency churn.'
+    receipt:
+      result: done
+      task_id: T008
+      board_path: docs/goals/bugdrop-board-beta-security-hardening/state.yaml
+      changed_files:
+        - package.json
+        - package-lock.json
+      commands:
+        - cmd: 'npm install --save-dev "@cloudflare/vitest-pool-workers@^0.21.3" "@cloudflare/workers-types@^5.20260814.1" "wrangler@^4.123.0" "esbuild@^0.28.2"'
+          status: pass
+        - cmd: npm audit fix --package-lock-only
+          status: pass
+        - cmd: git diff --check
+          status: pass
+        - cmd: npm ci
+          status: pass
+        - cmd: npm ls @cloudflare/vitest-pool-workers @cloudflare/workers-types wrangler miniflare esbuild hono
+          status: pass
+        - cmd: npm audit --json
+          status: pass
+        - cmd: npm run typecheck
+          status: pass
+        - cmd: make check
+          status: pass
+        - cmd: npm run test
+          status: pass
+        - cmd: npm run test:e2e
+          status: pass
+        - cmd: npm run deploy:check:production
+          status: pass
+      summary: 'Preserved Hono 4.13.2 and resolved pool 0.21.3, workers-types 5.20260814.1, Wrangler 4.123.0, Miniflare 5.20260811.1-alpha, and direct esbuild 0.28.2. Audit fell from the pre-upgrade baseline of 12 advisories to zero. Compatible lock-only fixes updated brace-expansion through ESLint/typescript-eslint, fast-uri and js-yaml through commitlint/ESLint, and nanoid/postcss through Vitest/Vite. No unrelated direct dependency resolution changed. Type, repository, Worker/D1, browser, and production dry-run gates passed.'
+      remaining_blockers: []
+      verification_attempts: 1
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: blocked
+    reasoning_hint: medium
+    objective: 'Run and, only where concretely missing, strengthen the closed-beta security proof for auth, CORS, throttling, widget delivery, and two-viewer behavior.'
+    inputs:
+      - 'T008 dependency remediation receipt'
+      - 'AGENTS.md risk-scaled evidence matrix'
+      - 'Existing unit and Playwright security coverage'
+    constraints:
+      - 'Start by running existing proof; add tests only for a concrete unproven failure mode.'
+      - 'Do not change production code in this task. Escalate a discovered product bug into a separate bounded Worker task.'
+      - 'Do not contact production services, expose secrets, deploy, or mutate remote data.'
+    expected_output:
+      - 'Exact full-suite results'
+      - 'Adversarial cases exercised and their outcomes'
+      - 'Any new narrow tests and the failure mode each proves'
+      - 'Remaining proof gaps or discovered implementation blockers'
+    allowed_files:
+      - 'test'
+      - 'e2e'
+      - 'vitest.config.ts'
+      - 'vitest.node.config.ts'
+      - 'playwright.config.ts'
+    verify:
+      - 'make check'
+      - 'npm run test'
+      - 'npm run test:e2e'
+      - 'npm run deploy:check:production'
+      - 'Focused negative tests for missing, expired, malformed, forged, and wrong-scope tokens'
+      - 'Focused CORS tests for allowed and disallowed origins'
+    stop_if:
+      - 'A discovered issue requires production-code changes.'
+      - 'Verification requires real secrets, credentials, production mutation, or exposing private user data.'
+      - 'A verifier fails twice without a bounded test-only correction.'
+    receipt:
+      result: blocked
+      task_id: T004
+      board_path: docs/goals/bugdrop-board-beta-security-hardening/state.yaml
+      changed_files: []
+      commands:
+        - cmd: make check
+          status: pass
+        - cmd: npm run test
+          status: pass
+        - cmd: npm run test:e2e
+          status: pass
+        - cmd: npm run deploy:check:production
+          status: pass
+        - cmd: >-
+            npx vitest run test/board-token.test.ts test/hosted-token-verifier.test.ts test/routes.test.ts --testNamePattern='rejects missing tokens|rejects malformed tokens|rejects expired tokens|rejects tampering|rejects wrong board scope|fails closed on expired or excessive TTL tokens|fails closed on malformed tokens and unsupported algorithms|fails closed on wrong hosted claims|rejects item creation without a bearer token|rejects item creation with a token scoped to another board|rejects wrong-scope event polling without exposing another board event log|rejects wrong-scope board reads and upvotes'
+          status: pass
+        - cmd: >-
+            npx vitest run test/hosted-beta-security-gate.test.ts test/routes.test.ts --testNamePattern='allows only provisioned hosted origins for CORS|uses hosted app origins for board route CORS when hosted config exists'
+          status: pass
+        - cmd: >-
+            npx vitest run test/request-throttling.test.ts test/hosted-beta-security-gate.test.ts --testNamePattern='request throttling|rate limits hosted reads and event polling with retry metadata'
+          status: pass
+        - cmd: >-
+            npx playwright test e2e/board-widget.spec.ts --grep='embedded board creates, upvotes, and syncs through polling'
+          status: pass
+        - cmd: >-
+            npx vitest run test/hosted-beta-security-gate.test.ts --testNamePattern='fails closed for hosted token TTL, issuer, audience, key, tenant, app, and board drift'
+          status: pass
+        - cmd: git diff --check
+          status: pass
+      summary: 'Existing coverage proved every requested case, so no test changes were warranted. The full unit suite passed 108 tests; Playwright passed 12 tests; repository checks and production deployment dry-run passed. Focused proof rejected missing, expired, malformed, tampered/forged, wrong-key, and wrong-scope tokens; allowed only provisioned CORS origins; enforced read, polling, create, and upvote throttles; and demonstrated Worker-hosted widget delivery plus two-viewer polling and viewer-specific upvote state. No production services or secrets were used.'
+      blocked_reason: 'The task was verification-only and correctly produced no file changes, but GoalBuddy Worker receipts require at least one changed file. Preserve the successful command evidence and reclassify the proof through a read-only Scout task instead of inventing a change.'
+      remaining_blockers: []
+      verification_attempts: 1
+      stopped_because: 'GoalBuddy Worker receipt contract requires a changed file for done status.'
+  - id: T009
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: low
+    objective: 'Independently confirm the existing closed-beta security proof for auth, CORS, throttling, widget delivery, and two-viewer behavior without changing files.'
+    inputs:
+      - 'T008 dependency remediation receipt'
+      - 'T004 successful verification command evidence'
+      - 'AGENTS.md risk-scaled evidence matrix'
+      - 'Existing unit and Playwright security coverage'
+    constraints:
+      - 'Read-only.'
+      - 'Do not contact production services, expose secrets, deploy, or mutate remote data.'
+      - 'Name exact tests and commands that prove each required adversarial case.'
+    expected_output:
+      - 'Evidence map for missing, expired, malformed, forged, wrong-key, and wrong-scope tokens'
+      - 'Allowed and disallowed CORS evidence'
+      - 'Throttling evidence'
+      - 'Widget delivery and two-viewer polling/upvote evidence'
+      - 'Remaining security proof gaps or none'
+    receipt:
+      result: done
+      task_id: T009
+      board_path: docs/goals/bugdrop-board-beta-security-hardening/state.yaml
+      summary: 'Independent local proof confirms all requested auth, CORS, throttling, and two-viewer behaviors. Six focused Vitest files passed 56 tests; the focused two-viewer Playwright workflow passed. Worker asset configuration and the mocked deployment smoke cover /board.js packaging and validation, but the normal local browser test loads /board.js from the dummy host, not the Worker. A real Worker-hosted /board.js fetch remains operator/deployment proof rather than a current local runtime assertion.'
+      evidence:
+        - requirement: 'Missing and malformed tokens'
+          proof: 'test/board-token.test.ts tests `rejects missing tokens` and `rejects malformed tokens`; test/routes.test.ts test `rejects item creation without a bearer token` verifies HTTP 401 and no GitHub call.'
+        - requirement: 'Expired tokens'
+          proof: 'test/board-token.test.ts test `rejects expired tokens`; test/hosted-token-verifier.test.ts test `fails closed on expired or excessive TTL tokens`.'
+        - requirement: 'Forged or tampered tokens'
+          proof: 'test/board-token.test.ts tests `rejects tampering` and `rejects tokens signed with another secret`; both require signature rejection.'
+        - requirement: 'Wrong key'
+          proof: 'test/hosted-beta-security-gate.test.ts test `fails closed for hosted token TTL, issuer, audience, key, tenant, app, and board drift` signs the key case with an old private key and expects HTTP 401; test/hosted-token-verifier.test.ts also fails closed when JWKS lacks the selected kid.'
+        - requirement: 'Wrong scope'
+          proof: 'test/board-token.test.ts test `rejects wrong board scope`; test/routes.test.ts tests `rejects item creation with a token scoped to another board`, `rejects wrong-scope event polling without exposing another board event log`, and `rejects wrong-scope board reads and upvotes`, including unchanged counters and no cross-board event leakage.'
+        - requirement: 'Allowed and disallowed CORS'
+          proof: 'test/hosted-beta-security-gate.test.ts test `allows only provisioned hosted origins for CORS` expects the provisioned origin header and no header for the fallback origin; test/routes.test.ts independently verifies hosted route CORS. test/verify-deployed-worker.test.ts rejects missing allow-origin and wildcard exposure to a disallowed origin.'
+        - requirement: Throttling
+          proof: 'test/request-throttling.test.ts covers item creation, upvote toggles, authenticated item reads, event polling, and user/board isolation with HTTP 429 and Retry-After. test/hosted-beta-security-gate.test.ts covers hosted read/poll limits and retry metadata.'
+        - requirement: 'Two-viewer polling and upvote behavior'
+          proof: "e2e/board-widget.spec.ts test `embedded board creates, upvotes, and syncs through polling` uses two browser contexts, proves item polling to viewer B, then proves viewer A's upvote reaches viewer B while viewer-specific aria-pressed state remains false for B."
+        - requirement: 'Widget delivery configuration'
+          proof: 'wrangler.toml declares public as the Worker assets directory with ASSETS binding; scripts/verify-deployed-worker.js requests /board.js and requires JavaScript content type; test/verify-deployed-worker.test.ts exercises that verifier with mocked HTTP.'
+        - command: 'npx vitest run test/board-token.test.ts test/hosted-token-verifier.test.ts test/routes.test.ts test/hosted-beta-security-gate.test.ts test/request-throttling.test.ts test/verify-deployed-worker.test.ts'
+          result: 'pass: 6 files, 56 tests'
+        - command: "npx playwright test e2e/board-widget.spec.ts --grep='embedded board creates, upvotes, and syncs through polling'"
+          result: 'pass: 1 test'
+      facts:
+        - 'The focused tests use local fixtures, local D1, generated test keys, and mocked fetches; no production service or secret was contacted.'
+        - 'Hosted token drift coverage includes TTL, issuer, audience, signing key, tenant, app, and board claims.'
+        - 'The two-viewer browser test proves viewer-specific upvote state as well as propagation through polling.'
+        - 'No new tests are needed for the enumerated token, CORS, throttling, or two-viewer failure modes.'
+      contradictions:
+        - "T004's statement that the existing browser proof demonstrated Worker-hosted widget delivery is broader than the evidence: e2e/fixtures/host-app.ts defaults scriptSrc to /board.js and serves that bundle from the dummy host. Worker-hosted delivery is presently supported by Wrangler asset configuration, deployment dry-run history, and a mocked smoke-verifier test, not by the focused local browser runtime."
+      ambiguity_requiring_judge:
+        - "Decide whether Worker asset configuration plus deployment dry-run and mocked smoke verification satisfy the board's global widget-delivery proof, or whether final beta acceptance must retain an operator-pending smoke that fetches /board.js from the actual deployed Worker."
+      commands:
+        - git rev-parse --show-toplevel
+        - 'targeted rg/sed/nl inspection of T009, T004, auth, CORS, throttling, widget, Wrangler, and Playwright sources'
+        - 'npx vitest run test/board-token.test.ts test/hosted-token-verifier.test.ts test/routes.test.ts test/hosted-beta-security-gate.test.ts test/request-throttling.test.ts test/verify-deployed-worker.test.ts'
+        - "npx playwright test e2e/board-widget.spec.ts --grep='embedded board creates, upvotes, and syncs through polling'"
+        - git status --short
+      note_needed: false
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Reconcile active beta-readiness and security documentation with the dependency and adversarial-test evidence.'
+    inputs:
+      - 'T008 dependency receipt'
+      - 'T009 security proof receipt'
+      - 'Current readiness, risks, setup, and final-acceptance documents'
+    constraints:
+      - 'Do not turn unresolved risk into a pass or conditional go.'
+      - 'Separate globally proven behavior from operator-pending per-install proof.'
+      - 'State what Advanced Security does and does not prove based on the T001 decision.'
+      - 'Do not add npm-package installation or publication guidance.'
+    expected_output:
+      - 'Consistent readiness decision'
+      - 'Updated risk and evidence references'
+      - 'Explicit Advanced Security role and residual limitations'
+      - 'Documentation verification results'
+    allowed_files:
+      - 'README.md'
+      - 'docs/closed-beta-readiness.md'
+      - 'docs/closed-beta-final-acceptance.md'
+      - 'docs/closed-beta-risks.md'
+      - 'docs/closed-beta-runbook.md'
+      - 'docs/closed-beta-setup.md'
+      - 'docs/closed-beta-ops-runbook.md'
+      - 'docs/hosted-security-and-setup.md'
+    verify:
+      - 'npm run format:check'
+      - 'git diff --check'
+      - "rg -n 'security|audit|advis|Advanced Security|conditional go|no-go|blocker' README.md docs/closed-beta-*.md docs/hosted-security-and-setup.md"
+    stop_if:
+      - 'The available receipts do not support a truthful readiness decision.'
+      - 'A documentation claim requires unperformed production or per-install proof.'
+      - 'Resolving inconsistency requires changing product behavior.'
+    receipt:
+      result: done
+      task_id: T005
+      board_path: docs/goals/bugdrop-board-beta-security-hardening/state.yaml
+      changed_files:
+        - README.md
+        - docs/closed-beta-readiness.md
+        - docs/closed-beta-final-acceptance.md
+        - docs/closed-beta-risks.md
+        - docs/closed-beta-runbook.md
+        - docs/closed-beta-setup.md
+        - docs/closed-beta-ops-runbook.md
+        - docs/hosted-security-and-setup.md
+      commands:
+        - cmd: npm run format:check
+          status: pass
+        - cmd: git diff --check
+          status: pass
+        - cmd: "rg -n 'security|audit|advis|Advanced Security|conditional go|no-go|blocker' README.md docs/closed-beta-*.md docs/hosted-security-and-setup.md"
+          status: pass
+      summary: 'Reconciled closed-beta documentation with T008’s zero-vulnerability audit and T009’s adversarial evidence. Restored runbook item 11 as a distinct numbered item after the nested explanatory paragraph and normalized setup command-fence indentation. Inspected all T005 diffs for similar malformed Markdown. Documentation consistently separates local proof from operator-pending deployed Worker, D1, GitHub, CORS, and two-viewer evidence; keeps Worker-hosted /board.js as the sole supported path; and describes Advanced Security as recommended additive detection not enabled by this goal.'
+      remaining_blockers: []
+      verification_attempts: 1
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Audit the complete four-step outcome against the Goal Oracle and decide closed-beta security readiness within scope.'
+    inputs:
+      - 'All completed task receipts'
+      - 'Current git history and dirty diff'
+      - 'Final npm audit and verification results'
+      - 'Updated readiness and risk documentation'
+    constraints:
+      - 'Read-only.'
+      - 'Reject completion if required Worker work remains queued, active, or lacks current proof.'
+      - 'Reject unsupported security, Advanced Security, or beta-readiness claims.'
+      - 'Distinguish local repo readiness from per-install operator proof.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'Oracle evidence map'
+      - 'Remaining beta blockers, accepted risks, and operator-owned proof'
+      - 'Exact next task if not complete'
+    receipt:
+      result: done
+      task_id: T999
+      board_path: docs/goals/bugdrop-board-beta-security-hardening/state.yaml
+      decision: complete
+      full_outcome_complete: true
+      rationale: 'The four-step owner outcome is proven. Commit ac97dcc isolates and preserves npm-distribution removal. The current dependency graph contains the approved Hono and coupled Cloudflare upgrades, and the full audit reports zero vulnerabilities. Repository, unit, browser, deployment-dry-run, token, CORS, throttling, and two-viewer gates pass. Active readiness documents accurately distinguish globally proven local behavior from mandatory per-install Worker/D1/GitHub/CORS/dogfood proof. Advanced Security is recommended as additive detection and explicitly not claimed as remotely enabled. Per-install onboarding remains operator-owned and does not block completion of this local hardening goal.'
+      evidence:
+        - 'Commit ac97dcc41a5b8991b7c65762193be871cb28d213 is `chore: remove npm distribution`; its 22-path diff matches the validated npm-removal boundary and excludes the untracked GoalBuddy board.'
+        - 'Current `git diff --check` passed; current dirty changes are limited to package remediation, eight readiness/security documents, and untracked GoalBuddy control files.'
+        - 'Current `npm audit --json` exited 0 with 0 low, moderate, high, or critical vulnerabilities across 525 dependencies.'
+        - 'Current `npm ls @cloudflare/vitest-pool-workers @cloudflare/workers-types wrangler miniflare esbuild hono` passed and resolved Hono 4.13.2, pool 0.21.3, workers-types 5.20260814.1, Wrangler 4.123.0, Miniflare 5.20260811.1-alpha, and direct esbuild 0.28.2.'
+        - 'T008 recorded an exact successful `npm ci` against the current package remediation; this read-only Judge did not reinstall, but current `npm ci --dry-run --ignore-scripts` passed and the installed graph matched the lockfile.'
+        - 'Current `make check` passed lint, formatting, typecheck, knip, audit gate, and the Node-24 Actions guard.'
+        - 'Current `npm run test` passed 14 files and 108 tests; `npm run test:e2e` passed all 12 browser tests.'
+        - 'Current `npm run deploy:check:production` built the Worker-hosted widget and completed Wrangler 4.123.0 production dry-run with D1, ASSETS, exact-origin, token, and throttle bindings.'
+        - 'Current focused security run passed 6 Vitest files and 56 tests covering missing, expired, malformed, forged/wrong-key, and wrong-scope tokens, allowed/disallowed CORS, throttling, and mocked deployed-worker checks.'
+        - 'Current focused two-viewer Playwright workflow passed, proving create, polling, upvote propagation, and viewer-specific vote state in separate browser contexts.'
+        - 'README.md and the active closed-beta readiness, acceptance, risks, runbook, setup, ops, and hosted-security documents consistently require a live target Worker `/board.js` fetch, remote D1/GitHub/configuration proof, allowed/disallowed-origin smoke, and two-viewer dogfood before invitation.'
+        - 'The same documents state that GitHub Advanced Security was not enabled by this goal and cannot substitute for auth, CORS, D1 isolation, deployment, asset-delivery, or two-viewer evidence.'
+      blocked_tasks: []
+      missing_evidence: []
+      required_board_updates:
+        - 'Record this receipt on T999, mark T999 done, set the goal status to complete, and clear active_task.'
+        - 'Preserve per-install Worker/D1/GitHub/CORS/widget/dogfood proof as operator-owned acceptance work; do not represent it as completed by this local goal.'
+        - 'Keep remote GitHub Advanced Security enablement outside this completed goal unless separately authorized by a repository administrator.'
+
+checks:
+  dirty_fingerprint: 'sha256:8beaf94d9dc4e15cefa171b5ff0764b0a591f31502436c31889a1c3c8270de4b'
+  last_verification:
+    result: pass
+    task: T999
+    commands:
+      - git diff --check
+      - npm ci --dry-run --ignore-scripts
+      - npm ls @cloudflare/vitest-pool-workers @cloudflare/workers-types wrangler miniflare esbuild hono
+      - npm audit --json
+      - make check
+      - npm run test
+      - npm run test:e2e
+      - npm run deploy:check:production
+      - focused negative token, CORS, throttling, and two-viewer tests

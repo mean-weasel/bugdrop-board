@@ -250,6 +250,23 @@ Production readiness checklist:
 - `npm run deploy:check:production`, `npm run validate`, `npm run test:e2e`, and `make check` pass
   before deploy.
 
+Repository security evidence is current as of the closed-beta hardening run: the full
+`npm audit --json` inventory reported zero vulnerabilities, and focused local tests rejected
+missing, expired, malformed, forged, wrong-key, and wrong-scope tokens; exercised allowed and
+disallowed CORS origins; covered request throttling; and passed the two-viewer polling/upvote flow.
+Those tests use local fixtures, local D1, generated keys, mocked fetches, and a dummy host. In
+particular, the local browser fixture serves its own `/board.js`. They do not prove a target
+installation's deployed Worker, live D1 binding, GitHub credentials, origins, or host token endpoint.
+For every installation, fetch `/board.js` from the actual Worker origin, run deployed smoke, and
+complete the two-viewer dogfood flow before inviting users.
+
+GitHub Advanced Security is recommended as additive detection: CodeQL default setup for
+JavaScript/TypeScript, dependency review, Dependabot alerts and security updates, secret scanning,
+and push protection. It was not enabled or configured by the local hardening work because changing
+repository settings requires repository-admin authority. Advanced Security does not prove runtime
+authorization, CORS, D1 isolation, deployment correctness, Worker-hosted asset delivery, or the
+two-viewer workflow.
+
 For an installer-facing closed-beta sequence, use the
 [Closed Beta Setup Checklist](docs/closed-beta-setup.md). Before inviting a beta user, walk through
 the [Closed Beta Runbook](docs/closed-beta-runbook.md), complete the
@@ -932,10 +949,10 @@ make check
 
 ## Current Handoff Notes
 
-This repository is still an early vertical slice. The conveyor PR stack has landed on `main`, and
-the production Worker is available at `https://board.bugdrop.dev`. The customization-capable Worker
-is dogfooded in production. The Worker-hosted `/board.js` asset is the only supported widget
-distribution path.
+This repository is still an early vertical slice. Historical dogfood records cover
+`https://board.bugdrop.dev`, but they do not replace a current per-install smoke. The Worker-hosted
+`/board.js` asset is the only supported widget distribution path; each target install must prove a
+real fetch from its deployed Worker before invitation.
 
 Remaining release actions are operational: keep running the local release rehearsal before
 significant changes, run the GitHub workflow against staging/test credentials when changing deploy

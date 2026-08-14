@@ -14,6 +14,8 @@ These block inviting a beta user until fixed or explicitly reclassified:
 - GitHub Issue creation fails for valid item creation.
 - Two signed viewers cannot complete the item create, polling, and upvote dogfood flow.
 - Secret values appear in committed files, screenshots, receipts, browser code, or logs.
+- A current full dependency audit reports an unresolved vulnerability without an explicit owner and
+  beta disposition. The verified hardening baseline reported zero vulnerabilities.
 - The beta user requires comments, downvotes, realtime updates, GitHub Projects, billing, hosted
   control plane, or status workflow before trialing the board.
 
@@ -35,6 +37,10 @@ These are acceptable for closed beta when communicated before invite:
 - Manual support, rollback, and backup/export boundaries are documented in
   [Closed Beta Ops Runbook](closed-beta-ops-runbook.md).
 - CORS is browser containment only; bearer tokens remain the Worker authorization boundary.
+- Local browser evidence uses the dummy host's `/board.js`; a real fetch from the target deployed
+  Worker remains operator-owned proof for every install.
+- GitHub Advanced Security is recommended for additive CodeQL, dependency, and secret signals, but
+  it is not configured by the local hardening goal and is not runtime or deployment proof.
 
 ## Deferred Product Work
 
@@ -60,6 +66,8 @@ These are not repo code changes, but they must be complete for a specific beta i
 - Provision the board row for the target mirror repo.
 - Deploy or promote the Worker through the operator's chosen path.
 - Run deployed smoke with allowed and disallowed origins.
+- Confirm the embed fetches `/board.js` from the actual deployed Worker. Worker hosting is the sole
+  supported widget distribution path.
 - Complete the dogfood script and record evidence.
 - Review the ops runbook and keep support evidence free of secrets, tokens, cookies, and secret
   screen screenshots.

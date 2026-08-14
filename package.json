@@ -45,18 +45,18 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "hono": "^4.12.19"
+    "hono": "^4.13.2"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.16.13",
-    "@cloudflare/workers-types": "^4.20241127.0",
+    "@cloudflare/vitest-pool-workers": "^0.21.3",
+    "@cloudflare/workers-types": "^5.20260814.1",
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^20.5.0",
     "@eslint/js": "^9.39.2",
     "@playwright/test": "^1.60.0",
     "@types/node": "^22.10.2",
     "@vitest/coverage-v8": "^4.1.6",
-    "esbuild": "^0.28.0",
+    "esbuild": "^0.28.2",
     "eslint": "^9.39.2",
     "globals": "^16.5.0",
     "husky": "^9.1.7",
@@ -67,7 +67,7 @@
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.50.0",
     "vitest": "^4.1.6",
-    "wrangler": "^4.98.0"
+    "wrangler": "^4.123.0"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
