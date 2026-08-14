@@ -14,6 +14,8 @@ beta readiness.
 - Add a pull-request dependency review workflow pinned to immutable action commits.
 - Fail dependency review for moderate-or-higher vulnerabilities in runtime, development, or unknown
   scopes; keep license policy out of this security-only gate.
+- Remediate the initial CodeQL findings by giving CI an explicit read-only `GITHUB_TOKEN`
+  permission boundary.
 
 ## Verification
 
