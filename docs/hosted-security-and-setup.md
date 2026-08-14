@@ -123,7 +123,7 @@ npm run provision:hosted-board -- \
 
 The dry run prints SQL plus a redacted handoff containing the embed snippet and setup checklist. To
 apply it, remove `--dry-run` and choose the target D1 mode, for example `--remote --env production`.
-The command does not create GitHub Apps, rotate credentials, deploy Workers, or publish packages.
+The command does not create GitHub Apps, rotate credentials, or deploy Workers.
 
 For a migration or dogfood install that intentionally uses BugDrop Board's legacy HMAC token shape,
 pass `--verifier-type hmac_legacy` and omit `--jwks-url`. That mode records `BOARD_TOKEN_SECRET` as

@@ -24,11 +24,11 @@ Closed beta is ready for a specific app only when a maintainer can show:
 2. Use the supported closed-beta toolchain: Node 22, npm 10, and the repo's Wrangler 4.x dev
    dependency through `npx wrangler`.
 3. Complete [Closed Beta Setup Checklist](closed-beta-setup.md).
-4. Confirm package/install proof:
+4. Confirm the widget builds and the production Worker bundle is valid:
 
    ```bash
-   npm view @mean-weasel/bugdrop-board version dist-tags --json
-   npm run install:smoke -- --version latest --retries 3 --retry-delay-ms 5000
+   npm run build:widget
+   npm run deploy:check:production
    ```
 
 5. Confirm local gates before touching any deployment credentials:
@@ -72,7 +72,7 @@ Record a dated handoff note for each beta install. Use this shape:
 - Worker URL:
 - Board id:
 - Mirror repo:
-- Package version/dist-tag:
+- Worker commit or deployment identifier:
 - Worker environment:
 - D1 database name/id location, without secret values:
 - Doctor command summary:

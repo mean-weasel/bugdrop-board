@@ -19,7 +19,7 @@ invite a beta user, or perform production data changes by itself.
 | Setup safety       | Pass   | [Closed Beta Setup Checklist](closed-beta-setup.md), `docs/goals/bugdrop-board-closed-beta-setup-safety/`                                                                                                |
 | Self-host doctor   | Pass   | `npm run doctor:selfhost`, `docs/goals/bugdrop-board-selfhost-doctor/`                                                                                                                                   |
 | Security controls  | Pass   | `docs/goals/bugdrop-board-closed-beta-security-abuse/`                                                                                                                                                   |
-| Package install    | Pass   | [v0.2.0 Consumer Install Review](release-readiness-results/2026-06-06-v0.2.0-consumer-install-review.md)                                                                                                 |
+| Widget delivery    | Pass   | Worker build, deploy dry-run, and `/board.js` deployed smoke                                                                                                                                             |
 | Customization      | Pass   | [v0.2.0 Customization Release Prep](release-readiness-results/2026-06-06-v0.2.0-customization-release.md), [Full UX Customization](release-readiness-results/2026-06-06-full-ux-customization.md)        |
 | Production dogfood | Pass   | [Chrome Upvote Issue 9](production-dogfood-results/2026-06-06-chrome-upvote-issue-9.md), [Production Dogfood](production-dogfood.md)                                                                     |
 | Handoff docs       | Pass   | [Closed Beta Runbook](closed-beta-runbook.md), [Closed Beta Dogfood Script](closed-beta-dogfood-script.md), [Closed Beta Readiness](closed-beta-readiness.md), [Closed Beta Risks](closed-beta-risks.md) |
@@ -66,7 +66,7 @@ or docs changes. Acceptable examples:
 - final target-app screenshots or dogfood notes are pending;
 - the beta user has accepted a documented limitation.
 
-Do not convert code, security, package, or documentation uncertainty into conditional go. Those are
+Do not convert code, security, deployment, or documentation uncertainty into conditional go. Those are
 no-go until fixed or explicitly reclassified by a maintainer.
 
 ## No-Go Criteria
@@ -108,7 +108,7 @@ Before the invite:
 - Worker URL:
 - Board id:
 - Mirror repo:
-- Package version or Worker commit:
+- Worker commit or deployment identifier:
 - Setup checklist complete: yes/no
 - Doctor result:
 - Deploy smoke result:

@@ -287,23 +287,10 @@ For an inline board inside existing page content, provide a mount target and poi
 ></script>
 ```
 
-You can serve `board.js` from your deployed Worker, or install the npm package and copy or serve the
-published bundle from one of its equivalent entrypoints:
-
-- `@mean-weasel/bugdrop-board`
-- `@mean-weasel/bugdrop-board/board`
-- `@mean-weasel/bugdrop-board/board.js`
-
-For npm-based installs, the browser script file is installed at:
-
-```text
-node_modules/@mean-weasel/bugdrop-board/public/board.js
-```
-
-Copy that file into your host app's static assets or serve it from your own asset pipeline, then
-point the script `src` at the URL where your app serves the copied bundle. The npm package contains
-the embedded widget bundle only; it does not provision D1, deploy the Worker, or replace the
-self-host Worker setup above.
+The deployed Worker is the supported widget distribution path. It builds and serves `board.js`
+alongside the board API, so the widget and backend are promoted and rolled back together. npm is
+used only for this repository's development dependencies and commands; BugDrop Board is not
+distributed as an npm package.
 
 Attributes:
 
@@ -876,114 +863,6 @@ authorization boundary for Worker API access.
 Rollback is operator-controlled: rerun the workflow from the previous known-good commit or restore
 the previous Worker secrets with `wrangler secret put`, then run the deployed smoke checks again.
 
-## Embed Package Publishing
-
-The npm package publishes the versioned embed script and source needed to inspect or rebuild it. It
-does not deploy a Worker, create a CDN release, provision D1, or replace the self-host deployment
-flow above.
-
-The package entrypoints are:
-
-- `@mean-weasel/bugdrop-board`
-- `@mean-weasel/bugdrop-board/board`
-- `@mean-weasel/bugdrop-board/board.js`
-
-All entrypoints resolve to `public/board.js`. The npm package includes:
-
-- `public/board.js`
-- `scripts/verify-deployed-worker.js`
-- `scripts/verify-clean-room-install.js`
-- `scripts/verify-clean-room-install-core.js`
-- `scripts/verify-package-install.js`
-- `src/widget/`
-- `README.md`
-- package metadata
-
-Before publishing, bump `package.json` in a normal PR. The widget build reads that package version
-by default and embeds it as the runtime `__BUGDROP_BOARD_VERSION__` value. For one-off local builds,
-override it with:
-
-```bash
-VERSION=0.1.0 npm run build:widget
-```
-
-Verify the package contents locally:
-
-```bash
-npm run pack:check
-make pack-check
-```
-
-`npm run pack:check` runs `npm pack --dry-run`. The `prepack` lifecycle rebuilds
-`public/board.js` first, so the tarball preview proves the package would contain the current embed
-bundle for the package version.
-
-After a publish, verify the registry artifact by installing it into a temporary project:
-
-```bash
-npm run release:smoke
-npm run release:smoke -- --version 0.2.0
-npm run install:smoke -- --version 0.2.0
-make release-smoke
-```
-
-The smoke command resolves all public package entrypoints, verifies they point at the installed
-`public/board.js` bundle, and checks the bundle has the expected widget and fetch code. The package
-workflow runs this smoke automatically after a non-dry-run publish with a longer retry window to
-allow npm registry propagation.
-
-`npm run install:smoke` goes one step further: it installs the published package into a temporary
-project, serves only the installed `public/board.js`, loads a minimal host page in Chromium with the
-documented script attributes, mocks the token/items API responses, and verifies the board mounts
-inside `data-mount-selector`.
-
-The `Install Smoke` GitHub Actions workflow exposes the same clean-room check as a manual,
-no-secret proof. It defaults to the `latest` dist-tag, currently `0.2.0`, and can also be dispatched
-with an explicit package version. Use it when you want GitHub Actions to verify the installable
-artifact without running npm publish, Cloudflare deploy, or any production credentials. To verify
-the workflow contract locally, run:
-
-```bash
-npm run install:smoke:workflow
-```
-
-To verify the package from a completely separate project, run:
-
-```bash
-tmpdir=$(mktemp -d)
-cd "$tmpdir"
-npm init -y
-npm install @mean-weasel/bugdrop-board@0.2.0
-test -f node_modules/@mean-weasel/bugdrop-board/public/board.js
-node -e "require.resolve('@mean-weasel/bugdrop-board/board.js'); require.resolve('@mean-weasel/bugdrop-board/board')"
-```
-
-This proves the published package can be installed without this repository checkout and that the
-documented static bundle path exists.
-
-The `Package Widget` GitHub Actions workflow is manually dispatched and dry-runs by default:
-
-1. Select **Package Widget**.
-2. Leave **Build and verify the npm package without publishing** enabled for a package preview.
-3. Choose `latest` or `next` as the npm dist-tag.
-4. To publish, rerun with dry-run disabled after the version PR has merged.
-
-Publishing requires a repository secret named `NPM_TOKEN`. Create a granular npm token with
-read/write access to the `@mean-weasel` package scope and no organization-management access. The
-workflow runs:
-
-```bash
-npm run validate
-npm run pack:check
-npm publish --access public --tag "$NPM_TAG"
-npm run release:smoke -- --retries 30 --retry-delay-ms 10000
-```
-
-The current published package is `@mean-weasel/bugdrop-board@0.2.0`, tagged `latest`. Future
-publishing still requires npm ownership or publish rights for the configured package scope plus
-explicit maintainer approval. When in doubt, keep the workflow in dry-run mode and inspect the
-package file list before publishing.
-
 ## Release Rehearsal
 
 Before configuring production credentials, run the local release rehearsal:
@@ -997,7 +876,6 @@ The rehearsal uses only local/test configuration and runs:
 
 ```bash
 npm run provision:board -- --repo mean-weasel/release-rehearsal --name "Release Rehearsal" --local
-npm run pack:check
 npm run deploy:check
 npm run test:e2e
 npm run validate
@@ -1006,20 +884,18 @@ npm run audit
 npm run check:actions-node24
 ```
 
-This proves the local D1 provisioning path, package dry-run, top-level Worker deploy dry-run,
-embedded widget smoke, unit/type/lint checks, knip, critical audit, and GitHub Actions version guard
-without requiring Cloudflare or npm production credentials. For closed-beta production config, also
+This proves the local D1 provisioning path, top-level Worker deploy dry-run, embedded widget smoke,
+unit/type/lint checks, knip, critical audit, and GitHub Actions version guard without requiring
+Cloudflare production credentials. For closed-beta production config, also
 run `npm run deploy:check:production` after the production D1 binding and Worker vars are set.
 
 After the local rehearsal passes, configure credentials in GitHub:
 
 - GitHub Environment secrets for `Deploy Worker`: `CLOUDFLARE_ACCOUNT_ID`,
   `CLOUDFLARE_API_TOKEN`, `BOARD_TOKEN_SECRET`, and `ISSUE_ACCESS_TOKEN`.
-- Repository secret for `Package Widget`: `NPM_TOKEN`.
 
-Then run the GitHub workflows in dry-run or test mode before production:
+Then run the GitHub deployment workflow in a test environment before production:
 
-- Run **Package Widget** with dry-run enabled and inspect the package file list.
 - Run **Deploy Worker** against a staging or test Cloudflare environment, with remote migrations and
   a disposable board repo when possible.
 - Embed the staging Worker in a signed-in host-app page and confirm item creation, GitHub Issue
@@ -1030,8 +906,8 @@ For the full staging sequence, use [Staging Dogfood](docs/staging-dogfood.md). F
 For closed-beta handoff, use [Closed Beta Runbook](docs/closed-beta-runbook.md) and record proof
 with [Closed Beta Dogfood Script](docs/closed-beta-dogfood-script.md).
 
-Do not publish to npm or deploy to production until the version, npm package ownership, Cloudflare
-account, GitHub token scope, host app origins, and token issuer/audience values are final.
+Do not deploy to production until the Cloudflare account, GitHub token scope, host app origins, and
+token issuer/audience values are final.
 
 ## Verification
 
@@ -1041,7 +917,6 @@ Run the standard checks before handing off changes:
 npm run release:rehearsal
 npm run provision:board -- --repo mean-weasel/demo --name "Demo Board" --local
 npm run build:widget
-npm run pack:check
 npm run deploy:check:production
 npm run deploy:smoke -- \
   --url https://board.bugdrop.dev \
@@ -1057,20 +932,15 @@ make check
 
 ## Current Handoff Notes
 
-This repository is still an early vertical slice. The conveyor PR stack has landed on `main`,
-`@mean-weasel/bugdrop-board@0.2.0` is the currently published npm `latest`, and the production Worker
-is available at `https://board.bugdrop.dev`.
-
-The customization-capable Worker is dogfooded in production, and `0.2.0` has been published and
-install-smoked. Do not run a future non-dry-run `Package Widget` workflow until a version PR has
-merged, a main-branch package dry-run passes, and the maintainer explicitly approves the specific
-package version and dist-tag.
+This repository is still an early vertical slice. The conveyor PR stack has landed on `main`, and
+the production Worker is available at `https://board.bugdrop.dev`. The customization-capable Worker
+is dogfooded in production. The Worker-hosted `/board.js` asset is the only supported widget
+distribution path.
 
 Remaining release actions are operational: keep running the local release rehearsal before
-significant changes, run the GitHub workflows against staging/test credentials when changing deploy
-or package release paths, dogfood the embedded widget in the real signed-token host app at
-`https://bugdrop.dev` against the board Worker at `https://board.bugdrop.dev`, and keep publish
-approval explicit before any future npm publish.
+significant changes, run the GitHub workflow against staging/test credentials when changing deploy
+paths, and dogfood the embedded widget in the real signed-token host app at `https://bugdrop.dev`
+against the board Worker at `https://board.bugdrop.dev`.
 
 Closed-beta handoff artifacts:
 

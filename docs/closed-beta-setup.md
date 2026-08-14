@@ -14,22 +14,20 @@ dogfood-style setup in a new app. It is intentionally limited to setup safety an
   npx wrangler --version
   ```
 
-  Use `npm ci` with the committed lockfile. The npm package is the embeddable widget artifact only;
-  self-hosting still uses this repo's Worker, D1 migrations, provisioning, and deploy path.
+  Use `npm ci` with the committed lockfile. npm manages this repository's development dependencies;
+  the widget itself is built and served by the deployed Worker.
 
-- Confirm the intended package artifact:
+- Confirm the widget and production Worker bundle:
 
   ```bash
-  npm view @mean-weasel/bugdrop-board version dist-tags --json
-  npm run install:smoke -- --version latest --retries 3 --retry-delay-ms 5000
+  npm run build:widget
+  npm run deploy:check:production
   ```
 
 - Run local repo gates before touching deployment credentials:
 
   ```bash
   npm run validate
-  npm run install:smoke:workflow
-  npm run package:workflow:check
   npm run deploy:check:production
   ```
 
@@ -47,7 +45,7 @@ dogfood-style setup in a new app. It is intentionally limited to setup safety an
   ```
 
   The doctor is local by default. It checks setup drift and prints the exact follow-up
-  `deploy:smoke` command without deploying, mutating D1, changing secrets, publishing npm, or
+  `deploy:smoke` command without deploying, mutating D1, changing secrets, or
   creating GitHub Issues. Use `--check-cloudflare-auth` and `--check-github-token` only when the
   maintainer explicitly wants non-mutating account/token reachability checks.
 
@@ -147,7 +145,7 @@ dogfood-style setup in a new app. It is intentionally limited to setup safety an
 
 Record these before calling the beta install ready:
 
-- package version and dist-tag proof;
+- Worker commit or deployment identifier;
 - D1 database name/id location, without secrets;
 - Worker URL and exact allowed host origins;
 - provisioned repo and board id;
@@ -166,6 +164,6 @@ before inviting the beta user.
 
 This checklist does not add or prove hosted control plane, billing, realtime, comments, downvotes,
 GitHub Projects, status workflow, token replay prevention, monitoring, incident response,
-backup/export/restore, npm publishing, Cloudflare deploy automation changes, credential rotation, or
+backup/export/restore, Cloudflare deploy automation changes, credential rotation, or
 abuse controls beyond the closed-beta throttles and token TTL boundary documented here. Those belong
 to later closed-beta conveyor boards.

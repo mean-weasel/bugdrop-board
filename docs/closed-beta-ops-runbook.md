@@ -13,7 +13,7 @@ mutations, or credential changes.
    - board Worker URL;
    - board id;
    - mirror repo;
-   - package version or Worker commit;
+   - Worker commit or deployment identifier;
    - time window and user impact.
 2. Classify the failure:
    - setup or deploy;
@@ -189,7 +189,7 @@ Use this template for a support note:
 - Worker URL:
 - Board id:
 - Mirror repo:
-- Package version or Worker commit:
+- Worker commit or deployment identifier:
 - Impact:
 - Failure class:
 - Doctor result:

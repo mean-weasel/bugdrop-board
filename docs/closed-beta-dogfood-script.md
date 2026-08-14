@@ -17,7 +17,7 @@ Fill these in before starting:
 - Mirror repo:
 - Viewer A identity:
 - Viewer B identity:
-- Package version or Worker commit:
+- Worker commit or deployment identifier:
 
 ## 1. Static Surface
 

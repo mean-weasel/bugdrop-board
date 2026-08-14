@@ -1,8 +1,8 @@
 # Staging Dogfood
 
-This runbook proves BugDrop Board in a real staging deployment before npm publish or production
-deploy. It intentionally avoids hosted control plane, billing, realtime, comments, downvotes,
-GitHub Projects, and new product behavior.
+This runbook proves BugDrop Board in a real staging deployment before production deploy. It
+intentionally avoids hosted control plane, billing, realtime, comments, downvotes, GitHub Projects,
+and new product behavior.
 
 ## Names
 
@@ -24,8 +24,8 @@ Run:
 npm run release:rehearsal
 ```
 
-Expected: local provisioning, package dry-run, deploy dry-run, Playwright E2E, validation, knip,
-critical audit, and Actions guard all pass.
+Expected: local provisioning, deploy dry-run, Playwright E2E, validation, knip, critical audit, and
+Actions guard all pass.
 
 ## Cloudflare Resources
 
@@ -133,9 +133,7 @@ strong length, verifies the Cloudflare token is active and can see the staging D
 verifies the GitHub token can read the dogfood repo Issues API. The deploy workflow remains the
 authoritative proof that the Cloudflare token has all required Worker/D1 write permissions.
 
-`--set-from-env` refuses to store the current broad `gh auth token` as `ISSUE_ACCESS_TOKEN`. Do not
-set `NPM_TOKEN` for staging dogfood; package dry-run does not need it and npm publish is out of
-scope.
+`--set-from-env` refuses to store the current broad `gh auth token` as `ISSUE_ACCESS_TOKEN`.
 
 If you are using zsh, use the zsh prompt form instead of `read -rsp`:
 
@@ -148,16 +146,6 @@ read -rs "GITHUB_ISSUE_ACCESS_TOKEN?GitHub Issues token: "
 echo
 export GITHUB_ISSUE_ACCESS_TOKEN
 ```
-
-## Package Dry-Run
-
-Run the **Package Widget** workflow with:
-
-- `dry_run`: enabled
-- `npm_tag`: `next`
-
-Expected: the package job passes and logs a tarball containing `README.md`, `package.json`,
-`public/board.js`, and `src/widget/`.
 
 ## Deploy Staging Worker
 

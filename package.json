@@ -1,6 +1,6 @@
 {
-  "name": "@mean-weasel/bugdrop-board",
-  "version": "0.2.0",
+  "name": "bugdrop-board",
+  "private": true,
   "description": "Embedded, self-hostable ideas/request board.",
   "type": "module",
   "packageManager": "npm@10.9.8",
@@ -8,23 +8,6 @@
     "node": ">=22.12.0 <23",
     "npm": ">=10 <11"
   },
-  "main": "./public/board.js",
-  "exports": {
-    ".": "./public/board.js",
-    "./board": "./public/board.js",
-    "./board.js": "./public/board.js"
-  },
-  "files": [
-    "public/board.js",
-    "scripts/verify-deployed-worker.js",
-    "scripts/verify-clean-room-install.js",
-    "scripts/verify-clean-room-install-core.js",
-    "scripts/verify-install-smoke-workflow.js",
-    "scripts/verify-package-install.js",
-    "scripts/verify-package-workflow.js",
-    "src/widget/",
-    "README.md"
-  ],
   "scripts": {
     "dev": "wrangler dev --port 8788",
     "build": "tsc",
@@ -36,13 +19,8 @@
     "deploy:check:development": "npm run deploy:check",
     "deploy:check:production": "npm run build:widget && wrangler deploy --dry-run --env production",
     "deploy:smoke": "node scripts/verify-deployed-worker.js",
-    "pack:check": "npm pack --dry-run",
-    "release:smoke": "node scripts/verify-package-install.js",
-    "install:smoke": "node scripts/verify-clean-room-install.js",
-    "install:smoke:workflow": "node scripts/verify-install-smoke-workflow.js",
     "doctor:selfhost": "node scripts/doctor-selfhost.js",
     "deploy:workflow:check": "node scripts/verify-deploy-workflow.js",
-    "package:workflow:check": "node scripts/verify-package-workflow.js",
     "provision:board": "node scripts/provision-board.js",
     "provision:hosted-board": "node scripts/provision-hosted-board.js",
     "dogfood:seed-kanban": "node scripts/seed-dogfood-kanban-statuses.js",
@@ -61,9 +39,9 @@
     "knip": "knip",
     "audit": "npm audit --audit-level=critical",
     "check:actions-node24": "node -e \"const {execSync}=require('node:child_process'); const out=execSync('rg -n \\\\\\\"actions/(checkout|setup-node|cache|upload-artifact)@v4|cloudflare/wrangler-action\\\\\\\" .github/workflows || true',{encoding:'utf8'}); if(out.trim()){ console.error(out); process.exit(1); } console.log('GitHub Actions are Node 24-ready');\"",
-    "validate": "npm run lint && npm run format:check && npm run typecheck && npm run package:workflow:check && npm run deploy:workflow:check && npm run test",
-    "release:rehearsal": "npm run provision:board -- --repo mean-weasel/release-rehearsal --name \"Release Rehearsal\" --local && npm run pack:check && npm run deploy:check && npm run test:e2e && npm run validate && npm run knip && npm run audit && npm run check:actions-node24",
-    "prepack": "npm run build:widget",
+    "validate": "npm run lint && npm run format:check && npm run typecheck && npm run deploy:workflow:check && npm run test",
+    "release:rehearsal": "npm run provision:board -- --repo mean-weasel/release-rehearsal --name \"Release Rehearsal\" --local && npm run deploy:check && npm run test:e2e && npm run validate && npm run knip && npm run audit && npm run check:actions-node24",
+    "prepublishOnly": "node -e \"console.error('BugDrop Board is deployed as a Worker and is not published to npm.'); process.exit(1)\"",
     "prepare": "husky"
   },
   "dependencies": {

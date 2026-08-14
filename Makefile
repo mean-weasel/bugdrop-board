@@ -1,4 +1,4 @@
-.PHONY: dev build build-widget build-all deploy deploy-development deploy-production deploy-check deploy-check-production deploy-smoke pack-check release-smoke release-rehearsal test test-watch lint lint-fix format format-check typecheck knip audit check-actions-node24 check ci clean install help
+.PHONY: dev build build-widget build-all deploy deploy-development deploy-production deploy-check deploy-check-production deploy-smoke release-rehearsal test test-watch lint lint-fix format format-check typecheck knip audit check-actions-node24 check ci clean install help
 
 dev:
 	npm run dev
@@ -33,12 +33,6 @@ deploy-smoke:
 		$(if $(CORS_ORIGIN),--cors-origin "$(CORS_ORIGIN)",) \
 		$(if $(CORS_BOARD_ID),--cors-board-id "$(CORS_BOARD_ID)",) \
 		$(if $(CORS_TOKEN_ENDPOINT),--cors-token-endpoint "$(CORS_TOKEN_ENDPOINT)",)
-
-pack-check:
-	npm run pack:check
-
-release-smoke:
-	npm run release:smoke
 
 release-rehearsal:
 	npm run release:rehearsal
@@ -96,8 +90,6 @@ help:
 	@echo "  make deploy-smoke URL=https://worker.example.com EXPECT_ENVIRONMENT=production - verify /health and /board.js"
 	@echo "                    add CORS_ORIGIN, CORS_BOARD_ID, and CORS_TOKEN_ENDPOINT to verify browser CORS"
 	@echo "                    or use DEPLOY_SMOKE_URL, DEPLOY_SMOKE_EXPECT_ENVIRONMENT, and DEPLOY_SMOKE_CORS_*"
-	@echo "  make pack-check   - build widget and dry-run npm package contents"
-	@echo "  make release-smoke - install the published package in a temp project"
 	@echo "  make release-rehearsal - run local release-readiness dry-run gates"
 	@echo "  make build-all   - build widget and TypeScript"
 	@echo "  make clean       - remove local build artifacts"
