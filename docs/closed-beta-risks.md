@@ -39,8 +39,9 @@ These are acceptable for closed beta when communicated before invite:
 - CORS is browser containment only; bearer tokens remain the Worker authorization boundary.
 - Local browser evidence uses the dummy host's `/board.js`; a real fetch from the target deployed
   Worker remains operator-owned proof for every install.
-- GitHub Advanced Security is recommended for additive CodeQL, dependency, and secret signals, but
-  it is not configured by the local hardening goal and is not runtime or deployment proof.
+- GitHub Advanced Security is enabled for additive CodeQL, dependency, and secret signals. The
+  active `main` ruleset requires both CI jobs and blocks medium-or-higher CodeQL security findings,
+  but these repository controls are not runtime or deployment proof.
 
 ## Deferred Product Work
 

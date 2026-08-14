@@ -73,11 +73,12 @@ or docs changes. Acceptable examples:
 Do not convert code, security, deployment, or documentation uncertainty into conditional go. Those are
 no-go until fixed or explicitly reclassified by a maintainer.
 
-GitHub Advanced Security is recommended additive detection, including CodeQL default setup for
-JavaScript/TypeScript, dependency review, Dependabot alerts/security updates, secret scanning, and
-push protection. The local hardening goal did not enable or configure it because no repository-admin
-authority was granted. Its alerts cannot substitute for auth/CORS tests, D1 isolation evidence,
-deployment smoke, a live Worker `/board.js` fetch, or two-viewer dogfood proof.
+GitHub Advanced Security is enabled as additive detection, including CodeQL default setup for
+JavaScript/TypeScript and GitHub Actions, pull-request dependency review, Dependabot alerts/security
+updates, secret scanning, and push protection. The active `main` ruleset requires both CI jobs and
+blocks medium-or-higher CodeQL security findings. These repository controls cannot substitute for
+auth/CORS tests, D1 isolation evidence, deployment smoke, a live Worker `/board.js` fetch, or
+two-viewer dogfood proof.
 
 ## No-Go Criteria
 

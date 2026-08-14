@@ -260,10 +260,11 @@ installation's deployed Worker, live D1 binding, GitHub credentials, origins, or
 For every installation, fetch `/board.js` from the actual Worker origin, run deployed smoke, and
 complete the two-viewer dogfood flow before inviting users.
 
-GitHub Advanced Security is recommended as additive detection: CodeQL default setup for
-JavaScript/TypeScript, dependency review, Dependabot alerts and security updates, secret scanning,
-and push protection. It was not enabled or configured by the local hardening work because changing
-repository settings requires repository-admin authority. Advanced Security does not prove runtime
+GitHub Advanced Security is enabled as additive detection. The repository uses CodeQL default setup
+for JavaScript/TypeScript and GitHub Actions, pull-request dependency review, Dependabot alerts and
+security updates, secret scanning, and push protection. The active `main` ruleset requires both CI
+jobs and blocks medium-or-higher CodeQL security findings while preserving pull-request,
+merge-queue, deletion, and force-push protections. These controls do not prove runtime
 authorization, CORS, D1 isolation, deployment correctness, Worker-hosted asset delivery, or the
 two-viewer workflow.
 
