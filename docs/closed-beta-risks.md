@@ -37,8 +37,8 @@ These are acceptable for closed beta when communicated before invite:
 - Manual support, rollback, and backup/export boundaries are documented in
   [Closed Beta Ops Runbook](closed-beta-ops-runbook.md).
 - CORS is browser containment only; bearer tokens remain the Worker authorization boundary.
-- Local browser evidence uses the dummy host's `/board.js`; a real fetch from the target deployed
-  Worker remains operator-owned proof for every install.
+- The shared staging baseline proves a real Worker-hosted `/board.js` and two-viewer flow, but a real
+  fetch from the target deployed Worker remains operator-owned proof for every install.
 - GitHub Advanced Security is enabled for additive CodeQL, dependency, and secret signals. The
   active `main` ruleset requires both CI jobs and blocks medium-or-higher CodeQL security findings,
   but these repository controls are not runtime or deployment proof.

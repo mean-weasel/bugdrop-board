@@ -14,18 +14,18 @@ invite a beta user, or perform production data changes by itself.
 
 ## Already Proven Globally
 
-| Area               | Status              | Evidence                                                                                                                                                                                                 |
-| ------------------ | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Setup safety       | Pass                | [Closed Beta Setup Checklist](closed-beta-setup.md), `docs/goals/bugdrop-board-closed-beta-setup-safety/`                                                                                                |
-| Self-host doctor   | Pass                | `npm run doctor:selfhost`, `docs/goals/bugdrop-board-selfhost-doctor/`                                                                                                                                   |
-| Dependency audit   | Pass                | Beta security hardening T008: full `npm audit --json` reported zero vulnerabilities; type, repository, unit, browser, and production deploy-dry-run gates passed                                         |
-| Security controls  | Pass                | Beta security hardening T009: 56 focused Vitest cases plus the focused two-viewer Playwright workflow proved the requested local auth, CORS, throttling, polling, and upvote cases                       |
-| Widget packaging   | Pass                | Worker asset configuration, production deploy dry-run, and mocked deploy-smoke verifier tests                                                                                                            |
-| Deployed widget    | Pending per install | The local browser fixture serves `/board.js` from the dummy host; fetch `/board.js` from the actual target Worker and record deployed smoke before invitation                                            |
-| Customization      | Pass                | [v0.2.0 Customization Release Prep](release-readiness-results/2026-06-06-v0.2.0-customization-release.md), [Full UX Customization](release-readiness-results/2026-06-06-full-ux-customization.md)        |
-| Production dogfood | Pass                | [Chrome Upvote Issue 9](production-dogfood-results/2026-06-06-chrome-upvote-issue-9.md), [Production Dogfood](production-dogfood.md)                                                                     |
-| Handoff docs       | Pass                | [Closed Beta Runbook](closed-beta-runbook.md), [Closed Beta Dogfood Script](closed-beta-dogfood-script.md), [Closed Beta Readiness](closed-beta-readiness.md), [Closed Beta Risks](closed-beta-risks.md) |
-| Ops handoff        | Pass                | [Closed Beta Ops Runbook](closed-beta-ops-runbook.md)                                                                                                                                                    |
+| Area               | Status                             | Evidence                                                                                                                                                                                                 |
+| ------------------ | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setup safety       | Pass                               | [Closed Beta Setup Checklist](closed-beta-setup.md), `docs/goals/bugdrop-board-closed-beta-setup-safety/`                                                                                                |
+| Self-host doctor   | Pass                               | `npm run doctor:selfhost`, `docs/goals/bugdrop-board-selfhost-doctor/`                                                                                                                                   |
+| Dependency audit   | Pass                               | Beta security hardening T008: full `npm audit --json` reported zero vulnerabilities; type, repository, unit, browser, and production deploy-dry-run gates passed                                         |
+| Security controls  | Pass                               | Beta security hardening T009: 56 focused Vitest cases plus the focused two-viewer Playwright workflow proved the requested local auth, CORS, throttling, polling, and upvote cases                       |
+| Widget packaging   | Pass                               | Worker asset configuration, production deploy dry-run, and mocked deploy-smoke verifier tests                                                                                                            |
+| Deployed widget    | Pass baseline; pending per install | [2026-08-15 Staging Dogfood](staging-dogfood-results/2026-08-15.md) proves a real staging Worker served `/board.js` and completed the two-viewer flow; repeat deployed smoke for each target install     |
+| Customization      | Pass                               | [v0.2.0 Customization Release Prep](release-readiness-results/2026-06-06-v0.2.0-customization-release.md), [Full UX Customization](release-readiness-results/2026-06-06-full-ux-customization.md)        |
+| Production dogfood | Pass                               | [Chrome Upvote Issue 9](production-dogfood-results/2026-06-06-chrome-upvote-issue-9.md), [Production Dogfood](production-dogfood.md)                                                                     |
+| Handoff docs       | Pass                               | [Closed Beta Runbook](closed-beta-runbook.md), [Closed Beta Dogfood Script](closed-beta-dogfood-script.md), [Closed Beta Readiness](closed-beta-readiness.md), [Closed Beta Risks](closed-beta-risks.md) |
+| Ops handoff        | Pass                               | [Closed Beta Ops Runbook](closed-beta-ops-runbook.md)                                                                                                                                                    |
 
 ## Required Per-Install Proof
 
@@ -79,6 +79,9 @@ updates, secret scanning, and push protection. The active `main` ruleset require
 blocks medium-or-higher CodeQL security findings. These repository controls cannot substitute for
 auth/CORS tests, D1 isolation evidence, deployment smoke, a live Worker `/board.js` fetch, or
 two-viewer dogfood proof.
+
+The 2026-08-15 repository security audit found zero open CodeQL, Dependabot, or secret-scanning
+alerts. Treat that as dated evidence and recheck before each beta acceptance decision.
 
 ## No-Go Criteria
 
