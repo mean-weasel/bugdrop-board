@@ -36,12 +36,18 @@ test('staging board creates a GitHub-backed item, upvotes, and syncs through pol
     await expect(item.getByRole('link', { name: /Issue #\d+/ })).toBeVisible();
     await expect(syncedItem).toBeVisible({ timeout: 15_000 });
 
-    await item.getByRole('button', { name: 'Upvote 0' }).click();
-
-    await expect(item.getByRole('button', { name: 'Upvoted 1' })).toBeVisible();
-    await expect(syncedItem.getByRole('button', { name: 'Upvote 1' })).toBeVisible({
-      timeout: 15_000,
+    const viewerAUpvote = item.getByRole('button', {
+      name: `Upvote ${title}. 0 upvotes.`,
     });
+    await expect(viewerAUpvote).toHaveAttribute('aria-pressed', 'false');
+    await viewerAUpvote.click();
+
+    await expect(
+      item.getByRole('button', { name: `Remove upvote from ${title}. 1 upvote.` })
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(
+      syncedItem.getByRole('button', { name: `Upvote ${title}. 1 upvote.` })
+    ).toHaveAttribute('aria-pressed', 'false', { timeout: 15_000 });
   } finally {
     await secondContext.close();
     await host.close();
