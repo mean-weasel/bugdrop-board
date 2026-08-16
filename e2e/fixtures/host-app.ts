@@ -1,4 +1,4 @@
-import { createServer, type Server } from 'node:http';
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { execFile } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -29,6 +29,7 @@ interface HostApp {
   server: Server;
   url: string;
   close(): Promise<void>;
+  tokenRequestCount(): number;
 }
 
 interface HostConfig {
@@ -57,11 +58,13 @@ export async function provisionBoard(): Promise<ProvisionedBoard> {
 
 interface HostOptions {
   inlineMount?: boolean;
+  pollInterval?: string;
   variant?: CustomizationVariant;
 }
 
 export async function startHostApp(boardId?: string, options: HostOptions = {}): Promise<HostApp> {
   const config = hostConfig(boardId, options);
+  let acceptedTokenRequests = 0;
   const server = createServer(async (req, res) => {
     try {
       const url = new URL(req.url ?? '/', HOST_ORIGIN);
@@ -72,6 +75,10 @@ export async function startHostApp(boardId?: string, options: HostOptions = {}):
         return;
       }
       if (url.pathname === '/token') {
+        if (!(await enforceTokenRequestContract(req, res))) {
+          return;
+        }
+        acceptedTokenRequests += 1;
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(
           JSON.stringify({ token: await createToken(config, url.searchParams.get('viewer')) })
@@ -103,6 +110,7 @@ export async function startHostApp(boardId?: string, options: HostOptions = {}):
     server,
     url: HOST_ORIGIN,
     close: () => new Promise(resolve => server.close(() => resolve())),
+    tokenRequestCount: () => acceptedTokenRequests,
   };
 }
 
@@ -123,8 +131,48 @@ function hostConfig(boardId: string | undefined, options: HostOptions): HostConf
     tokenSecret: envValue('BUGDROP_BOARD_TOKEN_SECRET') ?? DEFAULT_TOKEN_SECRET,
     tokenAudience: envValue('BUGDROP_BOARD_TOKEN_AUDIENCE') ?? DEFAULT_TOKEN_AUDIENCE,
     tokenIssuer: envValue('BUGDROP_BOARD_TOKEN_ISSUER') ?? DEFAULT_TOKEN_ISSUER,
-    pollInterval: envValue('BUGDROP_BOARD_POLL_INTERVAL') ?? DEFAULT_POLL_INTERVAL,
+    pollInterval:
+      options.pollInterval ?? envValue('BUGDROP_BOARD_POLL_INTERVAL') ?? DEFAULT_POLL_INTERVAL,
   };
+}
+
+async function enforceTokenRequestContract(
+  request: IncomingMessage,
+  response: ServerResponse
+): Promise<boolean> {
+  if (request.method !== 'POST') {
+    response.writeHead(405, {
+      Allow: 'POST',
+      'Content-Type': 'application/json; charset=utf-8',
+    });
+    response.end(JSON.stringify({ error: 'Method not allowed' }));
+    return false;
+  }
+
+  if (
+    request.headers.accept !== 'application/json' ||
+    request.headers['content-type'] !== 'application/json'
+  ) {
+    response.writeHead(415, { 'Content-Type': 'application/json; charset=utf-8' });
+    response.end(JSON.stringify({ error: 'Expected application/json' }));
+    return false;
+  }
+
+  if ((await readRequestBody(request)) !== '{}') {
+    response.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+    response.end(JSON.stringify({ error: 'Expected an empty JSON object' }));
+    return false;
+  }
+
+  return true;
+}
+
+async function readRequestBody(request: IncomingMessage): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of request) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks).toString('utf8');
 }
 
 function envValue(name: string): string | undefined {

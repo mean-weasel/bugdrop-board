@@ -27,6 +27,7 @@ export function parseHostedArgs(argv) {
     else if (arg === '--app-slug') options.appSlug = slugValue(argv, (index += 1), arg);
     else if (arg === '--app-name') options.appName = value(argv, (index += 1), arg);
     else if (arg === '--repo') options.repo = value(argv, (index += 1), arg);
+    else if (arg === '--board-id') options.boardId = boardIdValue(argv, (index += 1), arg);
     else if (arg === '--board-name') options.boardName = value(argv, (index += 1), arg);
     else if (arg === '--origin') options.origins.push(originValue(argv, (index += 1), arg));
     else if (arg === '--issuer') options.issuer = value(argv, (index += 1), arg);
@@ -59,7 +60,7 @@ export function parseHostedArgs(argv) {
 }
 
 export function buildHostedProvisioningPlan(options) {
-  const board = boardFromRepo(options.repo, options.boardName);
+  const board = boardFromRepo(options.repo, options.boardName, options.boardId);
   const { ids, sql } = buildHostedSql(options, board);
 
   return {
@@ -179,6 +180,14 @@ function slugValue(argv, index, flag) {
 function envValue(argv, index, flag) {
   const next = value(argv, index, flag);
   if (!ENV_PATTERN.test(next)) throw new Error('Expected --env to contain only safe characters');
+  return next;
+}
+
+function boardIdValue(argv, index, flag) {
+  const next = value(argv, index, flag);
+  if (!/^board_[A-Za-z0-9][A-Za-z0-9_-]*$/.test(next)) {
+    throw new Error('Expected --board-id to start with board_ and contain only safe characters');
+  }
   return next;
 }
 

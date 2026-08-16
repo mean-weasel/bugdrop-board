@@ -92,14 +92,19 @@ dogfood-style setup in a new app. It is intentionally limited to setup safety an
 
 ## 5. Host App Token Endpoint
 
-- Add a backend-only token endpoint that returns `{ "token": "payload.signature" }`.
+- Add a backend-only, POST-only token endpoint that returns
+  `{ "token": "payload.signature" }` with `Cache-Control: no-store`. The widget sends exactly one
+  credentialed, no-store request with `Accept` and `Content-Type` set to `application/json` and the
+  literal body `{}`. Reject GET and any other method or body; derive all identity, board, claim, and
+  TTL authority from the authenticated server session and server-side configuration.
 - Sign with the same `BOARD_TOKEN_SECRET`, `BOARD_TOKEN_AUDIENCE`, and `BOARD_TOKEN_ISSUER` as the
   Worker expects.
 - Include `boardId`, stable `externalUserId`, and a short `exp`, usually five minutes or less. The
   Worker rejects tokens whose expiry is more than `BOARD_TOKEN_MAX_TTL_SECONDS` in the future; the
   closed-beta default is `300` seconds.
-- Confirm the endpoint works in the signed-in host page. The widget fetches the endpoint with
-  browser credentials, so host cookies and host CORS rules must permit that token request.
+- Confirm the endpoint works in the signed-in host page. The widget fails closed on non-2xx,
+  invalid JSON, and missing, non-string, or blank tokens, with no GET fallback. Browser credentials
+  are included, so host cookies and host CORS rules must permit that POST request.
 
 ## 6. Deploy
 

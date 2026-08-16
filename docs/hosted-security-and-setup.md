@@ -41,7 +41,8 @@ keeps owning login, session security, and the token endpoint.
 The host app must provide:
 
 - signed-in users before the board token endpoint returns a token;
-- a backend token endpoint that returns `{ "token": "payload.signature" }`;
+- a POST-only backend token endpoint that accepts exactly `{}` and returns
+  `{ "token": "payload.signature" }` with `Cache-Control: no-store`;
 - stable `externalUserId` values for signed-in users;
 - token claims that match the provisioned `boardId`, token audience, token issuer, and max TTL;
 - normal credentialed-CORS behavior for the token endpoint if it is not same-origin with the host
@@ -56,17 +57,25 @@ GitHub mirror repo with the installer during manual provisioning.
 
 Configure these in the host app embed:
 
-| Setting        | Where                  | Notes                                                              |
-| -------------- | ---------------------- | ------------------------------------------------------------------ |
-| Board id       | `data-board-id`        | Must match the provisioned board id and signed token `boardId`.    |
-| API URL        | `data-api-url`         | Hosted beta points at the BugDrop-hosted Worker origin.            |
-| Token endpoint | `data-token-endpoint`  | Host app backend endpoint that returns `{ token }`.                |
-| Mount target   | `data-mount-selector`  | Optional host element where the board should render.               |
-| Poll interval  | `data-poll-interval`   | Optional milliseconds. Values below `500` are ignored.             |
-| Accent color   | `data-color`           | Quick color customization; maps to `theme.accent`.                 |
-| Layout         | `data-layout`          | `inline`, `panel`, or `kanban`.                                    |
-| Density        | `data-density`         | `compact`, `comfortable`, or `spacious`.                           |
-| JSON config    | `data-config-selector` | Optional deeper copy, layout, density, composer, and theme config. |
+| Setting        | Where                 | Notes                                                           |
+| -------------- | --------------------- | --------------------------------------------------------------- |
+| Board id       | `data-board-id`       | Must match the provisioned board id and signed token `boardId`. |
+| API URL        | `data-api-url`        | Hosted beta points at the BugDrop-hosted Worker origin.         |
+| Token endpoint | `data-token-endpoint` | POST-only host backend endpoint; called verbatim with `{}`.     |
+
+The widget makes exactly one POST per token request with credentials included, cache disabled,
+JSON request/response headers, and the literal body `{}`. It sends no board, identity, claim,
+issuer, audience, TTL, method-selection, or other authority-bearing fields. The host endpoint must
+derive authority from its authenticated server session and fixed server configuration, reject GET
+and malformed requests, and return a non-blank string token. The widget does not retry or fall back
+when the endpoint returns non-2xx, invalid JSON, or an invalid token response. This intentionally
+replaces the pre-beta implicit GET behavior.
+| Mount target | `data-mount-selector` | Optional host element where the board should render. |
+| Poll interval | `data-poll-interval` | Optional milliseconds. Values below `500` are ignored. |
+| Accent color | `data-color` | Quick color customization; maps to `theme.accent`. |
+| Layout | `data-layout` | `inline`, `panel`, or `kanban`. |
+| Density | `data-density` | `compact`, `comfortable`, or `spacious`. |
+| JSON config | `data-config-selector` | Optional deeper copy, layout, density, composer, and theme config. |
 
 JSON config supports:
 

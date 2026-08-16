@@ -18,6 +18,19 @@ describe('provision-board script helpers', () => {
     });
   });
 
+  it('uses an explicit stable board id so one repository can back multiple boards', () => {
+    expect(boardFromRepo('mean-weasel/demo', 'CI Board', 'board_preview_ci')).toEqual({
+      id: 'board_preview_ci',
+      repoOwner: 'mean-weasel',
+      repoName: 'demo',
+      name: 'CI Board',
+    });
+    expect(boardFromRepo('mean-weasel/demo', 'Demo Board', 'board_preview_demo')).toMatchObject({
+      id: 'board_preview_demo',
+      repoName: 'demo',
+    });
+  });
+
   it('rejects malformed repos', () => {
     expect(() => boardFromRepo('mean-weasel', 'Demo')).toThrow('Expected --repo owner/name');
     expect(() => boardFromRepo('../demo', 'Demo')).toThrow('Expected --repo owner/name');
@@ -27,7 +40,9 @@ describe('provision-board script helpers', () => {
     const sql = buildUpsertSql(boardFromRepo('mean-weasel/demo', "Ada's Board"));
 
     expect(sql).toContain("'Ada''s Board'");
-    expect(sql).toContain('ON CONFLICT(repo_owner, repo_name) DO UPDATE');
+    expect(sql).toContain('ON CONFLICT(id) DO UPDATE');
+    expect(sql).toContain('boards.repo_owner = excluded.repo_owner');
+    expect(sql).toContain('ELSE NULL');
   });
 
   describe('parseArgs', () => {
@@ -49,6 +64,15 @@ describe('provision-board script helpers', () => {
         local: false,
         env: 'staging',
       });
+    });
+
+    it('parses and validates an explicit board id', () => {
+      expect(
+        parseArgs(['--repo', 'mean-weasel/demo', '--board-id', 'board_preview_ci'])
+      ).toMatchObject({ boardId: 'board_preview_ci' });
+      expect(() => parseArgs(['--repo', 'mean-weasel/demo', '--board-id', 'preview/ci'])).toThrow(
+        'Expected --board-id'
+      );
     });
 
     it('rejects invalid wrangler environment names', () => {

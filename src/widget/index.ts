@@ -3,6 +3,7 @@ import { applyCustomization, readCustomization } from './config';
 import { renderBoard } from './dom';
 import { appendWidgetHost } from './mount';
 import { injectTheme } from './theme';
+import { fetchBoardToken } from './token';
 import type { BoardItemView, BoardState, BoardWidgetConfig } from './types';
 
 const script = document.currentScript as HTMLScriptElement | null;
@@ -41,18 +42,6 @@ function parsePollInterval(value: string | undefined): number {
   return Number.isFinite(parsed) && parsed >= 500 ? parsed : 3000;
 }
 
-async function getToken(config: BoardWidgetConfig): Promise<string> {
-  const res = await fetch(config.tokenEndpoint, { credentials: 'include' });
-  if (!res.ok) {
-    throw new Error(`Token request failed with ${res.status}`);
-  }
-  const data = (await res.json()) as { token?: string };
-  if (!data.token) {
-    throw new Error('Token request did not return a token');
-  }
-  return data.token;
-}
-
 function upsertItem(items: BoardItemView[], item: BoardItemView): BoardItemView[] {
   const exists = items.some(existing => existing.id === item.id);
   if (!exists) {
@@ -86,7 +75,9 @@ function mount(config: BoardWidgetConfig): void {
   shadow.append(root);
   appendWidgetHost(host, { document, script, mountSelector: config.mountSelector });
 
-  const api = new BoardApi(config.apiUrl, config.boardId, () => getToken(config));
+  const api = new BoardApi(config.apiUrl, config.boardId, () =>
+    fetchBoardToken(config.tokenEndpoint)
+  );
   let state: BoardState = { items: [], cursor: 0, loading: true };
 
   const refreshItems = async () => {

@@ -1,0 +1,51 @@
+name: Preview Janitor
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 9 * * *'
+
+permissions: {}
+
+jobs:
+  janitor:
+    name: Trusted preview Issue janitor
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    environment: preview-janitor
+    concurrency:
+      group: bugdrop-board-shared-preview
+      cancel-in-progress: false
+    steps:
+      - name: Checkout the triggering default-branch commit
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+      - name: Mint repository-scoped monitor token
+        id: monitor-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          app-id: ${{ secrets.BUGDROP_BOARD_PREVIEW_MONITOR_APP_ID }}
+          private-key: ${{ secrets.BUGDROP_BOARD_PREVIEW_MONITOR_PRIVATE_KEY }}
+          owner: mean-weasel
+          repositories: bugdrop-board-widget-test
+          permission-issues: write
+      - name: Sweep only attributable preview Issues
+        run: >-
+          node scripts/github-issue-canary.mjs sweep
+          --repo "$BUGDROP_BOARD_PREVIEW_REPOSITORY"
+          --repository-id "$BUGDROP_BOARD_PREVIEW_REPOSITORY_ID"
+          --prefix "[BugDrop Board CI canary]"
+        env:
+          BUGDROP_BOARD_PREVIEW_MONITOR_TOKEN: ${{ steps.monitor-token.outputs.token }}
+          BUGDROP_BOARD_PREVIEW_RUNTIME_BOT: ${{ vars.BUGDROP_BOARD_PREVIEW_RUNTIME_BOT }}
+          BUGDROP_BOARD_PREVIEW_LABELS: ${{ vars.BUGDROP_BOARD_PREVIEW_LABELS }}
+          BUGDROP_BOARD_PREVIEW_REPOSITORY: ${{ vars.BUGDROP_BOARD_PREVIEW_REPOSITORY }}
+          BUGDROP_BOARD_PREVIEW_REPOSITORY_ID: ${{ vars.BUGDROP_BOARD_PREVIEW_REPOSITORY_ID }}

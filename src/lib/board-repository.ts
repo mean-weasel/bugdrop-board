@@ -59,16 +59,33 @@ interface ViewerItem extends BoardItem {
 export class BoardRepository {
   constructor(private readonly db: D1Database) {}
 
-  async upsertBoard(input: { repoOwner: string; repoName: string; name?: string }): Promise<Board> {
-    const id = `board_${input.repoOwner}_${input.repoName}`.replace(/[^a-zA-Z0-9_]/g, '_');
+  async upsertBoard(input: {
+    id?: string;
+    repoOwner: string;
+    repoName: string;
+    name?: string;
+  }): Promise<Board> {
+    const id =
+      input.id ?? `board_${input.repoOwner}_${input.repoName}`.replace(/[^a-zA-Z0-9_]/g, '_');
     const name = input.name ?? `${input.repoOwner}/${input.repoName}`;
+    const existing = await this.getBoard(id);
+    if (
+      existing &&
+      (existing.repoOwner !== input.repoOwner || existing.repoName !== input.repoName)
+    ) {
+      throw new Error('Board id is already assigned to another repository');
+    }
 
     await this.db
       .prepare(
         `INSERT INTO boards (id, repo_owner, repo_name, name)
          VALUES (?, ?, ?, ?)
-         ON CONFLICT(repo_owner, repo_name) DO UPDATE SET
-           name = excluded.name,
+         ON CONFLICT(id) DO UPDATE SET
+           name = CASE
+             WHEN boards.repo_owner = excluded.repo_owner AND boards.repo_name = excluded.repo_name
+               THEN excluded.name
+             ELSE NULL
+           END,
            updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')`
       )
       .bind(id, input.repoOwner, input.repoName, name)
@@ -77,6 +94,9 @@ export class BoardRepository {
     const board = await this.getBoard(id);
     if (!board) {
       throw new Error('Failed to upsert board');
+    }
+    if (board.repoOwner !== input.repoOwner || board.repoName !== input.repoName) {
+      throw new Error('Board id is already assigned to another repository');
     }
 
     return board;

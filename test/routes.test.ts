@@ -662,6 +662,117 @@ describe('api routes', () => {
     await expect(res.json()).resolves.toMatchObject({ items: [] });
   });
 
+  it('keeps hosted runtime data and configuration isolated for two boards sharing one repo', async () => {
+    const sharedRepo = `${repoName}_shared`;
+    const demoBoard = await repo.upsertBoard({
+      id: `board_${sharedRepo}_demo`,
+      repoOwner: 'mean-weasel',
+      repoName: sharedRepo,
+      name: 'Preview Demo',
+    });
+    const ciBoard = await repo.upsertBoard({
+      id: `board_${sharedRepo}_ci`,
+      repoOwner: 'mean-weasel',
+      repoName: sharedRepo,
+      name: 'Preview CI',
+    });
+    const tenant = await hosted.createTenant({
+      name: 'Preview Tenant',
+      slug: `preview-${testSequence}`,
+    });
+    const demoApp = await hosted.createApp({
+      tenantId: tenant.id,
+      name: 'Preview Demo App',
+      slug: 'preview-demo',
+    });
+    const ciApp = await hosted.createApp({
+      tenantId: tenant.id,
+      name: 'Preview CI App',
+      slug: 'preview-ci',
+    });
+    for (const app of [demoApp, ciApp]) {
+      await hosted.createTokenVerifier({
+        tenantId: tenant.id,
+        appId: app.id,
+        type: 'hmac_legacy',
+        issuer: TOKEN_ISSUER,
+        audience: TOKEN_AUDIENCE,
+        secretRef: 'worker-secret',
+      });
+    }
+    await hosted.addOrigin({
+      tenantId: tenant.id,
+      appId: demoApp.id,
+      origin: 'https://demo.example.com',
+    });
+    await hosted.addOrigin({
+      tenantId: tenant.id,
+      appId: ciApp.id,
+      origin: 'https://ci.example.com',
+    });
+    await hosted.configureBoard({
+      tenantId: tenant.id,
+      appId: demoApp.id,
+      boardId: demoBoard.id,
+    });
+    await hosted.configureBoard({
+      tenantId: tenant.id,
+      appId: ciApp.id,
+      boardId: ciBoard.id,
+    });
+    await repo.createItem({
+      boardId: demoBoard.id,
+      title: 'Demo-only item',
+      description: 'The CI board must not see this.',
+      externalUserId: 'demo_user',
+    });
+
+    const api = createApi();
+    const demoResponse = await api.request(
+      `/boards/${demoBoard.id}/items`,
+      {
+        headers: {
+          Authorization: `Bearer ${await boardToken(demoBoard.id, {
+            tenantId: tenant.id,
+            appId: demoApp.id,
+          })}`,
+          Origin: 'https://demo.example.com',
+        },
+      },
+      env()
+    );
+    const ciResponse = await api.request(
+      `/boards/${ciBoard.id}/items`,
+      {
+        headers: {
+          Authorization: `Bearer ${await boardToken(ciBoard.id, {
+            tenantId: tenant.id,
+            appId: ciApp.id,
+          })}`,
+          Origin: 'https://ci.example.com',
+        },
+      },
+      env()
+    );
+
+    expect(demoResponse.status).toBe(200);
+    expect(ciResponse.status).toBe(200);
+    await expect(demoResponse.json()).resolves.toMatchObject({
+      items: [{ title: 'Demo-only item' }],
+    });
+    await expect(ciResponse.json()).resolves.toMatchObject({ items: [] });
+    await expect(hosted.getBoardConfig(demoBoard.id)).resolves.toMatchObject({
+      boardId: demoBoard.id,
+      appId: demoApp.id,
+      activeOrigins: ['https://demo.example.com'],
+    });
+    await expect(hosted.getBoardConfig(ciBoard.id)).resolves.toMatchObject({
+      boardId: ciBoard.id,
+      appId: ciApp.id,
+      activeOrigins: ['https://ci.example.com'],
+    });
+  });
+
   it('creates hosted board items through the configured GitHub App connection repo', async () => {
     const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName });
     const tokenKeyPair = await generateKeyPair();

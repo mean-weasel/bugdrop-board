@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
@@ -11,6 +13,8 @@ export function parseArgs(argv) {
     corsDisallowedOrigin: process.env.DEPLOY_SMOKE_CORS_DISALLOWED_ORIGIN,
     corsBoardId: process.env.DEPLOY_SMOKE_CORS_BOARD_ID,
     corsTokenEndpoint: process.env.DEPLOY_SMOKE_CORS_TOKEN_ENDPOINT,
+    expectBuildSha: process.env.DEPLOY_SMOKE_EXPECT_BUILD_SHA,
+    localBoardPath: process.env.DEPLOY_SMOKE_LOCAL_BOARD_PATH,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -47,6 +51,16 @@ export function parseArgs(argv) {
       index += 1;
       continue;
     }
+    if (arg === '--expect-build-sha') {
+      options.expectBuildSha = requireValue(arg, next);
+      index += 1;
+      continue;
+    }
+    if (arg === '--local-board-path') {
+      options.localBoardPath = requireValue(arg, next);
+      index += 1;
+      continue;
+    }
     if (arg === '--help') {
       options.help = true;
       continue;
@@ -77,7 +91,9 @@ Options:
   --cors-origin <origin>            Browser origin expected in Access-Control-Allow-Origin. Can also use DEPLOY_SMOKE_CORS_ORIGIN.
   --cors-disallowed-origin <origin> Browser origin expected not to receive Access-Control-Allow-Origin. Can also use DEPLOY_SMOKE_CORS_DISALLOWED_ORIGIN.
   --cors-board-id <id>              Board id used for authenticated /items and /events checks. Can also use DEPLOY_SMOKE_CORS_BOARD_ID.
-  --cors-token-endpoint <url>       Endpoint returning { "token": "payload.signature" }. Can also use DEPLOY_SMOKE_CORS_TOKEN_ENDPOINT.`);
+  --cors-token-endpoint <url>       POST endpoint returning { "token": "payload.signature" }. Can also use DEPLOY_SMOKE_CORS_TOKEN_ENDPOINT.
+  --expect-build-sha <sha>          Required preview BUILD_SHA. Can also use DEPLOY_SMOKE_EXPECT_BUILD_SHA.
+  --local-board-path <path>         Local board.js to hash-match before preview mutation. Can also use DEPLOY_SMOKE_LOCAL_BOARD_PATH.`);
 }
 
 function normalizeBaseUrl(value) {
@@ -104,20 +120,20 @@ async function fetchJson(url, fetchImpl, init) {
   }
 }
 
-async function fetchHead(url, fetchImpl) {
-  const response = await fetchImpl(url, { method: 'HEAD' });
+async function fetchAsset(url, fetchImpl) {
+  const response = await fetchImpl(url);
   if (!response.ok) {
     throw new Error(`${url} returned ${response.status}`);
   }
-  return response;
+  return { response, bytes: new Uint8Array(await response.arrayBuffer()) };
 }
 
-export async function runSmoke(options, fetchImpl = fetch) {
+export async function runSmoke(options, fetchImpl = fetch, readFileImpl = readFile) {
   const baseUrl = normalizeBaseUrl(options.url);
   const healthUrl = new URL('/health', baseUrl);
   const boardUrl = new URL('/board.js', baseUrl);
 
-  const { json: health } = await fetchJson(healthUrl, fetchImpl);
+  const { response: healthResponse, json: health } = await fetchJson(healthUrl, fetchImpl);
   if (health.status !== 'ok') {
     throw new Error(`${healthUrl} returned non-ok status: ${JSON.stringify(health)}`);
   }
@@ -127,10 +143,27 @@ export async function runSmoke(options, fetchImpl = fetch) {
     );
   }
 
-  const boardResponse = await fetchHead(boardUrl, fetchImpl);
+  if (health.environment === 'preview') {
+    requirePreviewProvenanceOptions(options);
+    assertBuildIdentity(healthUrl, healthResponse, health, options.expectBuildSha);
+  }
+
+  const { response: boardResponse, bytes: boardBytes } = await fetchAsset(boardUrl, fetchImpl);
   const contentType = boardResponse.headers.get('content-type') ?? '';
   if (!contentType.includes('javascript')) {
     throw new Error(`${boardUrl} returned unexpected content-type: ${contentType || '<missing>'}`);
+  }
+  let boardSha256;
+  if (health.environment === 'preview') {
+    assertBuildHeader(boardUrl, boardResponse, options.expectBuildSha);
+    const localBytes = await readFileImpl(options.localBoardPath);
+    const localSha256 = sha256(localBytes);
+    boardSha256 = sha256(boardBytes);
+    if (boardSha256 !== localSha256) {
+      throw new Error(
+        `${boardUrl} SHA-256 ${boardSha256} does not match local board.js ${localSha256}`
+      );
+    }
   }
 
   const result = {
@@ -142,6 +175,7 @@ export async function runSmoke(options, fetchImpl = fetch) {
       contentType,
       cacheStatus: boardResponse.headers.get('cf-cache-status'),
       etag: boardResponse.headers.get('etag'),
+      ...(boardSha256 ? { sha256: boardSha256 } : {}),
     },
   };
 
@@ -167,7 +201,15 @@ async function verifyCors(baseUrl, options, fetchImpl) {
   const origin = options.corsOrigin;
   const boardId = options.corsBoardId;
   const tokenEndpoint = new URL(options.corsTokenEndpoint);
-  const { json: tokenBody } = await fetchJson(tokenEndpoint, fetchImpl);
+  const { json: tokenBody } = await fetchJson(tokenEndpoint, fetchImpl, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Origin: origin,
+    },
+    body: '{}',
+  });
   const token = tokenBody.token;
   if (typeof token !== 'string' || token.length === 0) {
     throw new Error(`${tokenEndpoint} did not return a token string`);
@@ -187,12 +229,15 @@ async function verifyCors(baseUrl, options, fetchImpl) {
     throw new Error(`${itemsUrl} preflight returned ${preflight.status}`);
   }
   assertAllowOrigin(itemsUrl, preflight, origin);
+  assertOptionalBuildHeader(itemsUrl, preflight, options.expectBuildSha);
 
   const headers = { Authorization: `Bearer ${token}`, Origin: origin };
   const items = await fetchJson(itemsUrl, fetchImpl, { headers });
   assertAllowOrigin(itemsUrl, items.response, origin);
+  assertOptionalBuildHeader(itemsUrl, items.response, options.expectBuildSha);
   const events = await fetchJson(eventsUrl, fetchImpl, { headers });
   assertAllowOrigin(eventsUrl, events.response, origin);
+  assertOptionalBuildHeader(eventsUrl, events.response, options.expectBuildSha);
 
   const result = {
     origin,
@@ -211,7 +256,8 @@ async function verifyCors(baseUrl, options, fetchImpl) {
       boardId,
       token,
       options.corsDisallowedOrigin,
-      fetchImpl
+      fetchImpl,
+      options.expectBuildSha
     );
   }
   return result;
@@ -236,7 +282,7 @@ function assertAllowOrigin(url, response, expectedOrigin) {
   }
 }
 
-async function verifyDisallowedCors(baseUrl, boardId, token, origin, fetchImpl) {
+async function verifyDisallowedCors(baseUrl, boardId, token, origin, fetchImpl, expectBuildSha) {
   const itemsUrl = new URL(`/boards/${boardId}/items`, baseUrl);
   const eventsUrl = new URL(`/boards/${boardId}/events?since=0`, baseUrl);
   const preflight = await fetchImpl(itemsUrl, {
@@ -248,12 +294,15 @@ async function verifyDisallowedCors(baseUrl, boardId, token, origin, fetchImpl) 
     },
   });
   assertDisallowedOrigin(itemsUrl, preflight, origin);
+  assertOptionalBuildHeader(itemsUrl, preflight, expectBuildSha);
 
   const headers = { Authorization: `Bearer ${token}`, Origin: origin };
   const items = await fetchJson(itemsUrl, fetchImpl, { headers });
   assertDisallowedOrigin(itemsUrl, items.response, origin);
+  assertOptionalBuildHeader(itemsUrl, items.response, expectBuildSha);
   const events = await fetchJson(eventsUrl, fetchImpl, { headers });
   assertDisallowedOrigin(eventsUrl, events.response, origin);
+  assertOptionalBuildHeader(eventsUrl, events.response, expectBuildSha);
 
   return {
     origin,
@@ -261,6 +310,41 @@ async function verifyDisallowedCors(baseUrl, boardId, token, origin, fetchImpl) 
     items: corsResponseSummary(items.response),
     events: corsResponseSummary(events.response),
   };
+}
+
+function requirePreviewProvenanceOptions(options) {
+  if (!/^[a-f0-9]{40}$/.test(options.expectBuildSha ?? '')) {
+    throw new Error('Preview smoke requires an exact lowercase 40-character --expect-build-sha');
+  }
+  if (!options.localBoardPath) {
+    throw new Error('Preview smoke requires --local-board-path for immutable widget proof');
+  }
+}
+
+function assertBuildIdentity(url, response, body, expected) {
+  if (body.buildSha !== expected) {
+    throw new Error(
+      `${url} returned buildSha ${body.buildSha ?? '<missing>'}, expected ${expected}`
+    );
+  }
+  assertBuildHeader(url, response, expected);
+}
+
+function assertOptionalBuildHeader(url, response, expected) {
+  if (expected) assertBuildHeader(url, response, expected);
+}
+
+function assertBuildHeader(url, response, expected) {
+  const actual = response.headers.get('x-bugdrop-build-sha');
+  if (actual !== expected) {
+    throw new Error(
+      `${url} returned X-BugDrop-Build-Sha ${actual ?? '<missing>'}, expected ${expected}`
+    );
+  }
+}
+
+function sha256(value) {
+  return createHash('sha256').update(value).digest('hex');
 }
 
 function assertDisallowedOrigin(url, response, disallowedOrigin) {

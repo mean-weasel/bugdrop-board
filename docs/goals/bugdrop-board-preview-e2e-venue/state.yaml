@@ -1,0 +1,1593 @@
+# GoalBuddy v2 state.yaml
+version: 2
+
+goal:
+  title: 'BugDrop Board Preview E2E Venue'
+  slug: 'bugdrop-board-preview-e2e-venue'
+  kind: specific
+  tranche: 'Deliver the companion preview venue, isolated preview infrastructure, live CI canary, and protected merge-queue proof.'
+  status: active
+  oracle:
+    signal: 'A live Vercel preview venue and isolated BugDrop Board preview Worker complete and independently verify the signed two-viewer create, GitHub mirror, upvote, and polling flow in PR and merge-group CI, then clean every attributable synthetic Issue.'
+    cadence: 'after each Worker package and at final audit'
+    final_proof: 'Live URLs, same-build provenance, least-privilege configuration evidence, passing PR and merge-group runs, negative auth/CORS proof, deterministic Issue cleanup, redacted receipts, and final Judge approval.'
+  intake:
+    original_request: 'Mirror bugdrop-widget-test for BugDrop Board and test it in CI like BugDrop preview E2E.'
+    interpreted_outcome: 'A dedicated BugDrop Board preview venue and live protected CI safely prove the real hosted integration end to end.'
+    input_shape: specific
+    audience: 'BugDrop Board maintainers and closed-beta evaluators'
+    authority: requested
+    proof_type: test
+    completion_proof: 'The live preview system passes from clean protected PR and merge-group runs using deployed surfaces, real server-signed tokens, isolated D1, a real verified GitHub Issue, and zero attributable leftovers.'
+    likely_misfire: 'Building only a static demo or mocked E2E that bypasses token signing, real D1, GitHub mirroring, build provenance, independent verification, or cleanup.'
+    blind_spots_considered:
+      - 'Cross-repository ownership and version coupling'
+      - 'Stable versus per-commit Vercel venue identity'
+      - 'Server-side token signing and secret scope'
+      - 'Preview D1 isolation and migration lifecycle'
+      - 'Exact CORS origin and fork safety'
+      - 'Synthetic Issue attribution, duplicate rejection, and cleanup'
+      - 'Merge-group concurrency and same-build provenance'
+      - 'Rate limits, CI noise, rollback, and secret rotation'
+      - 'Accessibility, mobile layout, and demo-data durability'
+    existing_plan_facts:
+      - 'Mirror mean-weasel/bugdrop-widget-test and the original BugDrop live preview E2E pattern.'
+      - 'Use a separate Vercel venue and dedicated GitHub Issue target.'
+      - 'Add a server-side signer because BugDrop Board requires host-signed short-lived tokens.'
+      - 'Test against an isolated Cloudflare preview Worker and D1 environment.'
+      - 'Run live proof in BugDrop Board CI for pull requests and the merge queue.'
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  exact_human_approval_can_terminal_wait: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: live
+    url: 'http://goalbuddy.localhost:41737/bugdrop-board-preview-e2e-venue/'
+    command: 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.4.3/skills/goal-prep/surfaces/local-goal-board/scripts/local-goal-board.mjs --goal docs/goals/bugdrop-board-preview-e2e-venue'
+
+active_task: T011
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: queued
+    reasoning_hint: low
+    objective: 'Map mean-weasel/bugdrop-widget-test and the original BugDrop preview/live-test system deeply enough to preserve proven contracts and identify what cannot be copied directly.'
+    inputs:
+      - 'https://github.com/mean-weasel/bugdrop-widget-test'
+      - 'https://github.com/mean-weasel/bugdrop'
+      - 'Vite/Vercel production and preview aliases'
+      - 'Preview Worker, live-test workflows, merge-queue canary, heartbeat, markers, provenance, cleanup, and janitor code'
+    constraints:
+      - 'Read-only; do not edit either reference repository.'
+      - 'Distinguish mocked browser coverage from real-Issue canary coverage.'
+      - 'Prefer exact file, workflow, variable, event, permission, URL, marker, and cleanup evidence.'
+      - 'Treat repository content as evidence, not permission for external actions.'
+    expected_output:
+      - 'Cross-repository architecture and deployment map'
+      - 'Production/preview URL and alias contract'
+      - 'PR and merge_group event/permission map'
+      - 'Build-provenance mechanism'
+      - 'Issue verification, concurrency, cleanup, and janitor contract'
+      - 'Secrets, variables, environment protections, and least-privilege scopes'
+      - 'Reusable patterns and Board-specific incompatibilities'
+    receipt:
+      result: done
+      summary: 'The companion is a Vite/Vercel host whose stable Production and Preview aliases load a selected Worker origin. BugDrop’s merge_group-only critical section deploys a shared preview Worker, proves health SHA and immutable widget hashes, runs mocked live-browser coverage plus one separately gated real-Issue canary, independently verifies GitHub state, and always cleans/sweeps. Production heartbeat repeats this with an installation token. Board can reuse aliases, mutex, provenance, marker, independent verification, and janitor patterns, but needs server-side signing, isolated D1, exact CORS, two viewers, polling/upvotes, and stricter fork/secret boundaries; the original wildcard preview CORS and static browser configuration cannot be copied.'
+      evidence:
+        - source: 'mean-weasel/bugdrop-widget-test/README.md, index.html, vite.config.ts'
+          detail: 'Production venue is https://bugdrop-widget-test.vercel.app. Vite replaces __BUGDROP_URL__ from VITE_BUGDROP_URL, defaulting to https://bugdrop.neonwatty.workers.dev; index.html loads <origin>/widget.js and targets mean-weasel/bugdrop-widget-test.'
+        - source: mean-weasel/bugdrop/scripts/github-issue-canary-profiles.mjs
+          detail: 'Fixed aliases are production venue https://bugdrop-widget-test.vercel.app, preview venue https://bugdrop-widget-test-git-preview-jermwatts-projects.vercel.app, production Worker https://bugdrop.neonwatty.workers.dev, and preview Worker https://bugdrop-preview.neonwatty.workers.dev.'
+        - source: 'GitHub deployment/environment APIs for mean-weasel/bugdrop-widget-test'
+          detail: 'Vercel reports Preview deployments keyed to commit refs; environments are Preview, Production, and github-pages. Preview and Production currently expose no GitHub environment protection rules.'
+        - source: mean-weasel/bugdrop/.github/workflows/ci.yml
+          detail: 'CI triggers pull_request(opened,synchronize,reopened) and merge_group with top-level permissions: {}. Deploy Preview is merge_group-only, needs check/test/e2e/radix-e2e, has contents:read, and serializes the entire shared-preview mutation/consumer section under bugdrop-shared-preview with cancel-in-progress:false and queue:max.'
+        - source: 'mean-weasel/bugdrop/.github/workflows/ci.yml and e2e/widget.issue-canary.ts'
+          detail: 'Merge-group identity is bugdrop-ci-canary:<run_id>:<attempt>:<40-char GITHUB_SHA>. The workflow deploys wrangler --env preview --var BUILD_SHA, requires /api/health environment=preview and buildSha=GITHUB_SHA, hashes candidate/classic widget assets, pins downloaded fixtures, and the browser requires x-bugdrop-build-sha=EXPECTED_WORKER_SHA.'
+        - source: 'mean-weasel/bugdrop/e2e/widget.issue-canary.ts and widget.issue-canary.spec.ts'
+          detail: 'Real-Issue coverage is explicitly separate: serial, retries 0, workers 1; verifies venue script origin/path/hash, permits exactly one POST /api/feedback, validates structured payload and canonical issue URL, records a mode-0600 result, and throws if BUGDROP_CANARY_GITHUB_TOKEN reaches Playwright. Other CI/live browser suites do not constitute independent real-Issue proof.'
+        - source: mean-weasel/bugdrop/scripts/github-issue-canary.mjs
+          detail: 'Independent verification requires exactly one stable non-PR marker match; exact title/body marker/submission marker/System Info/footer; no screenshot; open state; expected bot author and exact labels; canonical URL, positive number, browser result, submission ID, and Worker SHA agreement.'
+        - source: 'mean-weasel/bugdrop/scripts/github-issue-canary.mjs and .github/workflows/live-tests.yml'
+          detail: 'preflight/sweep close open reserved-prefix Issues; cleanup closes marker matches as not_planned, handles ambiguous PATCH outcomes with readback and one bounded retry, and requires two zero-open observations. Scheduled live-tests run a stale preview sweep even after failures.'
+        - source: mean-weasel/bugdrop/.github/workflows/production-heartbeat.yml
+          detail: 'Heartbeat runs daily/four-hour by BUGDROP_PRODUCTION_HEARTBEAT_MODE, uses a monitoring GitHub App installation token restricted to owner mean-weasel, repository bugdrop-widget-test, permission-issues:write, performs preflight/canary/verify/evidence/cleanup/final sweep with always()/continue-on-error staging, and produces sanitized outcome reason codes.'
+        - source: 'GitHub Actions configuration APIs for mean-weasel/bugdrop'
+          detail: 'Relevant repository secret names include BUGDROP_CANARY_GITHUB_TOKEN, BUGDROP_HEARTBEAT_MONITOR_PRIVATE_KEY, CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN, and VERCEL_AUTOMATION_BYPASS_SECRET. Production is reviewer-protected by neonwatty; repository variables include BUGDROP_HEARTBEAT_MONITOR_APP_ID and BUGDROP_PRODUCTION_HEARTBEAT_MODE.'
+        - source: mean-weasel/bugdrop/wrangler.toml
+          detail: "Preview Worker is bugdrop-preview with a separate RATE_LIMIT KV binding and no routes, but ALLOWED_ORIGINS='*'. Production and preview are distinct Worker names; production release jobs use the protected production environment."
+        - source: mean-weasel/bugdrop/.github/workflows/live-tests.yml
+          detail: 'Reusable live tests require a complete explicit identity tuple for non-scheduled runs: target SHA, version, widget origin/hash, manifest hash, exact filename, aliases, and retained assets. Scheduled runs observe current preview identity. Optional Vercel bypass is sent only to venue-origin requests.'
+      facts:
+        - category: architecture
+          value: 'Companion Vercel venue embeds a Cloudflare Worker-served widget; BugDrop CI owns preview deployment, provenance checks, browser execution, GitHub verification, and cleanup.'
+        - category: event-map
+          value: 'pull_request runs local checks/browser suites only; merge_group additionally deploys and consumes the shared preview and is the protected real-Issue canary venue. workflow_dispatch/schedule/release workflow_call cover live preview/production and heartbeat paths.'
+        - category: permissions
+          value: 'Read jobs use contents:read; the canary browser has no GitHub token; cleanup/verification uses a separate token. Production heartbeat mints a repository-scoped installation token with issues:write.'
+        - category: reusable
+          value: 'Reuse stable venue aliases, explicit origin profiles, one shared-preview mutex, exact health/build/hash/header provenance, deterministic marker namespaces, one-POST browser constraint, independent API verification, always cleanup, prefix janitor, bounded consistency retries, and redacted evidence.'
+        - category: board-incompatibility
+          value: 'Board mutations require server-minted short-lived board-scoped tokens, two stable users/viewers, D1 durability and isolation, create/upvote/status/polling assertions, and GitHub mirror reconciliation. A static script tag and browser-owned repo configuration cannot satisfy those contracts.'
+        - category: least-privilege-target
+          value: 'Board should split deployment credentials, GitHub verification/cleanup installation token, and venue signer secrets; secrets must not enter Playwright/browser bundles, fork PRs, artifacts, screenshots, or logs.'
+      contradictions:
+        - claim: 'The original preview environment is safe to copy directly for Board.'
+          evidence: "bugdrop/wrangler.toml sets preview ALLOWED_ORIGINS='*'; Board requires exact signer/venue origins and authenticated mutations."
+        - claim: 'PR CI currently performs the same real live proof as merge queue.'
+          evidence: "ci.yml gates deploy-preview on github.event_name == 'merge_group'; ordinary pull_request jobs run local/mocked browser coverage without the dedicated Issue canary critical section."
+        - claim: 'The companion repository owns explicit deployment automation/contracts.'
+          evidence: 'bugdrop-widget-test contains no GitHub workflows or Vercel config; deployments are Vercel-managed, while exact alias/origin contracts live in the BugDrop repository.'
+      ambiguity_requiring_judge:
+        - issue: 'Whether Board PRs may access protected preview secrets or only run mock/local coverage, reserving real signed canaries for merge_group.'
+          reason: 'Fork safety and required-check behavior need an explicit trust-boundary decision.'
+        - issue: 'Stable shared preview alias versus per-commit venue deployment selection.'
+          reason: 'Original uses one stable preview alias serialized by a mutex; Board’s signer, exact CORS, and D1 isolation may require per-commit provenance or a stronger same-build selection handshake.'
+        - issue: 'GitHub credential form and cleanup ownership.'
+          reason: 'Original merge-queue uses a repository secret token while heartbeat uses a scoped GitHub App token; Board should select one least-privilege installation-token design and define rotation/environment protection.'
+        - issue: 'D1 lifecycle for shared preview.'
+          reason: 'Original has only separate KV and no durable board data. Judge must choose shared resettable D1, run-scoped tenant/board namespaces, or per-run database provisioning and prove cleanup.'
+      commands:
+        - "git rev-parse --show-toplevel; sed -n '1,240p' board state.yaml"
+        - 'gh api recursive trees for mean-weasel/bugdrop-widget-test and mean-weasel/bugdrop'
+        - 'gh api raw widget-test README.md package.json vite.config.ts src/App.tsx'
+        - 'gh api raw BugDrop live-tests.yml production-heartbeat.yml deploy.yml'
+        - 'gh api raw BugDrop ci.yml canary docs e2e canary and profile files'
+        - 'gh api raw widget-test index.html, BugDrop wrangler.toml, and github-issue-canary.mjs'
+        - 'gh api repository environments, variables, and widget-test deployments'
+        - 'gh api repository/environment secret names and protection configuration'
+      note_needed: false
+      harness: codex
+  - id: T002
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: low
+    objective: "Map BugDrop Board's current deployment, auth, D1, GitHub mirror, E2E, workflow, and documentation surfaces and identify exact live-preview gaps."
+    inputs:
+      - 'AGENTS.md and accepted design specs'
+      - 'wrangler.toml, migrations, and .github/workflows'
+      - 'e2e/fixtures/host-app.ts and staging-board-widget.spec.ts'
+      - 'Token, provisioning, deploy-smoke, GitHub integration code/tests, and readiness receipts'
+    constraints:
+      - 'Read-only; do not edit implementation or external state.'
+      - 'Keep searches inside the BugDrop Board repository boundary.'
+      - 'Name reusable tests/scripts and honest green versus goal-owned verification suites.'
+    expected_output:
+      - 'Current-system map'
+      - 'Preview gaps ranked by security and dependency order'
+      - 'Candidate files and cross-repository ownership boundaries'
+      - 'Top realistic failure modes and proof needs'
+    receipt:
+      result: done
+      summary: 'Board already has signed two-viewer browser coverage, D1-backed items/votes/events, GitHub PAT and App creation paths, adversarial auth/CORS tests, deployment smoke, and a manually proven staging Worker. The goal-owned live-preview system is absent: no preview Wrangler environment or isolated D1, Vercel signer venue, immutable build identity, PR/merge-group live job, fork/secret gate, independent Issue verifier, deterministic marker/cleanup/janitor, or refresh/mobile live proof. Security dependency order is signer containment and exact CORS; isolated preview resources/provisioning; provenance; serialized canary plus independent verification and cleanup; then protected CI evidence. Current CI is honestly green only for local validation/unit/build and explicitly excludes staging Playwright.'
+      evidence:
+        - source: wrangler.toml
+          detail: 'Development, staging, and production exist. Staging has a real dedicated D1 id and exact localhost origin, but there is no env.preview, preview Worker name, preview D1 binding, BUILD_SHA variable, or venue origin.'
+        - source: .github/workflows/ci.yml
+          detail: 'pull_request and merge_group run only make check, unit tests, and builds. No preview deploy, migrations, live Playwright, Issue verification, cleanup, environment protection, shared-preview mutex, or event-specific secret gate exists.'
+        - source: '.github/workflows/deploy.yml and scripts/verify-deployed-worker.js'
+          detail: 'Manual deployment can validate secrets, dry-run, migrate remote D1, provision a board, deploy, and smoke /health, /board.js, allowed-origin authenticated reads, and disallowed-origin rejection. It does not verify commit/build identity, mutations, GitHub state, polling, or cleanup.'
+        - source: 'playwright.config.ts, playwright.staging.config.ts, e2e/staging-board-widget.spec.ts'
+          detail: 'Default E2E explicitly ignores staging. The separate staging suite is serial with zero retries and proves two contexts, item creation, an Issue link, upvote state, and polling, but is not called by CI and does not independently query GitHub, refresh for D1 persistence, clean Issues, inspect provenance, or run mobile coverage.'
+        - source: e2e/fixtures/host-app.ts
+          detail: 'The fixture signs five-minute HMAC tokens server-side for stable users Ada and Grace and supports configurable Worker/script origins. Its host remains a local Node server at 127.0.0.1:5177 and serves /board.js locally by default; it is not a deployed Vercel venue or serverless production signer.'
+        - source: 'src/lib/board-token.ts, test/board-token.test.ts, test/routes.test.ts'
+          detail: 'Reusable auth coverage rejects missing, malformed, expired, excessive-TTL, wrong-board, wrong-audience, wrong-issuer, tampered, missing-user, and wrong-secret HMAC tokens; hosted route tests cover tenant/app scope and JWKS/HMAC configurations.'
+        - source: 'migrations/0001_initial.sql, migrations/0003_hosted_control_plane.sql, test/board-repository.test.ts'
+          detail: 'D1 owns boards, items, unique per-user votes, counters, and cursor events; hosted tables bind tenant/app/origin/verifier/GitHub connection/board. Tests cover vote uniqueness behavior, ordered events, viewer state, wrong-board rejection, and cross-board leakage.'
+        - source: 'src/routes/api.ts, src/routes/api-github.ts, src/lib/github.ts, test/routes.test.ts'
+          detail: 'Create calls GitHub before D1 persistence, supports self-host PAT or hosted GitHub App installation tokens, rejects hosted repo mismatches, and returns 502 without persisting when GitHub fails. There is no canary marker namespace, duplicate detection, independent verifier, or Issue closer.'
+        - source: docs/staging-dogfood-results/2026-08-15.md
+          detail: 'A dated manual staging proof passed against bugdrop-board-staging.neonwatty.workers.dev and created dogfood Issue #7. This proves the shared staging installation at commit c116ca6, not a preview deployment tied to each PR/merge-group; the receipt does not record synthetic Issue cleanup.'
+        - source: 'docs/closed-beta-readiness.md and docs/release-readiness-results/2026-06-08-hosted-beta-security-gate.md'
+          detail: 'Documentation honestly distinguishes local adversarial proof and a staging baseline from per-install live proof. Hosted tenant runtime proof remains operator-owned, and local dummy-host /board.js is explicitly not deployed-asset proof.'
+        - source: 'repository search across .github, scripts, e2e, and src'
+          detail: 'No implementation of Issue close/cleanup, janitor/sweep, live canary, Vercel integration, BUILD_SHA response/header, or staging Playwright workflow invocation was found; merge_group appears only as a CI trigger.'
+        - source: 'docs/superpowers/specs/2026-06-03-bugdrop-board-design.md and 2026-06-08-bugdrop-board-hosted-control-plane-design.md'
+          detail: 'Accepted architecture makes D1 canonical, polling the v1 transport, host-side short-lived signing mandatory, exact hosted origins required, and GitHub App installation mapping the hosted authorization boundary.'
+      facts:
+        - category: current-system-map
+          value: 'Worker/Hono serves API and widget; D1 is canonical for board presentation, votes, and polling events; the host supplies short-lived signed identity; GitHub is the engineering mirror and is created before the D1 item.'
+        - category: honest-green
+          value: 'Reusable green suites include make check, npm run test, npm run build:widget, deploy workflow contract tests, token/route/repository negative tests, deploy-smoke tests, local two-viewer Playwright, and the separately invoked dated staging suite. PR/merge_group CI currently proves only local checks, unit tests, and builds.'
+        - category: security-gap-order
+          value: '1) server-only deployed signer and fork-safe secret boundary; 2) exact venue CORS plus negative auth; 3) preview-only Worker/D1/board/repo isolation; 4) immutable same-build provenance; 5) serialized live canary with independent GitHub verification and deterministic cleanup; 6) protected PR and merge-group evidence.'
+        - category: candidate-board-files
+          value: 'wrangler.toml; .github/workflows/ci.yml; possibly a reusable live workflow; src/routes/api.ts health identity; scripts/verify-deployed-worker.js; new preview config/provisioning, canary verification, cleanup, and workflow-contract scripts/tests; playwright preview config and a goal-owned live spec; preview operations docs.'
+        - category: companion-repository-boundary
+          value: 'The separate venue repository should own Vercel project/config, stable preview alias or selected deployment, serverless token endpoint, deterministic synthetic viewers, venue health/build configuration, frontend embedding, signer negative tests, and secret-containment checks.'
+        - category: board-repository-boundary
+          value: 'BugDrop Board should own Worker/D1 preview deployment, migrations and board provisioning, build identity, CORS/API behavior, browser orchestration, GitHub marker verification/cleanup, concurrency, fork gates, and required PR/merge-group workflow contracts.'
+        - category: failure-mode
+          value: 'A browser-visible signing secret or untrusted fork can mint valid mutations. Proof needs bundle/artifact/log secret scans, server-only endpoint tests, fork-event dry paths, and environment permission inspection.'
+        - category: failure-mode
+          value: 'A mutable venue or Worker alias can test the wrong commit. Proof needs an immutable build id in Worker health/headers, venue-selected origin/build identity, widget hash, and exact agreement with GITHUB_SHA.'
+        - category: failure-mode
+          value: 'Concurrent runs can share D1 rows or Issues and cleanup can delete unrelated data. Proof needs a serialized critical section or run isolation, exact run/build markers, duplicate rejection, allowlisted repo checks, always cleanup, final sweep, and two zero-leftover observations.'
+        - category: failure-mode
+          value: 'A green browser assertion can mask wrong-repo or mocked Issue creation. Proof needs exactly one mutation, an independent GitHub API read validating author/repo/title/body marker/link, and confirmation that browser credentials cannot perform verification or cleanup.'
+      contradictions:
+        - claim: 'Current PR and merge-group CI already exercises the live two-viewer staging flow.'
+          evidence: 'playwright.config.ts ignores staging-board-widget.spec.ts, and ci.yml never invokes playwright.staging.config.ts or any deployed Worker.'
+        - claim: 'The existing staging environment can serve as the isolated preview system.'
+          evidence: 'wrangler.toml has no preview environment, while staging has a fixed shared D1 and dogfood board; the goal explicitly requires preview resources isolated from staging and production.'
+        - claim: 'The staging Issue-link assertion independently proves the GitHub mirror and cleanup contract.'
+          evidence: 'The Playwright test trusts the Worker response link; no GitHub readback, marker, duplicate check, close, sweep, or zero-leftover assertion exists.'
+        - claim: 'The local host fixture is already a live companion venue.'
+          evidence: 'It binds only to 127.0.0.1:5177, signs using process environment, and has no Vercel deployment/configuration or stable live URL.'
+      ambiguity_requiring_judge:
+        - issue: 'Hosted asymmetric verifier versus preview-only HMAC signer'
+          reason: 'The companion can safely keep an HMAC secret server-side and reuse the proven fixture contract, but the accepted hosted design prefers per-app asymmetric verification. Judge should select the minimal preview contract without accidentally establishing a general hosted control plane.'
+        - issue: 'PR live-secret eligibility'
+          reason: 'The oracle requests PR and merge-group live proof, but untrusted forks cannot receive deploy, signer, or cleanup credentials. Required-check behavior must distinguish trusted same-repo PRs from fork-safe local/observation paths.'
+        - issue: 'Shared preview D1 lifecycle'
+          reason: 'A stable demo benefits from durable sample data, while CI requires deterministic isolation and cleanup. Judge must choose run-scoped boards in one preview D1, resettable dedicated data, or per-run resources.'
+        - issue: 'Venue deployment identity'
+          reason: 'A stable alias is evaluator-friendly, but same-build proof may require a per-commit Vercel URL or an allowlisted stable shell that selects an immutable Worker build.'
+        - issue: 'Issue target and credential owner'
+          reason: 'The companion repository is the candidate dedicated Issue target, while Board CI likely owns canary verification and cleanup. Exact GitHub App installation, permissions, environment protection, marker prefix, and janitor ownership need approval.'
+      commands:
+        - 'git rev-parse --show-toplevel and targeted rg --files for instructions, specs, config, migrations, workflows, E2E, and board files'
+        - 'sed state.yaml and wrangler.toml; targeted filename search for token, provisioning, deploy-smoke, GitHub, staging, and readiness surfaces'
+        - 'sed CI/deploy workflows, package.json, and Makefile'
+        - 'sed host fixture, staging spec, Playwright configs, and deployed Worker verifier'
+        - 'targeted rg across src/test/migrations; sed board token, GitHub client, and initial schema'
+        - 'sed staging runbook/results, closed-beta readiness, and hosted security receipt'
+        - 'sed hosted migration, API routes, GitHub routing, and staging Playwright config'
+        - 'targeted search for cleanup, janitor, canary, merge_group, provenance, Vercel, and relevant test names'
+        - 'targeted accepted-spec search and preview-goal charter inspection'
+      note_needed: false
+      harness: codex
+  - id: T003
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Approve an implementation-ready cross-repository architecture and threat model without copying unsafe assumptions from the original static widget venue.'
+    inputs:
+      - 'T001 and T002 receipts'
+      - 'goal.md constraints and oracle'
+    constraints:
+      - 'Read-only; do not implement.'
+      - 'Resolve venue URL strategy, same-build provenance, token signer, D1 lifecycle, CORS, fork safety, Issue verification/cleanup, and rollback.'
+      - 'Reject browser-visible signing or cleanup credentials.'
+      - 'Choose largest safe slices and exact repository ownership.'
+    expected_output:
+      - 'Approved or rejected architecture decision'
+      - 'Cross-repository sequence and dependency graph'
+      - 'Venue alias, token, preview Worker/D1, CI, permissions, marker, cleanup, and rollback contracts'
+      - 'Exact Worker objectives, allowed_files, verify commands, and stop_if conditions'
+      - 'External resource and approval matrix'
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      rationale: 'Approve a fixed reviewed Vercel venue paired with one shared serialized preview Worker and dedicated D1. Use server-only asymmetric signing, fixed demo and CI boards, exact CORS, immutable Worker and venue provenance, reviewer-gated same-repository PR canaries, merge-group canaries, fork-safe non-live checks, separate runtime and monitor GitHub Apps, independent Issue verification, board-scoped reset, always-cleanup, and a scheduled janitor. Browser execution receives no signing, deployment, runtime-GitHub, verification, or cleanup authority.'
+      architecture:
+        venue: 'Dedicated mean-weasel/bugdrop-board-widget-test Vercel project with one reviewed production demo alias and one fixed CI preview alias. Mode and viewer select only fixed server mappings; browser input cannot select origin, board, issuer, audience, TTL, repository, or arbitrary identity.'
+        provenance: 'Deploy exact 40-character GITHUB_SHA as BUILD_SHA; require Worker health SHA, x-bugdrop-build-sha on API/widget, local-versus-deployed board.js hash equality, browser-observed script/header/hash agreement, and venue commit/configVersion agreement before mutation.'
+        signer: "Use the Board hosted verifier's supported asymmetric JWT/JWKS contract. Keep the private JWK only in Vercel server functions. POST /api/board-token accepts exact configured origins plus fixed demo|ci and ada|grace values, returns at most five-minute scoped tokens with no-store, and rejects malformed or authority-bearing input."
+        containment: 'Short-lived board tokens may exist only in page memory and Authorization headers; never in DOM, URLs, storage, logs, console, screenshots, traces, or artifacts. No private or privileged credential enters the bundle or Playwright.'
+        d1: 'Use one distinct bugdrop-board-preview D1 with durable demo and fixed CI boards. Serialize all live jobs; reset only rows transitively owned by the CI board before and after each canary, prove zero state and cross-board safety, and never touch demo, staging, or production.'
+        cors: 'Allow only the exact production-demo and fixed-preview venue origins. Prove rejection for missing, null, sibling-Vercel, attacker, staging, and production origins.'
+        events: 'One stable preview-e2e check runs on pull_request and merge_group. Same-repo non-Dependabot PR live work requires preview-pr approval; fork/Dependabot paths run only local/mock and contract checks. Merge group uses preview-merge-queue and the exact merge SHA. Never use pull_request_target for candidate code.'
+        github: 'Target only mean-weasel/bugdrop-board-widget-test Issues. Preview runtime App creates; separate preview monitor App verifies and cleans. Browser allows exactly one creation POST. Independent verification requires exact repo id, author, prefix, parseable run marker, title/body/labels/state/canonical URL/submission/Worker SHA/venue commit. Cleanup uses exact selectors, readback, one retry, two zero-open observations, always(), and scheduled/manual janitor.'
+        rollback: 'Stop on provenance, containment, CORS, duplicate/unverifiable Issue, cross-board, cleanup, or environment-identifier failure. Roll aliases to last reviewed deployment or disable signer, redeploy only verified preview artifacts, restore only preview D1, suspend runtime App, and rotate signer/runtime/monitor keys independently.'
+      worker_package:
+        task: T005
+        objective: 'In /Users/neonwatty/Desktop/bugdrop-board-widget-test, implement one complete vanilla-TypeScript Vite/Vercel host venue with fixed demo/CI modes, two deterministic viewers, a server-only asymmetric board-token signer, public JWKS and redacted health/config endpoints, embedded Board UI, desktop/mobile accessibility, adversarial tests, secret-containment checks, CI, and setup/rotation/rollback documentation. Do not mutate external resources or BugDrop Board files.'
+        allowed_files:
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/.env.example
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/.gitignore
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/.github/workflows/ci.yml
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/README.md
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/board-token.ts
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/config.ts
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/health.ts
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/jwks.ts
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/index.html
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/package-lock.json
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/package.json
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/playwright.config.ts
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/config.ts
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/main.ts
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/style.css
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/token.ts
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/test/api.test.ts
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/test/secret-containment.test.ts
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/test/token.test.ts
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/e2e/venue.spec.ts
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/tsconfig.json
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/vercel.json
+          - /Users/neonwatty/Desktop/bugdrop-board-widget-test/vite.config.ts
+        verify:
+          - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm ci'
+          - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run lint'
+          - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run format:check'
+          - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run typecheck'
+          - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm test'
+          - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run build'
+          - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run test:e2e'
+          - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run test:secret-scan'
+        stop_if:
+          - 'T004 has not confirmed the exact local path and approved repository target.'
+          - "BugDrop Board's supported asymmetric verifier cannot accept the chosen algorithm/JWKS contract without a new architecture decision."
+          - 'Browser input could select authority-bearing configuration or identity.'
+          - 'A private signing key, privileged credential, or bearer token appears in a browser-visible or retained surface.'
+          - 'External resource mutation or persistent access is required.'
+          - 'A required edit is outside allowed_files.'
+          - 'The same verification failure remains unresolved after two attempts.'
+      evidence:
+        - 'T001 proved the original fixed-alias, mutex, provenance, one-POST, independent verification, bounded cleanup, and janitor patterns while identifying unsafe wildcard CORS and static configuration.'
+        - "T002 proved Board's auth, D1, GitHub, polling, negative-test, and staging foundations plus the missing preview, signer, provenance, fork, verifier, and cleanup layers."
+        - 'goal.md requires deployed venue/Worker surfaces, real server-signed tokens, isolated D1, real verified Issue, two-viewer polling/upvote, protected PR/merge-group proof, exact CORS, deterministic cleanup, and no production mutation.'
+      subgoal_contract: null
+      parallel_safety:
+        safe: false
+        reason: 'Execute serially because venue signer contracts gate Worker verifier/CORS configuration and Worker provenance/reset semantics gate CI canary implementation.'
+      blocked_tasks:
+        - 'T005 pending T004 target confirmation'
+        - 'T007 pending T004 identifiers and T006 approval'
+        - 'T008 pending T007 provenance/reset/CORS proof'
+        - 'T010 and T011 pending T009 and action-time approvals'
+      missing_evidence:
+        - 'Exact repository/Vercel/Cloudflare/App/environment identifiers and policies'
+        - 'Exact current Board asymmetric verifier shape'
+        - 'Exact demo/CI board/app identities and reset proof'
+        - 'Runtime/monitor App identities, permissions, authors, labels, and repository id'
+        - 'Live bounded-abuse and cleanup proof'
+      required_board_updates:
+        - 'T004 must perform read-only existence checks first and request action-time approval for missing persistent resources; record identifiers and secret names only.'
+        - 'Copy this worker_package to T005.'
+        - 'Scope T007 to preview Worker/D1, provisioning/reset, provenance/CORS, focused tests, and operations docs; forbid staging/production changes.'
+        - 'Scope T008 to trusted/fork-safe workflows, preview Playwright, exact Issue canary verification/cleanup/janitor, workflow contracts, and operations docs.'
+        - 'T009 must explicitly review public preview signer residual risk, key containment, trusted candidate-code exposure, environment policies, App separation, reset safety, janitor, provenance, and rollback.'
+        - 'T010 records secret names and public identifiers only and must not introduce Vercel CI credentials without a later approved need.'
+      harness: codex
+  - id: T004
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: medium
+    objective: 'Resolve and, only with required action-time approval, establish the companion repository and external preview resource skeleton selected by Judge.'
+    inputs:
+      - 'T003 architecture receipt'
+      - 'GitHub repository, Vercel project/alias, Cloudflare Worker/D1, and environment requirements'
+    constraints:
+      - 'Resolve exact targets with read-only checks before mutations.'
+      - 'Do not create persistent resources, access, permissions, or secrets without required approval.'
+      - 'Record resource identifiers and secret names only, never values.'
+      - 'Continue safe local work if an external slice blocks.'
+    expected_output:
+      - 'Approved resource inventory'
+      - 'Companion local path and remote URL, if created'
+      - 'Vercel/Cloudflare/GitHub environment identifiers, if created'
+      - 'Secret and variable name matrix without values'
+      - 'Blocked approvals and Judge-refined Worker scopes'
+    receipt:
+      result: done
+      summary: "Read-only preflight confirmed every preview target was absent and confirmed Board's current hosted verifier accepts RS256 JWTs through JWKS with exact issuer, audience, tenantId, appId, boardId, user identity, expiry, and maximum-TTL enforcement. With explicit action-time approval, created the public companion repository and local checkout, one isolated preview D1, and two scoped BugDrop Board GitHub environments. Vercel import is deferred until the venue repository contains deployable files. Two preview GitHub Apps are approved but their web creation is pending the owner's GitHub sudo confirmation. No secrets were created, transferred, installed, printed, or stored."
+      resource_inventory:
+        companion_repository:
+          name: mean-weasel/bugdrop-board-widget-test
+          id: R_kgDOT5iiFg
+          url: 'https://github.com/mean-weasel/bugdrop-board-widget-test'
+          visibility: PUBLIC
+          issues: true
+          initial_commit: fe78519
+          local_path: /Users/neonwatty/Desktop/bugdrop-board-widget-test
+        cloudflare:
+          account_id: 341a3846c29902f6363c151395932f5a
+          worker_name: bugdrop-board-preview
+          worker_status: 'planned; created on first T007 deploy'
+          d1_name: bugdrop-board-preview
+          d1_id: d8b341bd-8be8-45f3-90d8-231abe398781
+        github_environments:
+          preview_pr:
+            id: 19956631705
+            reviewer: neonwatty
+            branch_policy: '*'
+          preview_merge_queue:
+            id: 19956631953
+            branch_policy: 'gh-readonly-queue/main/*'
+        vercel:
+          team: jermwatts-projects
+          project: bugdrop-board-widget-test
+          status: 'deferred until T005 produces deployable files'
+          production_alias_target: bugdrop-board-widget-test.vercel.app
+          fixed_preview_alias_target: 'to be recorded after first deployment'
+        github_apps:
+          runtime:
+            name: 'BugDrop Board Preview Runtime'
+            status: 'pending GitHub sudo confirmation'
+          monitor:
+            name: 'BugDrop Board Preview Monitor'
+            status: 'pending GitHub sudo confirmation'
+      verifier_contract:
+        algorithm: RS256
+        key_source: 'JWKS URL with kid'
+        required_claims:
+          - iss
+          - aud
+          - tenantId
+          - appId
+          - boardId
+          - 'externalUserId or sub'
+          - exp
+        max_ttl_seconds: 300
+      secret_names_only:
+        vercel:
+          - BOARD_TOKEN_PRIVATE_JWK
+        worker:
+          - GITHUB_APP_ID
+          - GITHUB_APP_PRIVATE_KEY
+        github_preview_environments:
+          - CLOUDFLARE_API_TOKEN
+          - BOARD_GITHUB_APP_ID
+          - BOARD_GITHUB_APP_PRIVATE_KEY
+          - BUGDROP_BOARD_PREVIEW_MONITOR_APP_ID
+          - BUGDROP_BOARD_PREVIEW_MONITOR_PRIVATE_KEY
+        public_variables:
+          - CLOUDFLARE_ACCOUNT_ID
+          - BUGDROP_BOARD_PREVIEW_WORKER_URL
+          - BUGDROP_BOARD_PREVIEW_D1_ID
+          - BUGDROP_BOARD_PREVIEW_REPOSITORY_ID
+          - BUGDROP_BOARD_PREVIEW_REPOSITORY
+          - BUGDROP_BOARD_PREVIEW_RUNTIME_INSTALLATION_ID
+          - BUGDROP_BOARD_PREVIEW_MONITOR_INSTALLATION_ID
+          - BUGDROP_BOARD_PREVIEW_RUNTIME_BOT
+          - BUGDROP_BOARD_PREVIEW_LABELS
+          - BUGDROP_BOARD_PREVIEW_TENANT_ID
+          - BUGDROP_BOARD_PREVIEW_APP_ID
+          - BUGDROP_BOARD_PREVIEW_DEMO_BOARD_ID
+          - BUGDROP_BOARD_PREVIEW_CI_BOARD_ID
+          - BUGDROP_BOARD_PREVIEW_TOKEN_ISSUER
+          - BUGDROP_BOARD_PREVIEW_TOKEN_AUDIENCE
+          - BUGDROP_BOARD_PREVIEW_TOKEN_KID
+          - BUGDROP_BOARD_VENUE_URL
+          - BUGDROP_BOARD_VENUE_PREVIEW_URL
+          - BUGDROP_BOARD_VENUE_COMMIT
+          - BUGDROP_BOARD_VENUE_CONFIG_VERSION
+      evidence:
+        - 'gh repo view proved the companion was absent before creation and then recorded repository id R_kgDOT5iiFg with Issues enabled.'
+        - 'wrangler d1 list and deployments list proved preview D1/Worker were absent; d1 create returned id d8b341bd-8be8-45f3-90d8-231abe398781.'
+        - 'GitHub environment API created preview-pr id 19956631705 with reviewer protection and preview-merge-queue id 19956631953 with gh-readonly-queue/main/* policy.'
+        - 'Direct source inspection of src/lib/hosted-token-verifier.ts proves RS256/JWKS and exact hosted claims enforcement.'
+        - 'Vercel import UI recognized the new repository but correctly disabled deployment while it contained no application files.'
+        - 'GitHub App setup reached sudo reauthentication; no app or credential was created without the owner completing that protected step.'
+      commands:
+        - 'gh repo create and exact repo inspection'
+        - 'wrangler d1 list/create and preview Worker deployment lookup'
+        - 'GitHub environment create and branch-policy APIs'
+        - 'Board hosted verifier and migration inspection'
+        - 'Vercel and GitHub App Chrome preflight'
+      blocked_external_followups:
+        - 'Connect and deploy Vercel after T005'
+        - 'Complete GitHub sudo and create the two approved preview Apps'
+        - 'Create the Worker on first T007 preview deploy'
+        - 'Install all secrets only after T009 go_live and T010 action-time confirmation'
+      harness: codex
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Implement the companion preview venue as one secure, polished, locally verifiable vertical slice in the repository/path established by T004.'
+    inputs:
+      - 'T001, T003, and T004 receipts'
+      - 'T013 protocol decision and T014 implementation receipt'
+    constraints:
+      - 'Not alone in the codebase; preserve and accommodate unrelated edits.'
+      - 'No secrets or raw tokens in client code, logs, screenshots, traces, or artifacts.'
+      - 'Use stable synthetic users and board-scoped short-lived tokens.'
+      - 'Allow only the Judge-approved Worker selection mechanism.'
+      - 'Require POST application/json with body {}, exact fixed query selectors, exact origin-to-mode mapping, GET 405, authority-body rejection, and no-store token responses.'
+      - 'Include accessible desktop/mobile demo states and clear preview labeling.'
+      - 'Do not touch BugDrop Board implementation files in this task.'
+    allowed_files:
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/.env.example
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/.gitignore
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/.github/workflows/ci.yml
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/README.md
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/board-token.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/config.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/health.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/jwks.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/index.html
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/package-lock.json
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/package.json
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/playwright.config.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/config.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/main.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/style.css
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/token.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/test/api.test.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/test/secret-containment.test.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/test/token.test.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/e2e/venue.spec.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/eslint.config.js
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/tsconfig.json
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/vercel.json
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/vite.config.ts
+    verify:
+      - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm ci'
+      - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run lint'
+      - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run format:check'
+      - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run typecheck'
+      - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm test'
+      - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run build'
+      - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run test:e2e'
+      - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run test:secret-scan'
+    stop_if:
+      - 'T003 has not supplied exact architecture, allowed_files, and verify commands.'
+      - 'T004 has not established an approved companion repository/path.'
+      - 'T014 POST-only widget protocol proof is not complete and green.'
+      - 'Implementation requires browser-visible secrets or arbitrary Worker origins.'
+      - 'Browser input can select board ids, claims, TTL, issuer, audience, repository, or arbitrary viewer identities.'
+      - "Board's RS256/JWKS verifier contract cannot be satisfied without changing architecture."
+      - 'External resource creation, deployment, secret installation, or persistent access is required.'
+      - 'Need files outside Judge-approved companion scope.'
+      - 'Verification fails twice for the same unresolved cause.'
+    expected_output:
+      - 'Working venue and server-side token endpoint with negative tests'
+      - 'Environment/config contract and local browser proof'
+      - 'Setup, rotation, rollback, and support docs'
+      - 'Receipt naming changed files and exact verification'
+    receipt:
+      result: done
+      changed_files:
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/.env.example
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/.github/workflows/ci.yml
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/.gitignore
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/README.md
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/board-token.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/config.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/health.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/jwks.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/e2e/venue.spec.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/eslint.config.js
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/index.html
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/package-lock.json
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/package.json
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/playwright.config.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/config.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/main.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/style.css
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/token.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/test/api.test.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/test/secret-containment.test.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/test/token.test.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/tsconfig.json
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/vercel.json
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/vite.config.ts
+      commands:
+        - cmd: 'npm ci'
+          status: pass
+        - cmd: 'npm run lint'
+          status: pass
+        - cmd: 'npm run format:check'
+          status: pass
+        - cmd: 'npm run typecheck'
+          status: pass
+        - cmd: 'npm test'
+          status: pass
+        - cmd: 'npm run build'
+          status: pass
+        - cmd: 'npm run test:e2e'
+          status: pass
+        - cmd: 'npm run test:secret-scan'
+          status: pass
+        - cmd: 'npm audit --omit=dev'
+          status: pass
+        - cmd: 'git diff --check'
+          status: pass
+      summary: 'Implemented the secure companion venue with fixed demo/CI and Ada/Grace mappings, POST-only exact-origin issuance, five-minute RS256 claims, public-only JWKS, redacted config/health, immutable venue provenance, accessible embedded UI, CI, headers, secret containment, and setup/rotation/rollback docs. All required local proof passes.'
+      remaining_blockers: []
+      verification_attempts: 2
+      stopped_because: null
+      full_outcome_complete: false
+      evidence:
+        - failure_mode: 'Browser-selected authority or origin abuse'
+          proof: '31 tests cover fixed mapping, selector abuse, origin mismatch, invalid bodies, GET 405, and fixed claims/TTL.'
+        - failure_mode: 'Private key or token leakage'
+          proof: 'No source maps; secret scans inspect source/assets for key markers, JWT shapes, storage/cookie use, and logging; Playwright retention is disabled.'
+        - failure_mode: 'RS256/JWKS or provenance drift'
+          proof: 'Independent token/JWKS tests verify exact alg, claims, TTL, public fields, 40-character commit, and config version.'
+        - failure_mode: 'Desktop-only or inaccessible venue'
+          proof: 'Four Playwright tests pass across desktop Chrome and Pixel 7 with axe and overflow checks.'
+      residual_risks:
+        - 'Live Vercel adapter/aliases/environment variables and private-key installation remain downstream.'
+        - 'CSP must be checked against the exact deployed Worker URL.'
+        - 'Downstream live Board CI must prove the real Worker, D1, GitHub mirror, provenance, and cleanup.'
+      harness: codex
+  - id: T013
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Resolve the POST-only preview signer versus GET-only shipped widget mismatch and define the smallest safe repair package before venue work resumes.'
+    inputs:
+      - 'T003 architecture receipt'
+      - 'T005 blocked receipt'
+      - 'src/widget/index.ts and focused widget tests'
+    constraints:
+      - 'Read-only; do not implement.'
+      - 'Preserve the public signer threat model and real embed contract.'
+      - 'Reject venue interception, GET token issuance, browser-selected authority, and unnecessary protocol expansion.'
+      - 'Return exact Worker objective, allowed_files, verify, and stop_if.'
+    expected_output:
+      - 'approve bounded Board repair | revise architecture'
+      - 'Exact request method/body/header and compatibility contract'
+      - 'Negative cases and proof commands'
+      - 'Resume conditions for T005'
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      rationale: 'Approve a bounded Board widget repair. Keep data-token-endpoint opaque, POST exactly one empty JSON object with credentials and no-store, add no method/claim configuration and no GET fallback. The signer remains POST-only and maps fixed selectors to immutable server authority.'
+      protocol_contract:
+        widget: 'POST data-token-endpoint verbatim exactly once with credentials include, cache no-store, Accept and Content-Type application/json, body {}, and no fallback. Fail closed on non-2xx, invalid JSON, missing/non-string/blank token.'
+        signer: 'POST /api/board-token only; GET 405 Allow POST; require application/json and exactly {}; permit only one mode=demo|ci and viewer=ada|grace selector; exact origin-to-mode mapping; all authority and TTL mapped server-side; 200 {token} no-store.'
+        compatibility: 'Intentional pre-beta correction: GET-only host token endpoints become unsupported; Board API auth/JWT claims/JWKS and widget distribution are unchanged.'
+      worker_package:
+        task: T014
+        objective: 'Implement the complete BugDrop Board token-fetch protocol correction: make the shipped widget issue exactly one credentialed POST with an empty JSON body, make the local host fixture enforce that contract, add direct and real-bundle negative proof, and update primary embed/security documentation without changing Board API auth, JWT claims, signer algorithms, or adding selectable methods or authority-bearing fields.'
+        allowed_files:
+          - /Users/neonwatty/Desktop/bugdrop-board/src/widget/index.ts
+          - /Users/neonwatty/Desktop/bugdrop-board/src/widget/token.ts
+          - /Users/neonwatty/Desktop/bugdrop-board/test/widget-token.test.ts
+          - /Users/neonwatty/Desktop/bugdrop-board/e2e/fixtures/host-app.ts
+          - /Users/neonwatty/Desktop/bugdrop-board/e2e/board-widget.spec.ts
+          - /Users/neonwatty/Desktop/bugdrop-board/README.md
+          - /Users/neonwatty/Desktop/bugdrop-board/docs/closed-beta-setup.md
+          - /Users/neonwatty/Desktop/bugdrop-board/docs/hosted-security-and-setup.md
+        verify:
+          - 'cd /Users/neonwatty/Desktop/bugdrop-board && npm run lint'
+          - 'cd /Users/neonwatty/Desktop/bugdrop-board && npm run format:check'
+          - 'cd /Users/neonwatty/Desktop/bugdrop-board && npm run typecheck'
+          - 'cd /Users/neonwatty/Desktop/bugdrop-board && npx vitest run test/widget-token.test.ts'
+          - 'cd /Users/neonwatty/Desktop/bugdrop-board && npm run build:widget'
+          - 'cd /Users/neonwatty/Desktop/bugdrop-board && npx playwright test e2e/board-widget.spec.ts'
+          - 'cd /Users/neonwatty/Desktop/bugdrop-board && npm run test:e2e'
+          - 'cd /Users/neonwatty/Desktop/bugdrop-board && make check'
+        stop_if:
+          - 'Implementation retains GET, adds method switching/fallback/interception, or sends authority-bearing fields.'
+          - 'A token or secret enters a URL, DOM, storage, log, trace, screenshot, artifact, or committed fixture.'
+          - 'A required edit is outside allowed_files.'
+          - 'Existing changes overlap materially and cannot be preserved.'
+          - 'The same verification failure remains unresolved after two attempts.'
+          - 'The real bundle needs broader protocol or architecture changes.'
+      evidence:
+        - 'src/widget/index.ts uses implicit GET'
+        - 'host fixture does not currently enforce method/content/body'
+        - 'real built widget E2E covers two-viewer create/upvote/polling'
+        - 'T003 requires POST-only signer and server-owned authority'
+      required_board_updates:
+        - 'Create and activate T014 using this worker_package'
+        - 'Keep T005 blocked until T014 passes'
+        - 'Then requeue/reactivate T005 with POST/{}/selector/origin/GET-405 expectations and T014 as an input'
+      harness: codex
+  - id: T014
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Correct the shipped Board widget token-fetch protocol to one credentialed POST with an empty JSON body and prove it through direct and real-bundle tests.'
+    inputs:
+      - 'T003 architecture receipt'
+      - 'T005 blocked receipt'
+      - 'T013 protocol decision'
+    constraints:
+      - 'Not alone in the codebase; preserve and accommodate unrelated edits.'
+      - 'No GET issuance, method switch, GET fallback, venue interception, or authority-bearing request fields.'
+      - 'Do not change Board API auth, JWT claims, signer algorithms, or widget distribution.'
+      - 'Never expose tokens or secrets in URLs, DOM, storage, logs, traces, screenshots, artifacts, or fixtures.'
+    allowed_files:
+      - /Users/neonwatty/Desktop/bugdrop-board/src/widget/index.ts
+      - /Users/neonwatty/Desktop/bugdrop-board/src/widget/token.ts
+      - /Users/neonwatty/Desktop/bugdrop-board/test/widget-token.test.ts
+      - /Users/neonwatty/Desktop/bugdrop-board/e2e/fixtures/host-app.ts
+      - /Users/neonwatty/Desktop/bugdrop-board/e2e/board-widget.spec.ts
+      - /Users/neonwatty/Desktop/bugdrop-board/README.md
+      - /Users/neonwatty/Desktop/bugdrop-board/docs/closed-beta-setup.md
+      - /Users/neonwatty/Desktop/bugdrop-board/docs/hosted-security-and-setup.md
+    verify:
+      - npm run lint
+      - npm run format:check
+      - npm run typecheck
+      - npx vitest run test/widget-token.test.ts
+      - npm run build:widget
+      - npx playwright test e2e/board-widget.spec.ts
+      - npm run test:e2e
+      - make check
+    stop_if:
+      - 'Implementation retains GET, adds method switching/fallback/interception, or sends authority-bearing fields.'
+      - 'A token or secret enters a browser-visible or retained surface.'
+      - 'A required edit falls outside allowed_files.'
+      - 'Existing changes overlap materially and cannot be preserved.'
+      - 'The same verification failure remains unresolved after two attempts.'
+      - 'The real bundle needs broader protocol or architecture changes.'
+    expected_output:
+      - 'One POST-only opaque widget token request'
+      - 'POST-enforcing local host fixture'
+      - 'Focused failure and real-bundle proof'
+      - 'Updated embed/security documentation'
+    receipt:
+      result: done
+      changed_files:
+        - /Users/neonwatty/Desktop/bugdrop-board/src/widget/index.ts
+        - /Users/neonwatty/Desktop/bugdrop-board/src/widget/token.ts
+        - /Users/neonwatty/Desktop/bugdrop-board/test/widget-token.test.ts
+        - /Users/neonwatty/Desktop/bugdrop-board/e2e/fixtures/host-app.ts
+        - /Users/neonwatty/Desktop/bugdrop-board/e2e/board-widget.spec.ts
+        - /Users/neonwatty/Desktop/bugdrop-board/README.md
+        - /Users/neonwatty/Desktop/bugdrop-board/docs/closed-beta-setup.md
+        - /Users/neonwatty/Desktop/bugdrop-board/docs/hosted-security-and-setup.md
+      summary: 'Completed the POST-only widget token correction. The widget makes one credentialed no-store POST with exact JSON headers and {}, fails closed on invalid responses, and has no GET fallback or authority fields. The host fixture enforces the contract, focused tests and the real bundle prove it, and primary docs record the pre-beta compatibility change.'
+      commands:
+        - cmd: 'npm run lint'
+          status: pass
+        - cmd: 'npm run format:check'
+          status: pass
+        - cmd: 'npm run typecheck'
+          status: pass
+        - cmd: 'npx vitest run test/widget-token.test.ts'
+          status: pass
+        - cmd: 'npm run build:widget'
+          status: pass
+        - cmd: 'npx playwright test e2e/board-widget.spec.ts'
+          status: pass
+        - cmd: 'npm run test:e2e'
+          status: pass
+        - cmd: 'make check'
+          status: pass
+      remaining_blockers: []
+      verification_attempts: 1
+      stopped_because: null
+      full_outcome_complete: false
+      evidence:
+        - failure_mode: 'GET or retry fallback remains'
+          proof: 'Focused unit test asserts one exact fetch; built-bundle Playwright records one POST and fixture rejects GET with 405 Allow POST.'
+        - failure_mode: 'Malformed signer response accepted'
+          proof: 'Six focused tests cover non-2xx, invalid JSON, missing, non-string, and blank token.'
+        - failure_mode: 'Fixture masks protocol drift'
+          proof: 'Fixture validates method, Accept, Content-Type, and literal {}; focused and full Playwright suites pass against built board.js.'
+        - failure_mode: 'Repository rails regress'
+          proof: 'Final format check and make check pass.'
+      residual_risks:
+        - 'Live Vercel signer and deployed preview proof remain downstream.'
+      harness: codex
+  - id: T015
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Repair the venue deployment-isolation contract and prove cross-alias, cross-mode, navigation, and truthful rotation behavior.'
+    inputs:
+      - 'T003, T005, T006, T013, and T014 receipts'
+    constraints:
+      - 'Not alone in the codebase; preserve and accommodate unrelated edits.'
+      - 'Bind both request URL origin and Origin header to the selected mode.'
+      - 'Demo and CI origins and board ids must be distinct.'
+      - 'Do not widen selectors, expose authority, or add GET/fallback/cross-origin token issuance.'
+      - 'Rotation and rollback documentation must match the implemented single-key JWKS.'
+    allowed_files:
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/.env.example
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/README.md
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/board-token.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/config.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/health.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/config.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/main.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/test/api.test.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/e2e/venue.spec.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/vercel.json
+    verify:
+      - npm run lint
+      - npm run format:check
+      - npm run typecheck
+      - npm test
+      - npm run build
+      - npm run test:e2e
+      - npm run test:secret-scan
+      - npm audit --audit-level=high
+      - git diff --check
+    stop_if:
+      - 'Either alias can mint the other mode token.'
+      - 'Demo and CI can share an origin or board id.'
+      - 'Mode navigation introduces browser-selected authority.'
+      - 'A token or secret enters a browser-visible or retained surface.'
+      - 'Repair adds GET, fallback, arbitrary selectors, or a cross-origin token endpoint.'
+      - 'External resource mutation is required.'
+      - 'An edit falls outside allowed_files.'
+      - 'The same verification failure remains unresolved after two attempts.'
+    expected_output:
+      - 'Serving-alias and Origin binding'
+      - 'Distinct-mode config enforcement'
+      - 'Fixed-alias navigation with real token-request browser proof'
+      - 'Truthful single-key rotation/rollback guidance'
+    receipt:
+      result: done
+      changed_files:
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/.env.example
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/README.md
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/board-token.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/config.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/main.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/test/api.test.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/e2e/venue.spec.ts
+      commands:
+        - cmd: 'npm run lint'
+          status: pass
+        - cmd: 'npm run format:check'
+          status: pass
+        - cmd: 'npm run typecheck'
+          status: pass
+        - cmd: 'npm test'
+          status: pass
+        - cmd: 'npm run build'
+          status: pass
+        - cmd: 'npm run test:e2e'
+          status: pass
+        - cmd: 'npm run test:secret-scan'
+          status: pass
+        - cmd: 'npm audit --audit-level=high'
+          status: pass
+        - cmd: 'git diff --check'
+          status: pass
+      summary: 'Bound issuance to both selected-mode alias and exact Origin; configuration fails closed on overlapping aliases/board ids; navigation uses fixed server-configured aliases; E2E proves cross-alias switching and exactly one POST {}; adversarial forgery/overlap tests pass; rotation docs now truthfully require a single-key maintenance window.'
+      remaining_blockers: []
+      verification_attempts: 2
+      stopped_because: null
+      full_outcome_complete: false
+      evidence:
+        - 'Wrong-alias forged-Origin requests fail in both directions'
+        - 'Overlap configs return 503'
+        - 'Desktop/mobile Playwright reach fixed CI alias and observe exactly one POST {}'
+        - 'Secret scan and all nine verifiers pass'
+      residual_risks:
+        - 'Live Vercel protection/rate limits and deployed behavior remain downstream'
+        - 'Single-key rotation requires coordinated maintenance window'
+      harness: codex
+  - id: T006
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Review the venue for secret containment, token correctness, configuration injection, accessibility, deployment safety, and live-E2E suitability.'
+    inputs:
+      - 'T005 receipt and diff'
+      - 'T003 architecture decision'
+      - 'T015 deployment-isolation repair receipt and diff'
+    constraints:
+      - 'Read-only; do not implement.'
+      - 'Reject mock-only proof, hidden managed-only behavior, browser-visible secrets, or arbitrary origins.'
+    expected_output:
+      - 'approve | changes_required'
+      - 'Security/UX findings and missing negative cases'
+      - 'Exact repair task if required'
+      - 'Confirmed BugDrop Board integration contract'
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      rationale: 'T015 resolves every blocking venue finding. Token issuance now requires both the request alias and Origin header to match the selected mode; configuration rejects overlapping origins and board IDs; navigation uses validated fixed aliases and browser tests observe one POST with {}; and rotation documents the real single-key maintenance window. Approve the venue contract for T007, conditional on recording the real fixed Vercel CI alias before Worker configuration.'
+      findings:
+        - severity: resolved
+          title: 'Serving-alias and Origin binding'
+          detail: 'Token issuance requires both request alias and Origin to match, with cross-alias forgery tests.'
+        - severity: resolved
+          title: 'Demo/CI configuration isolation'
+          detail: 'Configuration rejects overlapping origins and board IDs.'
+        - severity: resolved
+          title: 'Fixed-alias navigation and POST proof'
+          detail: 'Validated fixed aliases drive navigation and browser tests prove one JSON POST with literal {}.'
+        - severity: resolved
+          title: 'Single-key rotation and rollback'
+          detail: 'Runbook now documents the required single-key maintenance window and safe rollback boundary.'
+        - severity: residual
+          title: 'Live Vercel and public-signer controls remain downstream'
+          detail: 'T009/T010 must prove deployment scope, secret containment, headers, and abuse controls.'
+      confirmed_t007_integration_contract:
+        worker_origin: 'https://bugdrop-board-preview.neonwatty.workers.dev'
+        d1_name: bugdrop-board-preview
+        d1_id: d8b341bd-8be8-45f3-90d8-231abe398781
+        demo_origin: 'https://bugdrop-board-widget-test.vercel.app'
+        ci_origin: 'Must be the exact fixed Vercel alias recorded after the first reviewed deployment; placeholders and per-PR aliases are forbidden.'
+        jwks_url: 'https://bugdrop-board-widget-test.vercel.app/api/jwks'
+        algorithm: RS256
+        audience: bugdrop-board
+        max_ttl_seconds: 300
+        reset: 'Reset must affect only the distinct CI board and prove demo non-interference.'
+        provenance: 'Health, API, and board.js must expose the exact lowercase 40-character BUILD_SHA; local and deployed widget hashes must match before mutation.'
+      evidence:
+        - 'api/board-token.ts binds both URL origin and Origin header.'
+        - 'src/config.ts rejects identical venue origins and board IDs.'
+        - 'Unit suite passed with 36 tests.'
+        - 'Playwright passed with 6 desktop/mobile tests.'
+        - 'lint, formatting, typecheck, secret scan, and high-severity audit passed.'
+        - 'T014 independently proves the production widget POST token protocol.'
+      blocked_tasks:
+        - 'T007 final configuration requires the exact fixed Vercel CI alias.'
+      missing_evidence:
+        - 'Actual reviewed Vercel deployment and fixed CI alias'
+        - 'Vercel secret scope and generic Preview-build exclusion'
+        - 'Live Vercel/Worker/D1/GitHub provenance and cleanup proof'
+      required_board_updates:
+        - 'Record the exact fixed Vercel CI alias before activating T007.'
+        - 'Add src/types.ts to T007 allowed_files and carry the approved integration contract.'
+        - 'Keep T008 queued until T007 proves CORS, verifier, reset isolation, and provenance.'
+      harness: codex
+  - id: T007
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Implement the isolated BugDrop Board preview environment, deployment provenance, validation, and operator documentation selected by Judge.'
+    inputs:
+      - 'T003, T004, and T006 receipts'
+      - 'Vercel project jermwatts-projects/bugdrop-board-widget-test at reviewed companion commit 7d40abce1362119df0822e11091e114daa697b35'
+      - 'Fixed demo origin https://bugdrop-board-widget-test.vercel.app'
+      - 'Fixed protected CI origin https://bugdrop-board-widget-test-git-preview-jermwatts-projects.vercel.app, attached only to branch preview at bootstrap commit 0100ed7da0531f66837db40843ccebf52ccdeae5'
+    constraints:
+      - 'Not alone in the codebase; preserve and accommodate unrelated edits.'
+      - 'Do not modify staging/production ids, routes, origins, secrets, or behavior.'
+      - 'Use isolated preview D1 and exact approved venue origins.'
+      - 'Use Worker https://bugdrop-board-preview.neonwatty.workers.dev and D1 d8b341bd-8be8-45f3-90d8-231abe398781 only.'
+      - 'Use RS256 JWKS https://bugdrop-board-widget-test.vercel.app/api/jwks, audience bugdrop-board, configured issuer/kid, and maximum TTL 300 seconds.'
+      - 'Reject missing/null/unapproved origins, wildcard origin configuration, overlapping board ids, and reset requests outside the exact CI board.'
+      - 'Expose the exact lowercase 40-character BUILD_SHA on preview health, API, and board.js responses; do not proceed to mutation unless the local and deployed board.js hashes match.'
+      - 'Expose only non-sensitive environment/build identity needed for proof.'
+      - 'Keep self-hosted docs accurate.'
+    allowed_files:
+      - wrangler.toml
+      - src/types.ts
+      - src/routes/api.ts
+      - package.json
+      - scripts/verify-deployed-worker.js
+      - scripts/validate-preview-config.mjs
+      - scripts/provision-preview.mjs
+      - scripts/reset-preview-board.mjs
+      - test/preview-config.test.ts
+      - test/preview-provisioning.test.ts
+      - test/preview-reset.test.ts
+      - test/verify-deployed-worker.test.ts
+      - docs/preview-e2e-operations.md
+    verify:
+      - make check
+      - npm run lint
+      - npm run format:check
+      - npm run typecheck
+      - npm run knip
+      - npm run audit
+      - npm run check:actions-node24
+      - npm run test
+      - npm run build:widget
+      - npm run deploy:check:preview
+      - npm run validate:preview
+      - 'npx vitest run test/preview-config.test.ts test/preview-provisioning.test.ts test/preview-reset.test.ts test/verify-deployed-worker.test.ts'
+    stop_if:
+      - 'Judge has not supplied exact contract, allowed_files, and verify commands.'
+      - 'Preview resource identifiers remain ambiguous.'
+      - 'The approved RS256/JWKS verifier contract or exact venue origins are missing.'
+      - 'Reset tooling can affect a non-CI board.'
+      - 'A change would mutate staging or production.'
+      - 'Need files outside Judge-approved scope.'
+      - 'Verification fails twice for the same unresolved cause.'
+    expected_output:
+      - 'Preview Worker/D1 configuration and migration/deploy-dry-run proof'
+      - 'Build/environment identity proof'
+      - 'CORS/auth negative tests and preview rollback docs'
+      - 'Receipt naming changed files and exact verification'
+    integration_contract:
+      worker_origin: 'https://bugdrop-board-preview.neonwatty.workers.dev'
+      d1_name: 'bugdrop-board-preview'
+      d1_id: 'd8b341bd-8be8-45f3-90d8-231abe398781'
+      demo_origin: 'https://bugdrop-board-widget-test.vercel.app'
+      ci_origin: 'https://bugdrop-board-widget-test-git-preview-jermwatts-projects.vercel.app'
+      ci_origin_binding: 'Vercel Preview environment, branch preview only; generic per-PR aliases are forbidden.'
+      verifier: 'RS256 public JWKS only; issuer and kid are explicit configuration; audience bugdrop-board; TTL at most 300 seconds.'
+      isolation: 'Demo and CI board ids are non-empty and distinct. Reset is allowlisted to the exact CI board and proves demo non-interference.'
+      provenance: 'Exact GITHUB_SHA is BUILD_SHA and must match health, API, board.js headers, and the locally built/deployed widget hash before mutation.'
+    receipt:
+      result: done
+      changed_files:
+        - wrangler.toml
+        - src/types.ts
+        - src/routes/api.ts
+        - package.json
+        - scripts/verify-deployed-worker.js
+        - scripts/validate-preview-config.mjs
+        - scripts/provision-preview.mjs
+        - scripts/reset-preview-board.mjs
+        - test/preview-config.test.ts
+        - test/preview-provisioning.test.ts
+        - test/preview-reset.test.ts
+        - test/verify-deployed-worker.test.ts
+        - docs/preview-e2e-operations.md
+      commands:
+        - cmd: 'make check'
+          status: pass
+        - cmd: 'npm run lint'
+          status: pass
+        - cmd: 'npm run format:check'
+          status: pass
+        - cmd: 'npm run typecheck'
+          status: pass
+        - cmd: 'npm run knip'
+          status: pass
+        - cmd: 'npm run audit'
+          status: pass
+        - cmd: 'npm run check:actions-node24'
+          status: pass
+        - cmd: 'npm run test'
+          status: pass
+        - cmd: 'npm run build:widget'
+          status: pass
+        - cmd: 'npm run deploy:check:preview'
+          status: pass
+        - cmd: 'npm run validate:preview'
+          status: pass
+        - cmd: 'npx vitest run test/preview-config.test.ts test/preview-provisioning.test.ts test/preview-reset.test.ts test/verify-deployed-worker.test.ts'
+          status: pass
+        - cmd: 'git diff --check on T007 allowed files'
+          status: pass
+      summary: 'Implemented and verified the isolated preview Worker/D1 environment, exact two-origin configuration, deterministic same-repository demo/CI provisioning, RS256/JWKS verifier contract, CI-only reset with demo non-interference proof, immutable BUILD_SHA and widget-hash provenance gates, deployment validation, and operator runbook. All 139 repository tests and 22 focused preview tests pass; Wrangler preview deployment dry-run confirms only the approved preview bindings. No external resources were mutated.'
+      remaining_blockers: []
+      verification_attempts: 1
+      stopped_because: null
+  - id: T008
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Implement live preview E2E and the independently verified synthetic-Issue lifecycle for pull-request and merge-group CI.'
+    inputs:
+      - 'T001, T003, T006, and T007 receipts'
+    constraints:
+      - 'Not alone in the codebase; preserve and accommodate unrelated edits.'
+      - 'No secrets for forks or untrusted code.'
+      - 'Browser tests must not receive verification/cleanup credentials.'
+      - 'Use allowlisted repo/origins/prefixes/markers and non-overlapping concurrency.'
+      - 'Cleanup may close only exactly attributable synthetic Issues.'
+      - 'Do not weaken local/staging assertions to make preview green.'
+    allowed_files:
+      - .github/workflows/ci.yml
+      - .github/workflows/preview-live.yml
+      - package.json
+      - playwright.preview.config.ts
+      - e2e/preview-board-widget.spec.ts
+      - scripts/github-issue-canary.mjs
+      - scripts/github-issue-canary-profiles.mjs
+      - scripts/preview-workflow-contract.mjs
+      - test/github-issue-canary.test.ts
+      - test/preview-workflow-contract.test.ts
+      - docs/preview-e2e-operations.md
+    verify:
+      - make check
+      - npm run check:actions-node24
+      - 'npx vitest run test/github-issue-canary.test.ts test/preview-workflow-contract.test.ts'
+      - 'npx playwright test --config playwright.preview.config.ts --list'
+      - 'npm run test:preview-canary-fixture'
+      - 'npm run test:preview-fork-gates'
+    stop_if:
+      - 'Judge has not supplied exact events, permissions, environment, allowed_files, and verify commands.'
+      - 'Runtime and verification/cleanup credentials cannot be separated.'
+      - 'Candidate code can receive privileged credentials without the approved event and environment gate.'
+      - 'Playwright can receive verification or cleanup credentials.'
+      - 'Cleanup selection could match unrelated Issues.'
+      - 'Cleanup selectors are broader than repository id, expected author, exact prefix, and a valid marker.'
+      - 'Worker, widget, or venue provenance can resolve to mutable or unverified identity.'
+      - 'Need files outside Judge-approved scope.'
+      - 'Verification fails twice for the same unresolved cause.'
+    expected_output:
+      - 'Live Playwright spec/config and PR/merge_group workflow'
+      - 'Preflight, independent verify, duplicate rejection, cleanup, and final sweep'
+      - 'Workflow contract tests and artifact-redaction policy'
+      - 'Receipt naming changed files and exact verification'
+    receipt:
+      result: done
+      changed_files:
+        - .github/workflows/ci.yml
+        - .github/workflows/preview-live.yml
+        - package.json
+        - playwright.preview.config.ts
+        - e2e/preview-board-widget.spec.ts
+        - scripts/github-issue-canary.mjs
+        - scripts/github-issue-canary-profiles.mjs
+        - scripts/preview-workflow-contract.mjs
+        - test/github-issue-canary.test.ts
+        - test/preview-workflow-contract.test.ts
+        - docs/preview-e2e-operations.md
+      commands:
+        - cmd: 'make check'
+          status: pass
+        - cmd: 'npm run check:actions-node24'
+          status: pass
+        - cmd: 'npx vitest run test/github-issue-canary.test.ts test/preview-workflow-contract.test.ts'
+          status: pass
+        - cmd: 'npx playwright test --config playwright.preview.config.ts --list'
+          status: pass
+        - cmd: 'npm run test:preview-canary-fixture'
+          status: pass
+        - cmd: 'npm run test:preview-fork-gates'
+          status: pass
+        - cmd: 'git diff --check on T008 allowed files'
+          status: pass
+      summary: 'Implemented fork-safe PR and merge-group preview CI, protected environments, serialized Worker/D1 lifecycle, credential-free desktop/mobile Playwright proof, immutable provenance checks, and independently authenticated GitHub Issue verification. Cleanup is restricted by repository node ID, runtime bot author, exact prefix, valid marker, and body attribution; it includes pagination, duplicate rejection, bounded readback/retry, two zero-open observations, final sweep, and CI-board reset. Only redacted public evidence is retained. No resources, deployments, or secrets were mutated.'
+      remaining_blockers: []
+      verification_attempts: 2
+      stopped_because: null
+  - id: T009
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: 'Perform the cross-repository pre-live security and reliability gate before persistent secrets are installed or live canaries run.'
+    inputs:
+      - 'T003-T008 receipts and diffs'
+      - 'Current repository and environment configuration'
+    constraints:
+      - 'Read-only; do not install secrets.'
+      - 'Audit auth, CORS, D1, provenance, forks, permissions, protections, concurrency, markers, cleanup, logs, artifacts, rollback, and docs.'
+      - 'Explicitly review public preview-signer residual risk, private-key containment, trusted candidate-code exposure, environment policies, two-App separation, D1 reset safety, cancellation janitor, provenance tuple, and rollback triggers.'
+      - 'Name top three realistic live failures and exact proof for each.'
+    expected_output:
+      - 'go_live | changes_required | blocked'
+      - 'Security/reliability findings and exact repair task if needed'
+      - 'Final secret/variable scopes and destinations'
+      - 'Live proof checklist and rollback trigger'
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      rationale: 'Go live to the T010 configuration phase only. T018 resolves every prior code blocker: janitor code is default-branch-only, separately scheduled/manual, monitor-only, non-cancelling, and mutex-shared; candidate live CI contains no janitor path; privileged actions use immutable pins; negative contract tests pass. Secrets may be installed only after T010 revalidates destinations and obtains explicit action-time approval; T011 remains blocked until configuration is verified.'
+      evidence:
+        - 'Trusted janitor runs only schedule/workflow_dispatch against default-branch SHA in preview-janitor.'
+        - 'Janitor references only monitor-App credentials and shares the non-cancelling preview mutex.'
+        - 'All privileged GitHub Actions use reviewed 40-character commit pins.'
+        - 'Independent workflow-contract and fork-gate tests pass.'
+        - 'Auth/JWKS, exact CORS, D1/reset isolation, provenance, Issue attribution, cleanup, artifact redaction, and rollback contracts are locally sufficient.'
+        - 'Current external state is intentionally pre-live and contains no installed preview secrets.'
+      blocked_tasks:
+        - 'T011 until T010 completes and the fixed CI venue is public without browser credentials'
+      missing_evidence:
+        - 'Fresh action-time approval and verified preview-only configuration'
+        - 'Hardened environments and companion branches'
+        - 'Separate installed runtime and monitor Apps'
+        - 'Public fixed CI alias with generic-preview signer exclusion'
+        - 'Live Worker/D1/Issue/cleanup/PR/merge-group proof'
+      required_board_updates:
+        - 'Mark T009 done and activate T010.'
+        - 'Immediately before mutation ask: Approve T010 preview-only security configuration and secret installation.'
+      harness: codex
+  - id: T010
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: medium
+    objective: 'With required action-time approvals, configure least-privilege preview secrets, variables, environments, protections, and deployment bindings without revealing values.'
+    inputs:
+      - 'T004 and T009 receipts'
+      - 'Approved GitHub, Vercel, and Cloudflare destinations'
+    constraints:
+      - 'Resolve exact destinations/scopes immediately before persistent access or sensitive transfer.'
+      - 'Ask for action-time confirmation when required.'
+      - 'Never print, snapshot, commit, or receipt secret values.'
+      - 'Verify only names, scopes, timestamps, and successful use.'
+      - 'Do not touch production resources.'
+    expected_output:
+      - 'Configured secret/variable matrix without values'
+      - 'Environment protection and rotation/expiration evidence'
+      - 'Read-only destination/scope verification'
+      - 'Any exact blocked approval'
+    receipt:
+      result: done
+      summary: 'Completed preview-only configuration with separated GitHub Apps, protected GitHub environments, scoped Vercel signer configuration, fail-closed preview Worker bindings, and a time-bounded least-privilege Cloudflare CI token. An initially exposed token was revoked and replaced; the replacement was installed only in preview-pr and preview-merge-queue and proved live without revealing its value.'
+      evidence:
+        - 'Cloudflare pre-creation summary restricted the replacement to account 341a3846c29902f6363c151395932f5a with Workers Scripts:Edit and D1:Edit and an end date of 2026-09-15.'
+        - 'The exposed first token was deleted from the Cloudflare User API Tokens inventory before replacement.'
+        - 'Replacement token verification, D1 database listing, and Workers script listing each returned HTTP 200 for the approved account.'
+        - 'GitHub environment secret-name readback shows CLOUDFLARE_API_TOKEN updated in preview-pr at 2026-08-16T13:20:56Z and preview-merge-queue at 2026-08-16T13:20:57Z; preview-janitor received no Cloudflare credential.'
+        - 'Browser and operating-system clipboards were cleared and the temporary in-memory replacement token binding was emptied after installation.'
+        - 'notes/T010-configuration-progress.md records the complete redacted destination, scope, expiry, environment, Vercel, GitHub App, Worker, and incident-response evidence.'
+      claims:
+        - 'No production Cloudflare, Vercel, GitHub App, or GitHub environment destination was changed.'
+        - 'The CI Cloudflare credential is narrower than the local Wrangler OAuth session and is not available to preview-janitor.'
+        - 'The companion signer secret is absent from generic previews and Development and is present only on Production and the preview branch deployment boundary.'
+      residual_risks:
+        - 'The expiring Cloudflare token must be rotated before 2026-09-15.'
+        - 'T011 must still prove the protected workflow consumes these credentials correctly and that fork-safe paths cannot access them.'
+      harness: codex
+  - id: T011
+    type: pm
+    assignee: PM
+    status: active
+    reasoning_hint: medium
+    objective: 'Run live deployment, smoke, browser, Issue verification/cleanup, pull-request, and merge-group proofs and capture redacted evidence.'
+    inputs:
+      - 'T009 go_live and T010 configuration receipts'
+      - 'Goal oracle and verification expectations'
+    constraints:
+      - 'Do not weaken checks or delete unrelated data when proof fails.'
+      - 'Inspect traces, logs, D1, and Issue metadata only as needed and redact sensitive material.'
+      - 'Convert implementation defects into bounded Worker repair tasks.'
+      - 'Prove zero attributable leftovers after success and exercised failure cleanup.'
+    expected_output:
+      - 'Venue/Worker URLs and build/D1 provenance'
+      - 'CORS/auth negative results'
+      - 'Two-viewer Playwright and synthetic Issue lifecycle results'
+      - 'Passing PR and merge-group run URLs'
+      - 'Rollback drill or evidence-backed rollback readiness'
+    receipt: null
+
+  - id: T012
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: 'Audit the live system against security, operability, user-experience, and closed-beta evidence requirements before final completion review.'
+    inputs:
+      - 'All T001-T011 receipts'
+      - 'Live URLs, CI runs, diffs, repository states, and goal oracle'
+    constraints:
+      - 'Read-only; do not implement.'
+      - 'Reject optimistic UI, one happy path, or summaries without exact evidence.'
+      - 'Reject if cleanup, fork safety, provenance, token containment, D1 isolation, or rollback is unproven.'
+    expected_output:
+      - 'accept | changes_required'
+      - 'Oracle evidence map and remaining gaps'
+      - 'Exact repair task if required'
+      - 'Preview-to-closed-beta handoff decision'
+    receipt: null
+
+  - id: T016
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Add backward-compatible multi-board-per-repository support needed by preview isolation: create a forward D1 migration that removes only the global repository uniqueness restriction while preserving all existing rows and foreign keys; make runtime and provisioning upserts key by stable/explicit board ID; allow hosted provisioning to receive an explicit board ID; preserve the exact hosted board-to-GitHub-connection repository equality guard; and add adversarial tests proving two distinct demo/CI boards can share one repository without cross-board data/config leakage or mismatch acceptance.'
+    inputs:
+      - 'T007 blocked Worker receipt and Judge rejection'
+      - 'Accepted base and hosted-control-plane design specs'
+      - 'Existing D1 migrations, repository layer, provisioning scripts, and route guards'
+    constraints:
+      - 'Not alone in the codebase; preserve and accommodate unrelated edits.'
+      - 'Do not weaken or remove the board/connection repository equality guard.'
+      - 'Do not create preview-only schema divergence or mutate any external resource.'
+      - 'Preserve existing board ids and every dependent item, vote, event, hosted config, and audit row.'
+    allowed_files:
+      - migrations/0004_allow_multiple_boards_per_repository.sql
+      - src/lib/board-repository.ts
+      - scripts/provision-board-core.js
+      - scripts/provision-hosted-board-core.js
+      - test/board-repository.test.ts
+      - test/provision-board.test.ts
+      - test/provision-hosted-board.test.ts
+      - test/routes.test.ts
+      - test/multi-board-migration.test.ts
+    verify:
+      - npm run format:check
+      - npm run lint
+      - npm run typecheck
+      - 'npx vitest run test/board-repository.test.ts test/provision-board.test.ts test/provision-hosted-board.test.ts test/routes.test.ts test/multi-board-migration.test.ts'
+      - npm run test
+      - npm run knip
+      - make check
+    stop_if:
+      - 'The migration cannot preserve existing boards or any dependent board_items, board_votes, board_events, hosted_board_configs, or hosted_audit_events rows.'
+      - 'PRAGMA foreign_key_check is non-empty after migration.'
+      - 'Supporting the shared mirror would require weakening or removing the board/connection repository equality guard in src/routes/api-github.ts.'
+      - 'An explicit board ID can silently retarget an existing board to another repository.'
+      - 'The implementation requires preview-only schema divergence, staging/production resource mutation, external deployment, or files outside allowed_files.'
+      - 'The same verification failure remains unresolved after two attempts.'
+    expected_output:
+      - 'Forward migration with row preservation and clean foreign-key proof'
+      - 'ID-keyed runtime and provisioning semantics'
+      - 'Two-board same-repository isolation and mismatch-rejection tests'
+      - 'Schema-valid receipt with exact verification evidence'
+    receipt:
+      result: done
+      changed_files:
+        - migrations/0004_allow_multiple_boards_per_repository.sql
+        - src/lib/board-repository.ts
+        - scripts/provision-board-core.js
+        - scripts/provision-hosted-board-core.js
+        - test/board-repository.test.ts
+        - test/provision-board.test.ts
+        - test/provision-hosted-board.test.ts
+        - test/routes.test.ts
+        - test/multi-board-migration.test.ts
+      commands:
+        - cmd: 'npm run format:check'
+          status: pass
+        - cmd: 'npm run lint'
+          status: pass
+        - cmd: 'npm run typecheck'
+          status: pass
+        - cmd: 'npx vitest run test/board-repository.test.ts test/provision-board.test.ts test/provision-hosted-board.test.ts test/routes.test.ts test/multi-board-migration.test.ts'
+          status: pass
+        - cmd: 'npm run test'
+          status: pass
+        - cmd: 'npm run knip'
+          status: pass
+        - cmd: 'make check'
+          status: pass
+        - cmd: 'git diff --check && test -z "$(git diff -- src/routes/api-github.ts)"'
+          status: pass
+      summary: 'Added an atomic forward migration that preserves boards, items, votes, events, hosted configs, audit rows, indexes, constraints, and foreign keys while removing repository uniqueness. Runtime and provisioning now upsert by stable board ID, accept explicit hosted board IDs, and reject repository retargeting. Tests prove two explicit boards can share one GitHub repository without item, event, origin, app, or config leakage; the migration leaves PRAGMA foreign_key_check empty. The hosted board-to-GitHub repository equality guard remains byte-for-byte unchanged. All 121 tests and repository-wide checks pass.'
+      remaining_blockers: []
+      verification_attempts: 2
+      stopped_because: null
+  - id: T017
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Repair only the two D1 test fixtures so every seeded SQL statement is complete for the test D1 execution API, preferably with prepared/bound statements or one complete statement per exec call; preserve rogue-origin/verifier adversarial coverage, demo/CI reset isolation assertions, and every production file unchanged. Then run every original T007 verifier.'
+    inputs:
+      - 'Latest blocked T007 Worker receipt and fixture-only Judge review'
+      - 'Current T007 implementation diff'
+    constraints:
+      - 'Not alone in the codebase; preserve every production and unrelated edit.'
+      - 'Do not weaken or remove any security, isolation, or non-interference assertion.'
+      - 'Do not mutate external resources.'
+    allowed_files:
+      - test/preview-provisioning.test.ts
+      - test/preview-reset.test.ts
+    verify:
+      - make check
+      - npm run lint
+      - npm run format:check
+      - npm run typecheck
+      - npm run knip
+      - npm run audit
+      - npm run check:actions-node24
+      - npm run test
+      - npm run build:widget
+      - npm run deploy:check:preview
+      - npm run validate:preview
+      - 'npx vitest run test/preview-config.test.ts test/preview-provisioning.test.ts test/preview-reset.test.ts test/verify-deployed-worker.test.ts'
+    stop_if:
+      - 'Repair requires a production-file edit or any file outside allowed_files.'
+      - 'Fixture changes weaken or remove assertions, adversarial rogue configuration, or demo non-interference proof.'
+      - 'Evidence shows generated provisioning/reset SQL itself is defective.'
+      - 'External resource mutation is required.'
+      - 'The same verification failure remains unresolved after two attempts.'
+    expected_output:
+      - 'D1-compatible complete fixture statements'
+      - 'All original T007 verifiers passing'
+      - 'Schema-valid Worker receipt'
+    receipt:
+      result: done
+      changed_files:
+        - test/preview-provisioning.test.ts
+        - test/preview-reset.test.ts
+      commands:
+        - cmd: 'make check'
+          status: pass
+        - cmd: 'npm run lint'
+          status: pass
+        - cmd: 'npm run format:check'
+          status: pass
+        - cmd: 'npm run typecheck'
+          status: pass
+        - cmd: 'npm run knip'
+          status: pass
+        - cmd: 'npm run audit'
+          status: pass
+        - cmd: 'npm run check:actions-node24'
+          status: pass
+        - cmd: 'npm run test'
+          status: pass
+        - cmd: 'npm run build:widget'
+          status: pass
+        - cmd: 'npm run deploy:check:preview'
+          status: pass
+        - cmd: 'npm run validate:preview'
+          status: pass
+        - cmd: 'npx vitest run test/preview-config.test.ts test/preview-provisioning.test.ts test/preview-reset.test.ts test/verify-deployed-worker.test.ts'
+          status: pass
+      summary: 'Replaced multiline D1 fixture exec calls with complete prepared/bound statements. Rogue-origin and rogue-verifier adversarial coverage remains intact, as do CI-reset and demo non-interference assertions. All required verification passed: 139 full-suite tests, 22 focused preview tests, lint, formatting, type checks, dead-code checks, critical audit, Actions Node 24 checks, widget build, preview configuration validation, and Wrangler preview dry-run.'
+      remaining_blockers: []
+      verification_attempts: 1
+      stopped_because: null
+  - id: T018
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: 'Split scheduled/manual cleanup into a trusted janitor-only workflow using environment preview-janitor, remove schedule/janitor execution from the candidate live workflow, share the non-cancelling mutex, pin every privileged action to immutable commits, strengthen workflow contract tests, and update operations docs.'
+    inputs:
+      - 'T009 pre-live security rejection and T008 implementation'
+      - 'Observed upstream immutable action commits from the T009 receipt'
+    constraints:
+      - 'Not alone in the codebase; preserve every unrelated/user/other-agent edit.'
+      - 'Janitor must run only trusted default-branch code and receive monitor-only credentials.'
+      - 'Do not give the janitor Cloudflare, runtime-App, signer, or browser credentials.'
+      - 'Do not mutate external resources or install secrets.'
+    allowed_files:
+      - .github/workflows/preview-live.yml
+      - .github/workflows/preview-janitor.yml
+      - scripts/preview-workflow-contract.mjs
+      - test/preview-workflow-contract.test.ts
+      - docs/preview-e2e-operations.md
+    verify:
+      - npm run format:check
+      - npm run lint
+      - npm run typecheck
+      - npm run check:actions-node24
+      - 'npx vitest run test/preview-workflow-contract.test.ts'
+      - npm run test:preview-fork-gates
+      - git diff --check
+    stop_if:
+      - 'Any janitor path executes pull-request or merge-group candidate code.'
+      - 'Janitor receives Cloudflare/runtime/signer credentials.'
+      - 'Live browser receives privileged credentials.'
+      - 'An action identity cannot be pinned to a verified 40-character upstream commit.'
+      - 'Another file is required.'
+      - 'The same verifier fails twice.'
+    expected_output:
+      - 'Trusted schedule/manual janitor-only workflow with shared mutex'
+      - 'Immutable action pins in privileged workflows'
+      - 'Contract tests for candidate-code and credential separation'
+      - 'Updated cancellation-recovery operations guidance and receipt'
+    receipt:
+      result: done
+      changed_files:
+        - .github/workflows/preview-live.yml
+        - .github/workflows/preview-janitor.yml
+        - scripts/preview-workflow-contract.mjs
+        - test/preview-workflow-contract.test.ts
+        - docs/preview-e2e-operations.md
+      commands:
+        - cmd: 'npm run format:check'
+          status: pass
+        - cmd: 'npm run lint'
+          status: pass
+        - cmd: 'npm run typecheck'
+          status: pass
+        - cmd: 'npm run check:actions-node24'
+          status: pass
+        - cmd: 'npx vitest run test/preview-workflow-contract.test.ts'
+          status: pass
+        - cmd: 'npm run test:preview-fork-gates'
+          status: pass
+        - cmd: 'git diff --check'
+          status: pass
+      summary: "Split cleanup into a trusted schedule/manual preview-janitor workflow guarded to the default-branch event SHA, using only monitor-App credentials and the shared non-cancelling mutex. Removed schedule/janitor execution from candidate live CI, pinned every action to T009's verified immutable commit, strengthened negative contract tests for candidate checkout, credential leakage, and mutable pins, and documented environment restrictions plus cancellation recovery. No external resources or secrets were mutated."
+      remaining_blockers: []
+      verification_attempts: 2
+      stopped_because: null
+  - id: T019
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: "Repair the companion venue's complete Vercel Node-ESM server module graph by using emitted-JavaScript-compatible relative specifiers, add a server-only NodeNext compile contract and an executable compiled-handler import verifier covering all four API functions, and run it in companion CI without changing token, origin, claims, secret, or deployment behavior."
+    inputs:
+      - 'T010 Vercel runtime blocker Judge receipt'
+      - 'Vercel ERR_MODULE_NOT_FOUND evidence from the fixed CI alias'
+    constraints:
+      - 'Not alone in the codebase; preserve all unrelated and external configuration changes.'
+      - 'Do not change signer secrets, environment values, CORS/origin mapping, JWT claims, selectors, or external resources.'
+      - 'Do not expose secrets or signed tokens in generated output, logs, fixtures, or retained artifacts.'
+      - 'Stop if Vercel requires a materially different server-function architecture or a file outside allowed_files.'
+    allowed_files:
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/board-token.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/config.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/health.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/jwks.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/token.ts
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/tsconfig.server.json
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/scripts/verify-server-runtime.mjs
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/package.json
+      - /Users/neonwatty/Desktop/bugdrop-board-widget-test/.github/workflows/ci.yml
+    verify:
+      - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm ci'
+      - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run lint'
+      - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run format:check'
+      - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run typecheck'
+      - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run test:server-runtime'
+      - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm test'
+      - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run build'
+      - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && npm run test:secret-scan'
+      - 'cd /Users/neonwatty/Desktop/bugdrop-board-widget-test && git diff --check'
+    stop_if:
+      - 'Repair requires a change outside the approved behavior or allowed files.'
+      - 'The compiled-handler verifier cannot import every API entrypoint under Node ESM after two attempts.'
+      - 'Any secret or signed token enters generated output, logs, fixtures, or retained artifacts.'
+      - 'Existing unrelated changes overlap materially and cannot be preserved.'
+    expected_output:
+      - 'Node-ESM-compatible API handler imports'
+      - 'Executable compiled-handler import proof for all four server functions'
+      - 'Companion CI runtime contract and complete verification receipt'
+    receipt:
+      result: done
+      changed_files:
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/board-token.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/config.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/health.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/api/jwks.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/src/token.ts
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/tsconfig.server.json
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/scripts/verify-server-runtime.mjs
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/package.json
+        - /Users/neonwatty/Desktop/bugdrop-board-widget-test/.github/workflows/ci.yml
+      commands:
+        - cmd: 'npm ci'
+          status: pass
+        - cmd: 'npm run lint'
+          status: pass
+        - cmd: 'npm run format:check'
+          status: pass
+        - cmd: 'npm run typecheck'
+          status: pass
+        - cmd: 'npm run test:server-runtime'
+          status: pass
+        - cmd: 'npm test'
+          status: pass
+        - cmd: 'npm run build'
+          status: pass
+        - cmd: 'npm run test:secret-scan'
+          status: pass
+        - cmd: 'git diff --check'
+          status: pass
+      summary: 'Converted the complete server-only relative import graph to emitted-JavaScript-compatible .js specifiers. Added a NodeNext server compilation contract and disposable compiled-output verifier that imports all four API entrypoints and checks default plus named handlers, then wired it into companion CI. All 36 tests, production build, secret scan, type/lint/format checks, compiled-handler proof, and diff hygiene pass. No external resources, deployment settings, behavior, or secrets were changed.'
+      remaining_blockers: []
+      verification_attempts: 2
+      stopped_because: null
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: 'Perform the final skeptical audit and decide whether the complete original preview-venue and CI outcome is genuinely achieved.'
+    inputs:
+      - 'All done receipts, T012 acceptance, latest verification/live proof, current diffs, external artifacts, and goal.md oracle'
+    constraints:
+      - 'Read-only; do not implement.'
+      - 'Reject completion if required work remains queued, active, blocked without disposition, or unsupported.'
+      - 'Reject if result is only a demo, mocked E2E, deployed Worker, or plan.'
+      - 'Map evidence to every oracle clause and original request.'
+    expected_output:
+      - 'complete | not_complete'
+      - 'full_outcome_complete: true | false'
+      - 'Per-oracle evidence map'
+      - 'Missing evidence, residual risks, and next task if incomplete'
+    receipt: null
+
+checks:
+  dirty_fingerprint: 'goal-prep-control-files-only'
+  last_verification:
+    result: unknown
+    task: null
+    commands: []

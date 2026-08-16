@@ -1,6 +1,53 @@
 import { expect, test } from '@playwright/test';
 import { provisionBoard, startHostApp } from './fixtures/host-app';
 
+test('real widget bundle uses the strict token POST contract without a fallback', async ({
+  page,
+}) => {
+  const board = await provisionBoard();
+  const host = await startHostApp(board.id, { pollInterval: '60000' });
+  const tokenRequests: Array<{
+    accept?: string;
+    contentType?: string;
+    method: string;
+    body: string;
+  }> = [];
+  page.on('request', request => {
+    if (new URL(request.url()).pathname === '/token') {
+      const headers = request.headers();
+      tokenRequests.push({
+        accept: headers.accept,
+        contentType: headers['content-type'],
+        method: request.method(),
+        body: request.postData() ?? '',
+      });
+    }
+  });
+
+  try {
+    await page.goto(`${host.url}/viewer-a`);
+    await expect(page.getByRole('heading', { name: 'Feedback' })).toBeVisible();
+
+    await expect.poll(() => host.tokenRequestCount()).toBe(1);
+    expect(tokenRequests).toEqual([
+      {
+        accept: 'application/json',
+        contentType: 'application/json',
+        method: 'POST',
+        body: '{}',
+      },
+    ]);
+
+    const getResponse = await page.request.get(`${host.url}/token?viewer=a`);
+    expect(getResponse.status()).toBe(405);
+    expect(getResponse.headers().allow).toBe('POST');
+    expect(await getResponse.json()).toEqual({ error: 'Method not allowed' });
+    expect(host.tokenRequestCount()).toBe(1);
+  } finally {
+    await host.close();
+  }
+});
+
 test('embedded board creates, upvotes, and syncs through polling', async ({ browser, page }) => {
   const board = await provisionBoard();
   const host = await startHostApp(board.id);

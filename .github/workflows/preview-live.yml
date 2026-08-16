@@ -1,0 +1,231 @@
+name: Preview E2E
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  merge_group:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  classify:
+    name: Classify preview trust
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      trusted: ${{ steps.trust.outputs.trusted }}
+    steps:
+      - name: Classify without secrets
+        id: trust
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CURRENT_REPOSITORY: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          trusted=false
+          if [ "$EVENT_NAME" = "merge_group" ] || [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            trusted=true
+          elif [ "$EVENT_NAME" = "pull_request" ] && \
+               [ "$HEAD_REPOSITORY" = "$CURRENT_REPOSITORY" ] && \
+               [ "$ACTOR" != "dependabot[bot]" ]; then
+            trusted=true
+          fi
+          echo "trusted=$trusted" >> "$GITHUB_OUTPUT"
+
+  fork-safe:
+    name: Fork-safe preview contract
+    needs: classify
+    if: needs.classify.outputs.trusted != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Prove fork and credential gates
+        run: npm run test:preview-fork-gates
+
+  live:
+    name: Serialized live preview canary
+    needs: classify
+    if: needs.classify.outputs.trusted == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    environment: ${{ github.event_name == 'merge_group' && 'preview-merge-queue' || 'preview-pr' }}
+    concurrency:
+      group: bugdrop-board-shared-preview
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install candidate dependencies without privileged credentials
+        run: npm ci
+      - name: Install Chromium without privileged credentials
+        run: npx playwright install --with-deps chromium
+      - name: Build immutable candidate widget
+        run: npm run build:widget
+      - name: Record public canary identity
+        shell: bash
+        run: |
+          echo "BUGDROP_BOARD_CANARY_MARKER=bugdrop-board-ci:${GITHUB_RUN_ID}:${GITHUB_RUN_ATTEMPT}:${GITHUB_SHA}" >> "$GITHUB_ENV"
+          echo "BUGDROP_BOARD_CANARY_RESULT_FILE=$RUNNER_TEMP/bugdrop-board-canary-result.json" >> "$GITHUB_ENV"
+          echo "BUGDROP_BOARD_CANARY_ATTEMPT_FILE=$RUNNER_TEMP/bugdrop-board-canary-attempt" >> "$GITHUB_ENV"
+          echo "EXPECTED_WORKER_SHA=${GITHUB_SHA}" >> "$GITHUB_ENV"
+          echo "EXPECTED_WIDGET_SHA256=$(shasum -a 256 public/board.js | awk '{print $1}')" >> "$GITHUB_ENV"
+      - name: Mint repository-scoped monitor token
+        id: monitor-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          app-id: ${{ secrets.BUGDROP_BOARD_PREVIEW_MONITOR_APP_ID }}
+          private-key: ${{ secrets.BUGDROP_BOARD_PREVIEW_MONITOR_PRIVATE_KEY }}
+          owner: mean-weasel
+          repositories: bugdrop-board-widget-test
+          permission-issues: write
+      - name: Preflight attributable stale Issues
+        run: >-
+          node scripts/github-issue-canary.mjs preflight
+          --repo "$BUGDROP_BOARD_PREVIEW_REPOSITORY"
+          --repository-id "$BUGDROP_BOARD_PREVIEW_REPOSITORY_ID"
+          --prefix "[BugDrop Board CI canary]"
+        env:
+          BUGDROP_BOARD_PREVIEW_MONITOR_TOKEN: ${{ steps.monitor-token.outputs.token }}
+          BUGDROP_BOARD_PREVIEW_RUNTIME_BOT: ${{ vars.BUGDROP_BOARD_PREVIEW_RUNTIME_BOT }}
+          BUGDROP_BOARD_PREVIEW_LABELS: ${{ vars.BUGDROP_BOARD_PREVIEW_LABELS }}
+          BUGDROP_BOARD_PREVIEW_REPOSITORY: ${{ vars.BUGDROP_BOARD_PREVIEW_REPOSITORY }}
+          BUGDROP_BOARD_PREVIEW_REPOSITORY_ID: ${{ vars.BUGDROP_BOARD_PREVIEW_REPOSITORY_ID }}
+      - name: Apply preview-only migrations and provisioning
+        run: |
+          npx wrangler d1 migrations apply DB --remote --env preview
+          npm run provision:preview -- --installation-id "$BUGDROP_BOARD_PREVIEW_RUNTIME_INSTALLATION_ID" --remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          BUGDROP_BOARD_PREVIEW_RUNTIME_INSTALLATION_ID: ${{ vars.BUGDROP_BOARD_PREVIEW_RUNTIME_INSTALLATION_ID }}
+      - name: Deploy exact preview candidate
+        run: npx wrangler deploy --env preview --var "BUILD_SHA:$GITHUB_SHA"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Prove immutable Worker, widget, token, and CORS provenance
+        run: >-
+          npm run deploy:smoke --
+          --url "$BUGDROP_BOARD_PREVIEW_WORKER_URL"
+          --expect-environment preview
+          --expect-build-sha "$GITHUB_SHA"
+          --local-board-path public/board.js
+          --cors-origin "$BUGDROP_BOARD_VENUE_PREVIEW_URL"
+          --cors-disallowed-origin https://evil.example
+          --cors-board-id "$BUGDROP_BOARD_PREVIEW_CI_BOARD_ID"
+          --cors-token-endpoint "$BUGDROP_BOARD_VENUE_PREVIEW_URL/api/board-token?mode=ci&viewer=ada"
+        env: &public-preview
+          BUGDROP_BOARD_PREVIEW_WORKER_URL: ${{ vars.BUGDROP_BOARD_PREVIEW_WORKER_URL }}
+          BUGDROP_BOARD_PREVIEW_CI_BOARD_ID: ${{ vars.BUGDROP_BOARD_PREVIEW_CI_BOARD_ID }}
+          BUGDROP_BOARD_VENUE_PREVIEW_URL: ${{ vars.BUGDROP_BOARD_VENUE_PREVIEW_URL }}
+      - name: Reset only the CI board before mutation
+        run: npm run reset:preview -- --board-id board_preview_ci --confirm-board board_preview_ci --remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Run credential-free desktop and mobile browser proof
+        id: browser
+        run: |
+          : > "$BUGDROP_BOARD_CANARY_ATTEMPT_FILE"
+          npx playwright test --config playwright.preview.config.ts
+        env:
+          BUGDROP_BOARD_PREVIEW_REPOSITORY: ${{ vars.BUGDROP_BOARD_PREVIEW_REPOSITORY }}
+          BUGDROP_BOARD_PREVIEW_REPOSITORY_ID: ${{ vars.BUGDROP_BOARD_PREVIEW_REPOSITORY_ID }}
+          BUGDROP_BOARD_PREVIEW_WORKER_URL: ${{ vars.BUGDROP_BOARD_PREVIEW_WORKER_URL }}
+          BUGDROP_BOARD_PREVIEW_CI_BOARD_ID: ${{ vars.BUGDROP_BOARD_PREVIEW_CI_BOARD_ID }}
+          BUGDROP_BOARD_VENUE_PREVIEW_URL: ${{ vars.BUGDROP_BOARD_VENUE_PREVIEW_URL }}
+          BUGDROP_BOARD_VENUE_COMMIT: ${{ vars.BUGDROP_BOARD_VENUE_COMMIT }}
+          BUGDROP_BOARD_VENUE_CONFIG_VERSION: ${{ vars.BUGDROP_BOARD_VENUE_CONFIG_VERSION }}
+      - name: Independently verify the one synthetic Issue
+        id: verify
+        run: >-
+          node scripts/github-issue-canary.mjs verify
+          --repo "$BUGDROP_BOARD_PREVIEW_REPOSITORY"
+          --repository-id "$BUGDROP_BOARD_PREVIEW_REPOSITORY_ID"
+          --marker "$BUGDROP_BOARD_CANARY_MARKER"
+          --expected-worker-sha "$GITHUB_SHA"
+          --expected-venue-commit "$BUGDROP_BOARD_VENUE_COMMIT"
+          --expected-config-version "$BUGDROP_BOARD_VENUE_CONFIG_VERSION"
+          --result-file "$BUGDROP_BOARD_CANARY_RESULT_FILE"
+        env: &monitor-preview
+          BUGDROP_BOARD_PREVIEW_MONITOR_TOKEN: ${{ steps.monitor-token.outputs.token }}
+          BUGDROP_BOARD_PREVIEW_RUNTIME_BOT: ${{ vars.BUGDROP_BOARD_PREVIEW_RUNTIME_BOT }}
+          BUGDROP_BOARD_PREVIEW_LABELS: ${{ vars.BUGDROP_BOARD_PREVIEW_LABELS }}
+          BUGDROP_BOARD_PREVIEW_REPOSITORY: ${{ vars.BUGDROP_BOARD_PREVIEW_REPOSITORY }}
+          BUGDROP_BOARD_PREVIEW_REPOSITORY_ID: ${{ vars.BUGDROP_BOARD_PREVIEW_REPOSITORY_ID }}
+          BUGDROP_BOARD_VENUE_COMMIT: ${{ vars.BUGDROP_BOARD_VENUE_COMMIT }}
+          BUGDROP_BOARD_VENUE_CONFIG_VERSION: ${{ vars.BUGDROP_BOARD_VENUE_CONFIG_VERSION }}
+      - name: Cleanup the exact current marker
+        if: always()
+        run: |
+          if [ ! -f "$BUGDROP_BOARD_CANARY_ATTEMPT_FILE" ]; then exit 0; fi
+          node scripts/github-issue-canary.mjs cleanup \
+            --repo "$BUGDROP_BOARD_PREVIEW_REPOSITORY" \
+            --repository-id "$BUGDROP_BOARD_PREVIEW_REPOSITORY_ID" \
+            --marker "$BUGDROP_BOARD_CANARY_MARKER"
+        env: *monitor-preview
+      - name: Final attributable prefix sweep
+        if: always()
+        run: >-
+          node scripts/github-issue-canary.mjs sweep
+          --repo "$BUGDROP_BOARD_PREVIEW_REPOSITORY"
+          --repository-id "$BUGDROP_BOARD_PREVIEW_REPOSITORY_ID"
+          --prefix "[BugDrop Board CI canary]"
+        env: *monitor-preview
+      - name: Reset only the CI board after mutation
+        if: always()
+        run: npm run reset:preview -- --board-id board_preview_ci --confirm-board board_preview_ci --remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Write redacted evidence
+        if: always()
+        env:
+          BROWSER_OUTCOME: ${{ steps.browser.outcome }}
+          VERIFY_OUTCOME: ${{ steps.verify.outcome }}
+        run: |
+          jq -n --arg run "$GITHUB_RUN_ID" --arg attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg sha "$GITHUB_SHA" --arg marker "$BUGDROP_BOARD_CANARY_MARKER" \
+            '{schema:"bugdrop-board-preview-evidence/v1",run:$run,attempt:$attempt,sha:$sha,marker:$marker}' \
+            > "$RUNNER_TEMP/bugdrop-board-preview-evidence.json"
+      - name: Upload only redacted evidence
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: bugdrop-board-preview-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/bugdrop-board-preview-evidence.json
+          retention-days: 7
+
+  preview-e2e:
+    name: Preview E2E
+    if: always()
+    needs: [classify, fork-safe, live]
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Require the appropriate path
+        env:
+          TRUSTED: ${{ needs.classify.outputs.trusted }}
+          FORK_SAFE_RESULT: ${{ needs.fork-safe.result }}
+          LIVE_RESULT: ${{ needs.live.result }}
+        run: |
+          if [ "$TRUSTED" = "true" ]; then [ "$LIVE_RESULT" = "success" ];
+          else [ "$FORK_SAFE_RESULT" = "success" ] && [ "$LIVE_RESULT" = "skipped" ]; fi
