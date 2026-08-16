@@ -5,6 +5,9 @@ import { readFile } from 'node:fs/promises';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
+const PREVIEW_READINESS_ATTEMPTS = 10;
+const PREVIEW_READINESS_DELAY_MS = 1_000;
+
 export function parseArgs(argv) {
   const options = {
     url: process.env.DEPLOY_SMOKE_URL,
@@ -128,26 +131,22 @@ async function fetchAsset(url, fetchImpl) {
   return { response, bytes: new Uint8Array(await response.arrayBuffer()) };
 }
 
-export async function runSmoke(options, fetchImpl = fetch, readFileImpl = readFile) {
+export async function runSmoke(
+  options,
+  fetchImpl = fetch,
+  readFileImpl = readFile,
+  waitImpl = wait
+) {
   const baseUrl = normalizeBaseUrl(options.url);
   const healthUrl = new URL('/health', baseUrl);
   const boardUrl = new URL('/board.js', baseUrl);
 
-  const { response: healthResponse, json: health } = await fetchJson(healthUrl, fetchImpl);
-  if (health.status !== 'ok') {
-    throw new Error(`${healthUrl} returned non-ok status: ${JSON.stringify(health)}`);
-  }
-  if (options.expectEnvironment && health.environment !== options.expectEnvironment) {
-    throw new Error(
-      `${healthUrl} returned environment ${health.environment}, expected ${options.expectEnvironment}`
-    );
-  }
-
-  if (health.environment === 'preview') {
-    requirePreviewProvenanceOptions(options);
-    assertBuildIdentity(healthUrl, healthResponse, health, options.expectBuildSha);
-  }
-
+  const { response: healthResponse, json: health } = await waitForExpectedHealth(
+    healthUrl,
+    options,
+    fetchImpl,
+    waitImpl
+  );
   const { response: boardResponse, bytes: boardBytes } = await fetchAsset(boardUrl, fetchImpl);
   const contentType = boardResponse.headers.get('content-type') ?? '';
   if (!contentType.includes('javascript')) {
@@ -184,6 +183,46 @@ export async function runSmoke(options, fetchImpl = fetch, readFileImpl = readFi
   }
 
   return result;
+}
+
+async function waitForExpectedHealth(healthUrl, options, fetchImpl, waitImpl) {
+  const attempts = options.expectBuildSha ? PREVIEW_READINESS_ATTEMPTS : 1;
+  let lastError;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const healthResult = await fetchJson(healthUrl, fetchImpl, {
+        headers: { 'Cache-Control': 'no-cache' },
+      });
+      validateHealth(healthUrl, healthResult.response, healthResult.json, options);
+      return healthResult;
+    } catch (error) {
+      lastError = error;
+      if (attempt < attempts) await waitImpl(PREVIEW_READINESS_DELAY_MS);
+    }
+  }
+
+  throw lastError;
+}
+
+function validateHealth(healthUrl, healthResponse, health, options) {
+  if (health.status !== 'ok') {
+    throw new Error(`${healthUrl} returned non-ok status: ${JSON.stringify(health)}`);
+  }
+  if (options.expectEnvironment && health.environment !== options.expectEnvironment) {
+    throw new Error(
+      `${healthUrl} returned environment ${health.environment}, expected ${options.expectEnvironment}`
+    );
+  }
+
+  if (health.environment === 'preview') {
+    requirePreviewProvenanceOptions(options);
+    assertBuildIdentity(healthUrl, healthResponse, health, options.expectBuildSha);
+  }
+}
+
+function wait(milliseconds) {
+  return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
 function hasAnyCorsOption(options) {
