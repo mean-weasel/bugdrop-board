@@ -244,6 +244,48 @@ describe('verify-deployed-worker', () => {
     });
   });
 
+  it('waits for the exact preview build when the edge still serves the prior deployment', async () => {
+    const previousBuildSha = 'a'.repeat(40);
+    const expectedBuildSha = 'b'.repeat(40);
+    const board = 'console.log("new immutable preview widget")';
+    const health = (buildSha: string) =>
+      jsonResponse(
+        { status: 'ok', environment: 'preview', buildSha },
+        { headers: { 'x-bugdrop-build-sha': buildSha } }
+      );
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(health(previousBuildSha))
+      .mockResolvedValueOnce(health(expectedBuildSha))
+      .mockResolvedValueOnce(
+        new Response(board, {
+          headers: {
+            'content-type': 'text/javascript',
+            'x-bugdrop-build-sha': expectedBuildSha,
+          },
+        })
+      );
+    const waitImpl = vi.fn().mockResolvedValue(undefined);
+
+    await expect(
+      runSmoke(
+        {
+          url: 'https://bugdrop-board-preview.neonwatty.workers.dev',
+          expectEnvironment: 'preview',
+          expectBuildSha: expectedBuildSha,
+          localBoardPath: 'public/board.js',
+        },
+        fetchImpl,
+        vi.fn().mockResolvedValue(Buffer.from(board)),
+        waitImpl
+      )
+    ).resolves.toMatchObject({
+      health: { buildSha: expectedBuildSha },
+    });
+    expect(waitImpl).toHaveBeenCalledOnce();
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+  });
+
   it('fails preview proof on missing provenance or widget hash drift', async () => {
     const buildSha = 'a'.repeat(40);
     const healthy = () =>
