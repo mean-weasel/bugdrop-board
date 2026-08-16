@@ -242,6 +242,11 @@ describe('verify-deployed-worker', () => {
       health: { environment: 'preview', buildSha },
       board: { sha256: expect.stringMatching(/^[a-f0-9]{64}$/) },
     });
+    expect(fetchImpl).toHaveBeenNthCalledWith(
+      2,
+      new URL('https://bugdrop-board-preview.neonwatty.workers.dev/board.js'),
+      { headers: { 'Cache-Control': 'no-cache' } }
+    );
   });
 
   it('waits for the exact preview build when the edge still serves the prior deployment', async () => {

@@ -34,7 +34,7 @@ The `main` ruleset (`20876332`) now requires:
 - `Unit Tests & Build`
 - `Preview E2E`
 
-The preview environment approvals and exact ref patterns were exercised for pull-request merge refs and `gh-readonly-queue/main/*`. Because GitHub treated the sole repository owner as the merge-queue deployment initiator, `preview-merge-queue` permits self-review; it still requires that named reviewer and does not allow administrator bypass. This is an explicit single-owner operational tradeoff, not an unprotected environment.
+The preview environment approvals and exact ref patterns were exercised for pull-request merge refs and `gh-readonly-queue/main/*`. On 2026-08-16, the manual reviewer gates were removed from `preview-pr` and `preview-merge-queue` so trusted preview runs start automatically. Both environments still disallow administrator bypass, retain their custom deployment-branch policies, and expose credentials only after the workflow's same-repository/merge-group trust classifier selects the protected live job. Fork and Dependabot pull requests remain on the credential-free path.
 
 ## Negative and failure-path evidence
 
@@ -78,6 +78,5 @@ The final merge-group run showed `demoUnchanged=true` and `ciEmpty=true` before 
 
 Remaining operational follow-ups:
 
-- Completed 2026-08-16: rotated the preview Cloudflare CI token to a new one-account token with only D1 Edit and Workers Scripts Edit, expiring 2026-10-15. The replacement was installed only in `preview-pr` and `preview-merge-queue`; GitHub recorded updates at `2026-08-16T20:47:52Z` and `2026-08-16T20:47:58Z`. Cloudflare token verification, D1 access, and Workers Scripts access each returned HTTP 200, the superseded token was removed, and temporary token variables plus browser and operating-system clipboards were cleared.
+- Completed 2026-08-16: rotated the preview Cloudflare CI token to a new one-account token with only D1 Edit and Workers Scripts Edit, expiring 2026-10-15. The replacement was installed only in `preview-pr` and `preview-merge-queue`; GitHub recorded updates at `2026-08-16T21:05:17Z` and `2026-08-16T21:05:18Z`. Cloudflare token verification, D1 access, and Workers Scripts access each returned HTTP 200, the superseded token was removed, and temporary token variables plus browser and operating-system clipboards were cleared.
 - Replace the deprecated `app-id` input of `actions/create-github-app-token` with `client-id` in a bounded maintenance change; the currently pinned action and live janitor both work.
-- Revisit merge-queue self-review when a second trusted reviewer is available.

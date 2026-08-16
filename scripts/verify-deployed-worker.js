@@ -123,8 +123,8 @@ async function fetchJson(url, fetchImpl, init) {
   }
 }
 
-async function fetchAsset(url, fetchImpl) {
-  const response = await fetchImpl(url);
+async function fetchAsset(url, fetchImpl, init) {
+  const response = await fetchImpl(url, init);
   if (!response.ok) {
     throw new Error(`${url} returned ${response.status}`);
   }
@@ -147,7 +147,11 @@ export async function runSmoke(
     fetchImpl,
     waitImpl
   );
-  const { response: boardResponse, bytes: boardBytes } = await fetchAsset(boardUrl, fetchImpl);
+  const { response: boardResponse, bytes: boardBytes } = await fetchAsset(
+    boardUrl,
+    fetchImpl,
+    health.environment === 'preview' ? { headers: { 'Cache-Control': 'no-cache' } } : undefined
+  );
   const contentType = boardResponse.headers.get('content-type') ?? '';
   if (!contentType.includes('javascript')) {
     throw new Error(`${boardUrl} returned unexpected content-type: ${contentType || '<missing>'}`);
