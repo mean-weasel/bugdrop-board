@@ -55,6 +55,7 @@ describe('preview configuration', () => {
     const board = await api.request('/board.js', {}, env);
     expect(board.status).toBe(200);
     expect(board.headers.get('x-bugdrop-build-sha')).toBe(BUILD_SHA);
+    expect(board.headers.get('cache-control')).toBe('no-store');
     expect(assetFetch).toHaveBeenCalledOnce();
 
     const unauthorized = await api.request(`/boards/${PREVIEW_CONTRACT.ciBoardId}/items`, {}, env);

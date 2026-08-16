@@ -53,7 +53,18 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
   api.get('/', c => c.redirect('https://bugdrop.dev/board-dogfood', 302));
 
   api.on(['GET', 'HEAD'], '/board.js', async c => {
-    return c.env.ASSETS.fetch(c.req.raw);
+    const asset = await c.env.ASSETS.fetch(c.req.raw);
+    if (c.env.ENVIRONMENT !== 'preview') {
+      return asset;
+    }
+
+    const headers = new Headers(asset.headers);
+    headers.set('Cache-Control', 'no-store');
+    return new Response(asset.body, {
+      status: asset.status,
+      statusText: asset.statusText,
+      headers,
+    });
   });
 
   api.get('/health', c => {

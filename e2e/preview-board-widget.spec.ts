@@ -20,6 +20,7 @@ test('two viewers persist, poll, and create exactly one attributable Issue', asy
   test.skip(testInfo.project.name !== 'chromium-canary');
   assertBrowserCredentialBoundary();
   const environment = readEnvironment();
+  await bypassPreviewAssetCache(page, environment);
   const config = await readVenueConfig(page, environment);
   validateBrowserCanaryConfig({
     ...environment,
@@ -54,6 +55,7 @@ test('two viewers persist, poll, and create exactly one attributable Issue', asy
 
   const graceContext = await browser.newContext();
   const grace = await graceContext.newPage();
+  await bypassPreviewAssetCache(grace, environment);
   grace.on('request', request => {
     if (new URL(request.url()).pathname === '/api/board-token') {
       tokenRequests.push(request.method());
@@ -144,6 +146,7 @@ test('mobile venue loads the same immutable CI configuration without mutation', 
   test.skip(testInfo.project.name !== 'mobile-readonly');
   assertBrowserCredentialBoundary();
   const environment = readEnvironment();
+  await bypassPreviewAssetCache(page, environment);
   const config = await readVenueConfig(page, environment);
   validateBrowserCanaryConfig({
     ...environment,
@@ -191,6 +194,20 @@ async function readVenueConfig(page: import('@playwright/test').Page, environmen
     configVersion: environment.configVersion,
   });
   return config;
+}
+
+async function bypassPreviewAssetCache(
+  page: import('@playwright/test').Page,
+  environment: Environment
+) {
+  await page.route(`${environment.workerOrigin}/**`, async route => {
+    await route.continue({
+      headers: {
+        ...route.request().headers(),
+        'Cache-Control': 'no-cache',
+      },
+    });
+  });
 }
 
 interface Environment {

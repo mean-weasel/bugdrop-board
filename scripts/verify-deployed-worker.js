@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
-const PREVIEW_READINESS_ATTEMPTS = 10;
+const PREVIEW_READINESS_ATTEMPTS = 60;
 const PREVIEW_READINESS_DELAY_MS = 1_000;
 
 export function parseArgs(argv) {
@@ -123,8 +123,8 @@ async function fetchJson(url, fetchImpl, init) {
   }
 }
 
-async function fetchAsset(url, fetchImpl) {
-  const response = await fetchImpl(url);
+async function fetchAsset(url, fetchImpl, init) {
+  const response = await fetchImpl(url, init);
   if (!response.ok) {
     throw new Error(`${url} returned ${response.status}`);
   }
@@ -147,7 +147,11 @@ export async function runSmoke(
     fetchImpl,
     waitImpl
   );
-  const { response: boardResponse, bytes: boardBytes } = await fetchAsset(boardUrl, fetchImpl);
+  const { response: boardResponse, bytes: boardBytes } = await fetchAsset(
+    boardUrl,
+    fetchImpl,
+    health.environment === 'preview' ? { headers: { 'Cache-Control': 'no-cache' } } : undefined
+  );
   const contentType = boardResponse.headers.get('content-type') ?? '';
   if (!contentType.includes('javascript')) {
     throw new Error(`${boardUrl} returned unexpected content-type: ${contentType || '<missing>'}`);
@@ -256,14 +260,20 @@ async function verifyCors(baseUrl, options, fetchImpl) {
 
   const itemsUrl = new URL(`/boards/${boardId}/items`, baseUrl);
   const eventsUrl = new URL(`/boards/${boardId}/events?since=0`, baseUrl);
-  const preflight = await fetchImpl(itemsUrl, {
-    method: 'OPTIONS',
-    headers: {
-      Origin: origin,
-      'Access-Control-Request-Method': 'GET',
-      'Access-Control-Request-Headers': 'Authorization',
-    },
-  });
+  const preflight = await fetchImpl(
+    itemsUrl,
+    previewRequest(
+      {
+        method: 'OPTIONS',
+        headers: {
+          Origin: origin,
+          'Access-Control-Request-Method': 'GET',
+          'Access-Control-Request-Headers': 'Authorization',
+        },
+      },
+      options.expectBuildSha
+    )
+  );
   if (!preflight.ok) {
     throw new Error(`${itemsUrl} preflight returned ${preflight.status}`);
   }
@@ -271,10 +281,18 @@ async function verifyCors(baseUrl, options, fetchImpl) {
   assertOptionalBuildHeader(itemsUrl, preflight, options.expectBuildSha);
 
   const headers = { Authorization: `Bearer ${token}`, Origin: origin };
-  const items = await fetchJson(itemsUrl, fetchImpl, { headers });
+  const items = await fetchJson(
+    itemsUrl,
+    fetchImpl,
+    previewRequest({ headers }, options.expectBuildSha)
+  );
   assertAllowOrigin(itemsUrl, items.response, origin);
   assertOptionalBuildHeader(itemsUrl, items.response, options.expectBuildSha);
-  const events = await fetchJson(eventsUrl, fetchImpl, { headers });
+  const events = await fetchJson(
+    eventsUrl,
+    fetchImpl,
+    previewRequest({ headers }, options.expectBuildSha)
+  );
   assertAllowOrigin(eventsUrl, events.response, origin);
   assertOptionalBuildHeader(eventsUrl, events.response, options.expectBuildSha);
 
@@ -324,22 +342,28 @@ function assertAllowOrigin(url, response, expectedOrigin) {
 async function verifyDisallowedCors(baseUrl, boardId, token, origin, fetchImpl, expectBuildSha) {
   const itemsUrl = new URL(`/boards/${boardId}/items`, baseUrl);
   const eventsUrl = new URL(`/boards/${boardId}/events?since=0`, baseUrl);
-  const preflight = await fetchImpl(itemsUrl, {
-    method: 'OPTIONS',
-    headers: {
-      Origin: origin,
-      'Access-Control-Request-Method': 'GET',
-      'Access-Control-Request-Headers': 'Authorization',
-    },
-  });
+  const preflight = await fetchImpl(
+    itemsUrl,
+    previewRequest(
+      {
+        method: 'OPTIONS',
+        headers: {
+          Origin: origin,
+          'Access-Control-Request-Method': 'GET',
+          'Access-Control-Request-Headers': 'Authorization',
+        },
+      },
+      expectBuildSha
+    )
+  );
   assertDisallowedOrigin(itemsUrl, preflight, origin);
   assertOptionalBuildHeader(itemsUrl, preflight, expectBuildSha);
 
   const headers = { Authorization: `Bearer ${token}`, Origin: origin };
-  const items = await fetchJson(itemsUrl, fetchImpl, { headers });
+  const items = await fetchJson(itemsUrl, fetchImpl, previewRequest({ headers }, expectBuildSha));
   assertDisallowedOrigin(itemsUrl, items.response, origin);
   assertOptionalBuildHeader(itemsUrl, items.response, expectBuildSha);
-  const events = await fetchJson(eventsUrl, fetchImpl, { headers });
+  const events = await fetchJson(eventsUrl, fetchImpl, previewRequest({ headers }, expectBuildSha));
   assertDisallowedOrigin(eventsUrl, events.response, origin);
   assertOptionalBuildHeader(eventsUrl, events.response, expectBuildSha);
 
@@ -348,6 +372,17 @@ async function verifyDisallowedCors(baseUrl, boardId, token, origin, fetchImpl, 
     preflight: corsResponseSummary(preflight),
     items: corsResponseSummary(items.response),
     events: corsResponseSummary(events.response),
+  };
+}
+
+function previewRequest(init, expectBuildSha) {
+  if (!expectBuildSha) return init;
+  return {
+    ...init,
+    headers: {
+      ...init.headers,
+      'Cache-Control': 'no-cache',
+    },
   };
 }
 

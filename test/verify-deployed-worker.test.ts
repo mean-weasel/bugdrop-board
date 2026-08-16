@@ -242,9 +242,69 @@ describe('verify-deployed-worker', () => {
       health: { environment: 'preview', buildSha },
       board: { sha256: expect.stringMatching(/^[a-f0-9]{64}$/) },
     });
+    expect(fetchImpl).toHaveBeenNthCalledWith(
+      2,
+      new URL('https://bugdrop-board-preview.neonwatty.workers.dev/board.js'),
+      { headers: { 'Cache-Control': 'no-cache' } }
+    );
   });
 
-  it('waits for the exact preview build when the edge still serves the prior deployment', async () => {
+  it('revalidates every preview Worker request after the exact health build is ready', async () => {
+    const buildSha = 'a'.repeat(40);
+    const board = 'console.log("preview widget")';
+    const provenance = { 'x-bugdrop-build-sha': buildSha };
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({ status: 'ok', environment: 'preview', buildSha }, { headers: provenance })
+      )
+      .mockResolvedValueOnce(
+        new Response(board, {
+          headers: { 'content-type': 'text/javascript', ...provenance },
+        })
+      )
+      .mockResolvedValueOnce(jsonResponse({ token: 'payload.signature' }))
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 204,
+          headers: { ...corsHeaders('https://venue.example'), ...provenance },
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(
+          { items: [] },
+          { headers: { ...corsHeaders('https://venue.example'), ...provenance } }
+        )
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(
+          { cursor: 0, events: [] },
+          { headers: { ...corsHeaders('https://venue.example'), ...provenance } }
+        )
+      );
+
+    await runSmoke(
+      {
+        url: 'https://preview.example',
+        expectEnvironment: 'preview',
+        expectBuildSha: buildSha,
+        localBoardPath: 'public/board.js',
+        corsOrigin: 'https://venue.example',
+        corsBoardId: 'board_preview_ci',
+        corsTokenEndpoint: 'https://venue.example/api/board-token?mode=ci',
+      },
+      fetchImpl,
+      vi.fn().mockResolvedValue(Buffer.from(board))
+    );
+
+    for (const callIndex of [3, 4, 5]) {
+      expect(fetchImpl.mock.calls[callIndex][1]).toMatchObject({
+        headers: expect.objectContaining({ 'Cache-Control': 'no-cache' }),
+      });
+    }
+  });
+
+  it('waits through a bounded propagation window for the exact preview build', async () => {
     const previousBuildSha = 'a'.repeat(40);
     const expectedBuildSha = 'b'.repeat(40);
     const board = 'console.log("new immutable preview widget")';
@@ -253,18 +313,18 @@ describe('verify-deployed-worker', () => {
         { status: 'ok', environment: 'preview', buildSha },
         { headers: { 'x-bugdrop-build-sha': buildSha } }
       );
-    const fetchImpl = vi
-      .fn()
-      .mockResolvedValueOnce(health(previousBuildSha))
-      .mockResolvedValueOnce(health(expectedBuildSha))
-      .mockResolvedValueOnce(
-        new Response(board, {
-          headers: {
-            'content-type': 'text/javascript',
-            'x-bugdrop-build-sha': expectedBuildSha,
-          },
-        })
-      );
+    const fetchImpl = vi.fn();
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      fetchImpl.mockResolvedValueOnce(health(previousBuildSha));
+    }
+    fetchImpl.mockResolvedValueOnce(health(expectedBuildSha)).mockResolvedValueOnce(
+      new Response(board, {
+        headers: {
+          'content-type': 'text/javascript',
+          'x-bugdrop-build-sha': expectedBuildSha,
+        },
+      })
+    );
     const waitImpl = vi.fn().mockResolvedValue(undefined);
 
     await expect(
@@ -282,8 +342,8 @@ describe('verify-deployed-worker', () => {
     ).resolves.toMatchObject({
       health: { buildSha: expectedBuildSha },
     });
-    expect(waitImpl).toHaveBeenCalledOnce();
-    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    expect(waitImpl).toHaveBeenCalledTimes(10);
+    expect(fetchImpl).toHaveBeenCalledTimes(12);
   });
 
   it('fails preview proof on missing provenance or widget hash drift', async () => {

@@ -6,7 +6,7 @@ goal:
   slug: 'bugdrop-board-preview-e2e-venue'
   kind: specific
   tranche: 'Deliver the companion preview venue, isolated preview infrastructure, live CI canary, and protected merge-queue proof.'
-  status: active
+  status: done
   oracle:
     signal: 'A live Vercel preview venue and isolated BugDrop Board preview Worker complete and independently verify the signed two-viewer create, GitHub mirror, upvote, and polling flow in PR and merge-group CI, then clean every attributable synthetic Issue.'
     cadence: 'after each Worker package and at final audit'
@@ -70,13 +70,13 @@ visual_board:
     url: 'http://goalbuddy.localhost:41737/bugdrop-board-preview-e2e-venue/'
     command: 'node /Users/neonwatty/.codex/plugins/cache/goalbuddy/goalbuddy/0.4.3/skills/goal-prep/surfaces/local-goal-board/scripts/local-goal-board.mjs --goal docs/goals/bugdrop-board-preview-e2e-venue'
 
-active_task: T011
+active_task: null
 
 tasks:
   - id: T001
     type: scout
     assignee: Scout
-    status: queued
+    status: done
     reasoning_hint: low
     objective: 'Map mean-weasel/bugdrop-widget-test and the original BugDrop preview/live-test system deeply enough to preserve proven contracts and identify what cannot be copied directly.'
     inputs:
@@ -1230,7 +1230,7 @@ tasks:
   - id: T011
     type: pm
     assignee: PM
-    status: active
+    status: done
     reasoning_hint: medium
     objective: 'Run live deployment, smoke, browser, Issue verification/cleanup, pull-request, and merge-group proofs and capture redacted evidence.'
     inputs:
@@ -1247,12 +1247,35 @@ tasks:
       - 'Two-viewer Playwright and synthetic Issue lifecycle results'
       - 'Passing PR and merge-group run URLs'
       - 'Rollback drill or evidence-backed rollback readiness'
-    receipt: null
-
+    receipt:
+      result: done
+      summary: 'Completed protected live preview proof for a same-repository pull request and a clean merge group. Exact Worker/widget/venue provenance, signed two-viewer desktop and mobile behavior, D1 persistence and reset, independent real GitHub Issue verification, deterministic cleanup, janitor sweeps, rate limiting, and two fail-closed rollback drills were all exercised. No attributable synthetic board row or Issue remained.'
+      evidence:
+        - 'Passing pull-request live proof: https://github.com/mean-weasel/bugdrop-board/actions/runs/31954854975'
+        - 'Passing clean merge-group live proof at fdf0356f684c5caef7c3cea197b235d79244033e: https://github.com/mean-weasel/bugdrop-board/actions/runs/31955188955'
+        - 'Passing merge-group repository CI: https://github.com/mean-weasel/bugdrop-board/actions/runs/31955188976'
+        - 'Passing trusted main-only janitor: https://github.com/mean-weasel/bugdrop-board/actions/runs/31955720029'
+        - 'Post-Issue failure run 31949725368 still completed exact cleanup, sweep, and D1 reset.'
+        - 'Stale-build rejection run 31950593478 failed closed and still completed cleanup, sweep, and D1 reset.'
+        - 'Exact identity: Worker/merge SHA fdf0356f684c5caef7c3cea197b235d79244033e, venue commit a9eba6e7f8770e997facdfa8e5edf406bafdc03a, widget SHA-256 521df617959620acf1ebac5c4664bc501275244770a506523b5eeac65d2bf209.'
+        - 'Read-only rate-limit probe returned HTTP 429 with Retry-After: 8.'
+        - 'Signer-cutoff drill returned 503 for health/config/token, then 200/200/200 after exact deployment restoration.'
+        - 'Runtime GitHub App suspension made the reserved mutation return 502; after unsuspension, independent inspection showed d1_matches=0 and issue_matches=0.'
+        - 'notes/T011-live-proof.md contains the complete redacted evidence map and operational follow-ups.'
+      claims:
+        - 'The protected live system tests the deployed companion signer, deployed Worker, isolated preview D1, and real GitHub mirror rather than a static demo or mocked Issue path.'
+        - 'The browser cannot independently verify or clean GitHub Issues; those operations use separately scoped installation credentials outside Playwright.'
+        - 'Exact provenance mismatches, signer absence, GitHub App unavailability, invalid auth/CORS, and burst traffic fail closed.'
+        - 'Final cleanup preserved demo data, emptied the CI board, and left zero attributable open Issues.'
+      residual_risks:
+        - 'Rotate the preview Cloudflare CI token before 2026-09-15.'
+        - 'The single-owner merge-queue environment allows the named owner to approve their own deployment; restore self-review prevention when a second trusted reviewer is available.'
+        - 'The pinned GitHub App token action warns that app-id is deprecated in favor of client-id; migrate the input in a bounded maintenance change.'
+      harness: codex
   - id: T012
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
     objective: 'Audit the live system against security, operability, user-experience, and closed-beta evidence requirements before final completion review.'
     inputs:
@@ -1267,8 +1290,29 @@ tasks:
       - 'Oracle evidence map and remaining gaps'
       - 'Exact repair task if required'
       - 'Preview-to-closed-beta handoff decision'
-    receipt: null
-
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      rationale: 'Accept the preview-to-closed-beta handoff as an evaluation and canary venue, not as certification of the entire product. Current endpoints and exact GitHub evidence corroborate immutable provenance, signed two-viewer behavior, real D1/GitHub integration, independent verification, failure-path cleanup, fork gates, protected PR/merge-queue execution, rate limiting, and rollback recovery. Zero attributable Issues remain. Residuals are bounded operations work: token rotation, single-owner self-review, single-key signer maintenance, and an action-input deprecation. T999 must still perform final goal completion review.'
+      evidence:
+        - 'Current Worker /health returns preview build fdf0356f684c5caef7c3cea197b235d79244033e; the fixed venue returns approved commit a9eba6e7f8770e997facdfa8e5edf406bafdc03a and config preview-2026-08-15-v1; merge-group run 31955188955 recorded widget SHA-256 521df617959620acf1ebac5c4664bc501275244770a506523b5eeac65d2bf209.'
+        - 'Runs 31954854975, 31955188955, and 31955188976 prove protected pull-request, merge-group live canary, and repository CI. Main ruleset 20876332 is active and requires Preview E2E alongside repository checks.'
+        - 'Merge-group logs prove signed desktop two-viewer create, polling, upvote, reload persistence, and Pixel 7 mobile smoke; companion check run 31916138093 passed its complete repository gate.'
+        - 'Run 31955188955 independently verified real Issue #6 with monitor authority, exact author/repository/labels/marker/provenance, and canonical URL before closed/not_planned cleanup.'
+        - 'Successful and exercised-failure runs prove exact cleanup, prefix sweep, and D1 reset; current public inspection finds zero open reserved-prefix Issues and janitor run 31955720029 passed.'
+        - 'D1 reset evidence shows demoUnchanged=true and ciEmpty=true before and after mutation; the preview database is distinct from staging and production.'
+        - 'Live CORS and signer negatives, public-only JWKS, POST-only signer behavior, generic-preview fail-closed behavior, and browser credential exclusion prove token containment boundaries.'
+        - 'Fork/Dependabot paths are untrusted and environment-free, pull_request_target is absent, runtime and monitor Apps are separate, janitor has monitor-only credentials, and mutation jobs share a non-cancelling mutex.'
+        - 'Main and companion rulesets and the three preview environment branch patterns are active with no administrator bypass; the named single owner remains required even though merge-queue self-review is permitted.'
+        - 'Signer cutoff returned 503/503/503 and recovered to 200/200/200; runtime App suspension returned 502 with zero D1/Issue matches; burst traffic returned 429 with Retry-After: 8.'
+      blocked_tasks: []
+      missing_evidence: []
+      required_board_updates:
+        - 'Record T012 as done and activate T999 for final whole-goal completion audit.'
+        - 'Carry non-blocking residuals: rotate CLOUDFLARE_API_TOKEN before 2026-09-15; restore self-review prevention when a second trusted reviewer exists; migrate the pinned token action from app-id to client-id; preserve the documented maintenance window for single-key signer rotation.'
+        - 'Describe approval narrowly: the preview venue is accepted for closed-beta evaluation and protected CI proof; broader product readiness remains governed by separate closed-beta evidence.'
+      harness: codex
   - id: T016
     type: worker
     assignee: Worker
@@ -1568,7 +1612,7 @@ tasks:
   - id: T999
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
     objective: 'Perform the final skeptical audit and decide whether the complete original preview-venue and CI outcome is genuinely achieved.'
     inputs:
@@ -1583,8 +1627,30 @@ tasks:
       - 'full_outcome_complete: true | false'
       - 'Per-oracle evidence map'
       - 'Missing evidence, residual risks, and next task if incomplete'
-    receipt: null
-
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      rationale: 'Complete. Canonical state marks every required T001-T019 task done, T012 approved the live handoff, and exact evidence maps the original request to a protected deployed vertical slice: dedicated Vercel venue, server-signed identities, isolated Worker/D1, real GitHub mirroring, two-viewer polling and upvotes, immutable provenance, independent verification, deterministic cleanup, fork-safe PR CI, and merge-group proof. Failure cleanup, rate limiting, janitor recovery, and rollback were exercised. Remaining items are bounded operations maintenance, not outcome gaps. This completion is narrow and does not certify broader product closed-beta readiness.'
+      evidence:
+        - 'T001-T003 mapped the original BugDrop pattern and selected a safe Board-specific architecture: fixed reviewed venue, server-only asymmetric signing, isolated preview D1, exact CORS, serialized canary, independent monitor authority, deterministic cleanup, and protected fork-safe environments.'
+        - 'The fixed companion alias serves commit a9eba6e7f8770e997facdfa8e5edf406bafdc03a and config preview-2026-08-15-v1 with server-only RS256 signing, public JWKS, fixed demo/CI boards and Ada/Grace viewers, and generic-preview fail-closed behavior.'
+        - 'The preview Worker reports build fdf0356f684c5caef7c3cea197b235d79244033e; preview D1 d8b341bd-8be8-45f3-90d8-231abe398781 is isolated and reset proof shows demoUnchanged=true and ciEmpty=true before and after the live flow.'
+        - 'Merge-group run 31955188955 tied GitHub SHA, Worker health/header, local and deployed board.js, widget SHA-256 521df617959620acf1ebac5c4664bc501275244770a506523b5eeac65d2bf209, venue commit, and venue config before mutation. Run 31950593478 rejected stale identity and cleaned up.'
+        - 'Pull-request run 31954854975 and merge-group runs 31955188955 and 31955188976 passed protected deployment, provenance, desktop/mobile two-viewer browser proof, independent Issue verification, cleanup, D1 reset, and repository CI.'
+        - 'Run 31955188955 proved deployed signed item creation, second-viewer polling, upvote state, reload persistence, POST-only token retrieval, mobile smoke, and independently verified real GitHub Issue #6 before exact closed/not_planned cleanup.'
+        - 'Post-Issue failure run 31949725368 still cleaned the Issue and D1; trusted janitor run 31955720029 passed; final public inspection showed zero open reserved-prefix Issues.'
+        - 'Fork and Dependabot paths have no protected environment; pull_request_target is absent; browser execution has no privileged credential; runtime and monitor Apps are separate; janitor is monitor-only; workflows use immutable action pins and a non-cancelling shared mutex.'
+        - 'Live exact-origin CORS and signer negatives fail closed. Burst traffic returned 429 with Retry-After. Signer cutoff returned 503 then recovered after exact restoration. Runtime App suspension returned 502 without a D1 row or Issue and was successfully reversed.'
+        - 'Canonical GoalBuddy inspection shows T001-T019 done, T012 approved with no missing evidence, and no required Worker, Scout, PM, or intermediate Judge task queued or blocked.'
+      blocked_tasks: []
+      missing_evidence: []
+      required_board_updates:
+        - 'Apply this receipt, mark the goal complete, and clear active_task.'
+        - 'Persist the redacted T011 note and final state through the protected repository workflow.'
+        - 'Carry non-blocking maintenance outside this goal: rotate CLOUDFLARE_API_TOKEN before 2026-09-15; restore self-review prevention when a second trusted reviewer exists; migrate the pinned GitHub App token input from app-id to client-id; retain the single-key signer maintenance procedure.'
+        - 'State scope precisely: the companion preview venue and protected BugDrop Board PR/merge-group E2E outcome are complete; broader product closed-beta readiness remains a separate evidence gate.'
+      harness: codex
 checks:
   dirty_fingerprint: 'goal-prep-control-files-only'
   last_verification:
