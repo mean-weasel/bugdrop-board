@@ -81,6 +81,18 @@ describe('verify-deployed-worker', () => {
         },
       },
     ]);
+    expect(fetchImpl.mock.calls[2]).toEqual([
+      new URL('https://bugdrop.dev/api/bugdrop-board-token?viewer=a'),
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Origin: 'https://bugdrop.dev',
+        },
+        body: '{}',
+      },
+    ]);
     expect(fetchImpl.mock.calls[4][1]).toMatchObject({
       headers: {
         Authorization: 'Bearer payload.signature',
@@ -180,13 +192,92 @@ describe('verify-deployed-worker', () => {
         'board_mean_weasel_bugdrop_board_production_dogfood',
         '--cors-token-endpoint',
         'https://bugdrop.dev/api/bugdrop-board-token?viewer=a',
+        '--expect-build-sha',
+        'a'.repeat(40),
+        '--local-board-path',
+        'public/board.js',
       ])
     ).toMatchObject({
       corsOrigin: 'https://bugdrop.dev',
       corsDisallowedOrigin: 'https://evil.example',
       corsBoardId: 'board_mean_weasel_bugdrop_board_production_dogfood',
       corsTokenEndpoint: 'https://bugdrop.dev/api/bugdrop-board-token?viewer=a',
+      expectBuildSha: 'a'.repeat(40),
+      localBoardPath: 'public/board.js',
     });
+  });
+
+  it('proves exact preview build identity and local/deployed board.js equality', async () => {
+    const buildSha = 'a'.repeat(40);
+    const board = 'console.log("immutable preview widget")';
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse(
+          { status: 'ok', environment: 'preview', buildSha },
+          { headers: { 'x-bugdrop-build-sha': buildSha } }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(board, {
+          headers: {
+            'content-type': 'text/javascript',
+            'x-bugdrop-build-sha': buildSha,
+          },
+        })
+      );
+
+    await expect(
+      runSmoke(
+        {
+          url: 'https://bugdrop-board-preview.neonwatty.workers.dev',
+          expectEnvironment: 'preview',
+          expectBuildSha: buildSha,
+          localBoardPath: 'public/board.js',
+        },
+        fetchImpl,
+        vi.fn().mockResolvedValue(Buffer.from(board))
+      )
+    ).resolves.toMatchObject({
+      health: { environment: 'preview', buildSha },
+      board: { sha256: expect.stringMatching(/^[a-f0-9]{64}$/) },
+    });
+  });
+
+  it('fails preview proof on missing provenance or widget hash drift', async () => {
+    const buildSha = 'a'.repeat(40);
+    const healthy = () =>
+      jsonResponse(
+        { status: 'ok', environment: 'preview', buildSha },
+        { headers: { 'x-bugdrop-build-sha': buildSha } }
+      );
+    const board = () =>
+      new Response('deployed', {
+        headers: {
+          'content-type': 'text/javascript',
+          'x-bugdrop-build-sha': buildSha,
+        },
+      });
+
+    await expect(
+      runSmoke(
+        { url: 'https://preview.example', expectEnvironment: 'preview' },
+        vi.fn().mockResolvedValueOnce(healthy())
+      )
+    ).rejects.toThrow(/expect-build-sha/);
+
+    await expect(
+      runSmoke(
+        {
+          url: 'https://preview.example',
+          expectEnvironment: 'preview',
+          expectBuildSha: buildSha,
+          localBoardPath: 'public/board.js',
+        },
+        vi.fn().mockResolvedValueOnce(healthy()).mockResolvedValueOnce(board()),
+        vi.fn().mockResolvedValue(Buffer.from('local'))
+      )
+    ).rejects.toThrow(/does not match local board\.js/);
   });
 });
 

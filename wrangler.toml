@@ -53,6 +53,34 @@ database_name = "bugdrop-board-staging"
 database_id = "e4bfc871-ace5-49b9-b795-1e85ce535b9f"
 migrations_dir = "migrations"
 
+[env.preview]
+name = "bugdrop-board-preview"
+workers_dev = true
+
+[env.preview.assets]
+directory = "public"
+binding = "ASSETS"
+run_worker_first = ["/board.js"]
+
+[env.preview.vars]
+ENVIRONMENT = "preview"
+ALLOWED_ORIGINS = "https://bugdrop-board-widget-test.vercel.app,https://bugdrop-board-widget-test-git-preview-jermwatts-projects.vercel.app"
+BOARD_TOKEN_AUDIENCE = "bugdrop-board"
+BOARD_TOKEN_ISSUER = "https://bugdrop-board-widget-test.vercel.app"
+BOARD_TOKEN_MAX_TTL_SECONDS = "300"
+BUILD_SHA = "0000000000000000000000000000000000000000"
+REQUEST_THROTTLE_WINDOW_SECONDS = "60"
+ITEM_CREATE_RATE_LIMIT = "5"
+UPVOTE_RATE_LIMIT = "60"
+ITEM_READ_RATE_LIMIT = "120"
+EVENTS_POLL_RATE_LIMIT = "180"
+
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "bugdrop-board-preview"
+database_id = "d8b341bd-8be8-45f3-90d8-231abe398781"
+migrations_dir = "migrations"
+
 [env.production]
 name = "bugdrop-board"
 workers_dev = true

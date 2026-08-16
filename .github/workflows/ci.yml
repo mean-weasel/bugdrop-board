@@ -28,6 +28,9 @@ jobs:
       - name: Run checks
         run: make check
 
+      - name: Verify preview fork and secret gates
+        run: npm run test:preview-fork-gates
+
   test:
     name: Unit Tests & Build
     runs-on: ubuntu-latest

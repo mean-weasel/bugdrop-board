@@ -107,6 +107,32 @@ describe('provision-hosted-board helpers', () => {
     expect(plan.sql).toContain("'Ada''s Requests'");
   });
 
+  it('builds distinct hosted board configs that share one repository connection', () => {
+    const demo = buildHostedProvisioningPlan(
+      parseHostedArgs([...REQUIRED_ARGS, '--board-id', 'board_preview_demo'])
+    );
+    const ci = buildHostedProvisioningPlan(
+      parseHostedArgs([...REQUIRED_ARGS, '--board-id', 'board_preview_ci'])
+    );
+
+    expect(demo.board).toMatchObject({
+      id: 'board_preview_demo',
+      repoOwner: 'mean-weasel',
+      repoName: 'demo',
+    });
+    expect(ci.board.id).toBe('board_preview_ci');
+    expect(demo.ids.boardConfigId).not.toBe(ci.ids.boardConfigId);
+    expect(demo.ids.githubConnectionId).toBe(ci.ids.githubConnectionId);
+    expect(demo.handoff.embedSnippet).toContain('data-board-id="board_preview_demo"');
+    expect(ci.handoff.embedSnippet).toContain('data-board-id="board_preview_ci"');
+  });
+
+  it('rejects an unsafe explicit hosted board id', () => {
+    expect(() => parseHostedArgs([...REQUIRED_ARGS, '--board-id', 'board/preview'])).toThrow(
+      'Expected --board-id'
+    );
+  });
+
   it('builds hosted setup SQL for hmac legacy token verifier metadata', () => {
     const hmacArgs = REQUIRED_ARGS.filter((value, index, args) => {
       const previous = args[index - 1];

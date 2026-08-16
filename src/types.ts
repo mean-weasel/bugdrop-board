@@ -7,6 +7,7 @@ export interface Env {
   BOARD_TOKEN_AUDIENCE?: string;
   BOARD_TOKEN_ISSUER?: string;
   BOARD_TOKEN_MAX_TTL_SECONDS?: string;
+  BUILD_SHA?: string;
   GITHUB_ISSUE_ACCESS_TOKEN?: string;
   GITHUB_APP_ID?: string;
   GITHUB_APP_PRIVATE_KEY?: string;

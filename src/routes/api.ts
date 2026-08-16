@@ -19,9 +19,24 @@ const defaultDependencies: ApiDependencies = {
   createIssueCreator,
 };
 
+const BUILD_SHA_PATTERN = /^[a-f0-9]{40}$/;
+
 export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<ApiEnv> {
   const deps: ApiDependencies = { ...defaultDependencies, ...dependencies };
   const api = new Hono<ApiEnv>();
+
+  api.use('*', async (c, next) => {
+    const buildSha = previewBuildSha(c.env);
+    if (c.env.ENVIRONMENT === 'preview' && !buildSha) {
+      return c.json({ error: 'Preview build identity is unavailable' }, 503);
+    }
+
+    await next();
+    if (buildSha) {
+      c.header('X-BugDrop-Build-Sha', buildSha);
+      c.header('X-BugDrop-Environment', c.env.ENVIRONMENT);
+    }
+  });
 
   api.use('*', async (c, next) => {
     if (c.req.method === 'OPTIONS') {
@@ -37,10 +52,16 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
 
   api.get('/', c => c.redirect('https://bugdrop.dev/board-dogfood', 302));
 
+  api.on(['GET', 'HEAD'], '/board.js', async c => {
+    return c.env.ASSETS.fetch(c.req.raw);
+  });
+
   api.get('/health', c => {
+    const buildSha = previewBuildSha(c.env);
     return c.json({
       status: 'ok',
       environment: c.env.ENVIRONMENT,
+      ...(buildSha ? { buildSha } : {}),
       timestamp: new Date().toISOString(),
     });
   });
@@ -158,6 +179,13 @@ export function createApi(dependencies: Partial<ApiDependencies> = {}): Hono<Api
   api.get('/boards/:boardId/events', listEvents);
 
   return api;
+}
+
+function previewBuildSha(env: Env): string | null {
+  if (env.ENVIRONMENT !== 'preview') {
+    return null;
+  }
+  return env.BUILD_SHA && BUILD_SHA_PATTERN.test(env.BUILD_SHA) ? env.BUILD_SHA : null;
 }
 
 async function listItems(c: Context<ApiEnv>) {

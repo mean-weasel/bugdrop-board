@@ -315,7 +315,8 @@ Attributes:
 - `data-board-id`: D1 board id. Current ids are generated from repo owner/name, for example
   `board_mean_weasel_demo`.
 - `data-api-url`: Worker API origin. Defaults to the script origin when omitted.
-- `data-token-endpoint`: host app endpoint that returns a board token for the current app user.
+- `data-token-endpoint`: host app endpoint that returns a board token for the current app user. The
+  widget calls this URL verbatim with the POST contract described below.
 - `data-mount-selector`: optional CSS selector for a host page element that should contain the
   widget. The widget throws a clear setup error if the selector does not match.
 - `data-poll-interval`: optional polling interval in milliseconds. Values below `500` are ignored.
@@ -537,10 +538,18 @@ The host app endpoint must return JSON:
 { "token": "payload.signature" }
 ```
 
-The widget calls this endpoint from the browser with `fetch(tokenEndpoint, { credentials: "include"
-})`, so cookie-based host sessions work as long as the endpoint is same-origin with the host page or
-has the host's normal credentialed-CORS behavior. The endpoint must run on the host app backend; do
-not sign tokens in browser code.
+The widget calls this endpoint exactly once per token request using `POST`, `credentials: "include"`,
+`cache: "no-store"`, `Accept: application/json`, `Content-Type: application/json`, and the literal
+body `{}`. It does not retry with `GET` or send board ids, claims, identity, issuer, audience, TTL, or
+other authority-bearing fields. The endpoint must derive those values from its server-side config
+and authenticated host session, and should reject other methods or request bodies. Return a 2xx JSON
+response containing a non-blank string token and `Cache-Control: no-store`; the widget fails closed
+for non-2xx, invalid JSON, or a missing, non-string, or blank token.
+
+Cookie-based host sessions work as long as the endpoint is same-origin with the host page or has the
+host's normal credentialed-CORS behavior. The endpoint must run on the host app backend; do not sign
+tokens in browser code. This POST-only contract intentionally replaces the pre-beta implicit GET
+request; GET-only token endpoints must be updated before using this widget build.
 
 The token is an HMAC-SHA256 signature over a base64url JSON payload. Required claims:
 
@@ -577,7 +586,7 @@ function signBoardToken(claims, secret) {
 Express-style endpoint:
 
 ```js
-app.get('/api/bugdrop-board-token', requireSignedInUser, (req, res) => {
+app.post('/api/bugdrop-board-token', requireSignedInUser, (req, res) => {
   const token = signBoardToken(
     {
       boardId: 'board_owner_repo',
@@ -590,14 +599,17 @@ app.get('/api/bugdrop-board-token', requireSignedInUser, (req, res) => {
     process.env.BOARD_TOKEN_SECRET
   );
 
-  res.json({ token });
+  res.set('Cache-Control', 'no-store').json({ token });
 });
 ```
 
 Next.js App Router route handler:
 
 ```js
-export async function GET() {
+export async function POST(request) {
+  if ((await request.text()) !== '{}') {
+    return Response.json({ error: 'Expected an empty JSON object' }, { status: 400 });
+  }
   const user = await requireSignedInUser();
   const token = signBoardToken(
     {
@@ -611,7 +623,7 @@ export async function GET() {
     process.env.BOARD_TOKEN_SECRET
   );
 
-  return Response.json({ token });
+  return Response.json({ token }, { headers: { 'Cache-Control': 'no-store' } });
 }
 ```
 

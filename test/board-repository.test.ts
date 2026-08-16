@@ -11,7 +11,7 @@ describe('BoardRepository', () => {
     repo = new BoardRepository(env.DB);
   });
 
-  it('creates and loads one board per repo', async () => {
+  it('keeps the repository-derived board id stable when no explicit id is provided', async () => {
     const board = await repo.upsertBoard({ repoOwner: 'mean-weasel', repoName: 'demo' });
     const duplicate = await repo.upsertBoard({
       repoOwner: 'mean-weasel',
@@ -26,6 +26,44 @@ describe('BoardRepository', () => {
       repoOwner: 'mean-weasel',
       repoName: 'demo',
       name: 'Demo Board',
+    });
+  });
+
+  it('keeps two explicit boards for one repository isolated and rejects id retargeting', async () => {
+    const demo = await repo.upsertBoard({
+      id: 'board_shared_repo_demo',
+      repoOwner: 'mean-weasel',
+      repoName: 'shared-repo',
+      name: 'Demo',
+    });
+    const ci = await repo.upsertBoard({
+      id: 'board_shared_repo_ci',
+      repoOwner: 'mean-weasel',
+      repoName: 'shared-repo',
+      name: 'CI',
+    });
+    const item = await repo.createItem({
+      boardId: demo.id,
+      title: 'Demo-only item',
+      description: 'This must not appear on the CI board.',
+      externalUserId: 'demo_user',
+    });
+
+    expect(demo.id).not.toBe(ci.id);
+    await expect(repo.listItems(demo.id)).resolves.toMatchObject([{ id: item.id }]);
+    await expect(repo.listItems(ci.id)).resolves.toEqual([]);
+    await expect(repo.listEvents(ci.id, 0)).resolves.toEqual([]);
+    await expect(
+      repo.upsertBoard({
+        id: demo.id,
+        repoOwner: 'mean-weasel',
+        repoName: 'other-repo',
+      })
+    ).rejects.toThrow('Board id is already assigned to another repository');
+    await expect(repo.getBoard(demo.id)).resolves.toMatchObject({
+      repoOwner: 'mean-weasel',
+      repoName: 'shared-repo',
+      name: 'Demo',
     });
   });
 
