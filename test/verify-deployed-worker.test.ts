@@ -249,7 +249,7 @@ describe('verify-deployed-worker', () => {
     );
   });
 
-  it('waits for the exact preview build when the edge still serves the prior deployment', async () => {
+  it('waits through a bounded propagation window for the exact preview build', async () => {
     const previousBuildSha = 'a'.repeat(40);
     const expectedBuildSha = 'b'.repeat(40);
     const board = 'console.log("new immutable preview widget")';
@@ -258,18 +258,18 @@ describe('verify-deployed-worker', () => {
         { status: 'ok', environment: 'preview', buildSha },
         { headers: { 'x-bugdrop-build-sha': buildSha } }
       );
-    const fetchImpl = vi
-      .fn()
-      .mockResolvedValueOnce(health(previousBuildSha))
-      .mockResolvedValueOnce(health(expectedBuildSha))
-      .mockResolvedValueOnce(
-        new Response(board, {
-          headers: {
-            'content-type': 'text/javascript',
-            'x-bugdrop-build-sha': expectedBuildSha,
-          },
-        })
-      );
+    const fetchImpl = vi.fn();
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      fetchImpl.mockResolvedValueOnce(health(previousBuildSha));
+    }
+    fetchImpl.mockResolvedValueOnce(health(expectedBuildSha)).mockResolvedValueOnce(
+      new Response(board, {
+        headers: {
+          'content-type': 'text/javascript',
+          'x-bugdrop-build-sha': expectedBuildSha,
+        },
+      })
+    );
     const waitImpl = vi.fn().mockResolvedValue(undefined);
 
     await expect(
@@ -287,8 +287,8 @@ describe('verify-deployed-worker', () => {
     ).resolves.toMatchObject({
       health: { buildSha: expectedBuildSha },
     });
-    expect(waitImpl).toHaveBeenCalledOnce();
-    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    expect(waitImpl).toHaveBeenCalledTimes(10);
+    expect(fetchImpl).toHaveBeenCalledTimes(12);
   });
 
   it('fails preview proof on missing provenance or widget hash drift', async () => {

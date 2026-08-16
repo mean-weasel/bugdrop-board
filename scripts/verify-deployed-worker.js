@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
-const PREVIEW_READINESS_ATTEMPTS = 10;
+const PREVIEW_READINESS_ATTEMPTS = 60;
 const PREVIEW_READINESS_DELAY_MS = 1_000;
 
 export function parseArgs(argv) {
