@@ -249,6 +249,61 @@ describe('verify-deployed-worker', () => {
     );
   });
 
+  it('revalidates every preview Worker request after the exact health build is ready', async () => {
+    const buildSha = 'a'.repeat(40);
+    const board = 'console.log("preview widget")';
+    const provenance = { 'x-bugdrop-build-sha': buildSha };
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({ status: 'ok', environment: 'preview', buildSha }, { headers: provenance })
+      )
+      .mockResolvedValueOnce(
+        new Response(board, {
+          headers: { 'content-type': 'text/javascript', ...provenance },
+        })
+      )
+      .mockResolvedValueOnce(jsonResponse({ token: 'payload.signature' }))
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 204,
+          headers: { ...corsHeaders('https://venue.example'), ...provenance },
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(
+          { items: [] },
+          { headers: { ...corsHeaders('https://venue.example'), ...provenance } }
+        )
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(
+          { cursor: 0, events: [] },
+          { headers: { ...corsHeaders('https://venue.example'), ...provenance } }
+        )
+      );
+
+    await runSmoke(
+      {
+        url: 'https://preview.example',
+        expectEnvironment: 'preview',
+        expectBuildSha: buildSha,
+        localBoardPath: 'public/board.js',
+        corsOrigin: 'https://venue.example',
+        corsBoardId: 'board_preview_ci',
+        corsTokenEndpoint: 'https://venue.example/api/board-token?mode=ci',
+      },
+      fetchImpl,
+      vi.fn().mockResolvedValue(Buffer.from(board))
+    );
+
+    for (const callIndex of [3, 4, 5]) {
+      expect(fetchImpl.mock.calls[callIndex][1]).toMatchObject({
+        headers: expect.objectContaining({ 'Cache-Control': 'no-cache' }),
+      });
+    }
+  });
+
   it('waits through a bounded propagation window for the exact preview build', async () => {
     const previousBuildSha = 'a'.repeat(40);
     const expectedBuildSha = 'b'.repeat(40);

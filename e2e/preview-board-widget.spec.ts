@@ -200,7 +200,7 @@ async function bypassPreviewAssetCache(
   page: import('@playwright/test').Page,
   environment: Environment
 ) {
-  await page.route(`${environment.workerOrigin}/board.js`, async route => {
+  await page.route(`${environment.workerOrigin}/**`, async route => {
     await route.continue({
       headers: {
         ...route.request().headers(),
