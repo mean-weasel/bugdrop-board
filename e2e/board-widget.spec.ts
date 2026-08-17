@@ -91,6 +91,56 @@ test('embedded board creates, upvotes, and syncs through polling', async ({ brow
   }
 });
 
+test('real bundle preserves an empty kanban with a collapsed composer', async ({ page }) => {
+  const board = await provisionBoard();
+  const host = await startHostApp(board.id, {
+    presentation: {
+      composer: 'collapsed',
+      density: 'compact',
+      emptyLaneDisplay: 'visible',
+      issueLinks: 'hidden',
+      layout: 'kanban',
+    },
+  });
+
+  try {
+    await page.goto(`${host.url}/viewer-a`);
+
+    const root = page.locator('[data-bugdrop-board-root]');
+    await expect(root).toHaveAttribute('data-bugdrop-board-layout', 'kanban');
+    await expect(root).toHaveAttribute('data-bugdrop-board-composer', 'collapsed');
+    await expect(root).toHaveAttribute('data-bugdrop-board-density', 'compact');
+    await expect(root).toHaveAttribute('data-bugdrop-board-empty-lane-display', 'visible');
+    await expect(root).toHaveAttribute('data-bugdrop-board-issue-links', 'hidden');
+
+    for (const lane of ['Open', 'Planned', 'Building', 'Shipped']) {
+      await expect(page.getByRole('region', { name: `${lane} lane, 0 items` })).toBeVisible();
+    }
+
+    const composer = page.locator('details.bugdrop-board__composer');
+    await expect(composer).not.toHaveAttribute('open', '');
+    await expect(page.getByLabel('Idea title')).not.toBeVisible();
+    await composer.locator('summary').click();
+    await expect(page.getByLabel('Idea title')).toBeVisible();
+
+    await page.getByLabel('Idea title').fill('Keep the board visible');
+    await page.getByLabel('Context').fill('Empty boards must still look like boards.');
+    await page.getByRole('button', { name: 'Submit' }).click();
+
+    const openLane = page.getByRole('region', { name: 'Open lane, 1 item' });
+    await expect(openLane.getByText('Keep the board visible')).toBeVisible();
+    await expect(openLane.getByRole('link', { name: /Issue #/ })).toHaveCount(0);
+
+    await page.setViewportSize({ width: 375, height: 812 });
+    await expect(openLane).toBeVisible();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
+    ).toBe(true);
+  } finally {
+    await host.close();
+  }
+});
+
 test('embedded board can mount inside a host-provided inline container', async ({ page }) => {
   const board = await provisionBoard();
   const host = await startHostApp(board.id, { inlineMount: true });

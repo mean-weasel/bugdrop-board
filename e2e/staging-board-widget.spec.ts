@@ -8,7 +8,14 @@ test('staging board creates a GitHub-backed item, upvotes, and syncs through pol
   browser,
   page,
 }) => {
-  const host = await startHostApp(BOARD_ID);
+  const host = await startHostApp(BOARD_ID, {
+    presentation: {
+      composer: 'collapsed',
+      emptyLaneDisplay: 'visible',
+      issueLinks: 'hidden',
+      layout: 'kanban',
+    },
+  });
   const secondContext = await browser.newContext();
   const secondPage = await secondContext.newPage();
   const title = `Staging dogfood item ${Date.now()}`;
@@ -21,6 +28,7 @@ test('staging board creates a GitHub-backed item, upvotes, and syncs through pol
     await expect(secondPage.getByRole('heading', { name: 'Dummy App' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Feedback' })).toBeVisible();
 
+    await page.locator('details.bugdrop-board__composer summary').first().click();
     await page.getByLabel('Idea title').fill(title);
     await page.getByLabel('Context').fill('Staging dogfood proof from the signed-token host app.');
     await page.getByRole('button', { name: 'Submit' }).click();
@@ -33,7 +41,7 @@ test('staging board creates a GitHub-backed item, upvotes, and syncs through pol
     });
 
     await expect(item).toBeVisible();
-    await expect(item.getByRole('link', { name: /Issue #\d+/ })).toBeVisible();
+    await expect(item.getByRole('link', { name: /Issue #\d+/ })).toHaveCount(0);
     await expect(syncedItem).toBeVisible({ timeout: 15_000 });
 
     const viewerAUpvote = item.getByRole('button', {

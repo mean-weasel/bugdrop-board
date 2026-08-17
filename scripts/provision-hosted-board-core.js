@@ -5,6 +5,9 @@ const ENV_PATTERN = /^[A-Za-z0-9_][A-Za-z0-9_-]*$/;
 const ID_PART_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
 const LAYOUTS = new Set(['inline', 'panel', 'kanban']);
 const DENSITIES = new Set(['compact', 'comfortable', 'spacious']);
+const COMPOSERS = new Set(['inline', 'collapsed']);
+const EMPTY_LANE_DISPLAYS = new Set(['visible', 'compact', 'hidden']);
+const ISSUE_LINKS = new Set(['visible', 'hidden']);
 const TOKEN_VERIFIER_TYPES = new Set(['jwks', 'hmac_legacy']);
 const SECRET_KEYS = new Set([
   'accesstoken',
@@ -47,7 +50,13 @@ export function parseHostedArgs(argv) {
       options.tokenEndpoint = tokenEndpointValue(argv, (index += 1), arg);
     } else if (arg === '--layout') options.layout = oneOf(argv, (index += 1), arg, LAYOUTS);
     else if (arg === '--density') options.density = oneOf(argv, (index += 1), arg, DENSITIES);
-    else if (arg === '--color') options.color = value(argv, (index += 1), arg);
+    else if (arg === '--composer') {
+      options.composer = oneOf(argv, (index += 1), arg, COMPOSERS);
+    } else if (arg === '--empty-lane-display') {
+      options.emptyLaneDisplay = oneOf(argv, (index += 1), arg, EMPTY_LANE_DISPLAYS);
+    } else if (arg === '--issue-links') {
+      options.issueLinks = oneOf(argv, (index += 1), arg, ISSUE_LINKS);
+    } else if (arg === '--color') options.color = value(argv, (index += 1), arg);
     else if (arg === '--config-selector') options.configSelector = value(argv, (index += 1), arg);
     else if (arg === '--env') options.env = envValue(argv, (index += 1), arg);
     else if (arg === '--local') options.local = true;
@@ -99,12 +108,19 @@ function buildEmbedSnippet(boardId, options) {
     ['data-board-id', boardId],
     ['data-api-url', options.apiUrl],
     ['data-token-endpoint', options.tokenEndpoint],
-    ['data-layout', options.layout ?? 'inline'],
-    ['data-density', options.density ?? 'comfortable'],
+    ['data-layout', presentationValue(options, 'layout', 'inline')],
+    ['data-density', presentationValue(options, 'density', 'comfortable')],
+    ['data-composer', presentationValue(options, 'composer', 'inline')],
+    ['data-empty-lane-display', presentationValue(options, 'emptyLaneDisplay', 'visible')],
+    ['data-issue-links', presentationValue(options, 'issueLinks', 'visible')],
     ['data-color', options.color],
     ['data-config-selector', options.configSelector],
   ].filter(([, attrValue]) => Boolean(attrValue));
   return `<script ${attrs.map(([name, attrValue]) => `${name}="${htmlAttr(attrValue)}"`).join(' ')}></script>`;
+}
+
+function presentationValue(options, key, fallback) {
+  return options[key] ?? (options.configSelector ? undefined : fallback);
 }
 
 export function redactHostedSetupOutput(value) {

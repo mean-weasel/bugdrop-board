@@ -147,7 +147,8 @@ with two signed-in viewers.
 
 ### Embed Or Customization
 
-- Confirm `data-board-id`, `data-api-url`, and `data-token-endpoint` are correct.
+- Confirm `data-board-id`, `data-api-url`, `data-token-endpoint`, `data-layout`, `data-density`,
+  `data-composer`, `data-empty-lane-display`, and `data-issue-links` are correct.
 - Confirm `data-mount-selector` exists when the host app expects inline placement.
 - Confirm the host customization JSON, if used, is valid JSON and uses documented keys.
 - Keep host styling outside private Shadow DOM internals.

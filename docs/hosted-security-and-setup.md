@@ -75,7 +75,10 @@ replaces the pre-beta implicit GET behavior.
 | Accent color | `data-color` | Quick color customization; maps to `theme.accent`. |
 | Layout | `data-layout` | `inline`, `panel`, or `kanban`. |
 | Density | `data-density` | `compact`, `comfortable`, or `spacious`. |
-| JSON config | `data-config-selector` | Optional deeper copy, layout, density, composer, and theme config. |
+| Composer | `data-composer` | `inline` or `collapsed`. |
+| Empty Kanban lanes | `data-empty-lane-display` | `visible`, `compact`, or `hidden`. |
+| GitHub issue links | `data-issue-links` | `visible` or `hidden`. |
+| JSON config | `data-config-selector` | Optional deeper copy, presentation, and theme config. |
 
 JSON config supports:
 
@@ -127,6 +130,9 @@ npm run provision:hosted-board -- \
   --token-endpoint /api/bugdrop-board-token \
   --layout kanban \
   --density compact \
+  --composer collapsed \
+  --empty-lane-display visible \
+  --issue-links hidden \
   --dry-run
 ```
 
@@ -178,7 +184,7 @@ Before using a hosted beta board with real users, confirm:
 - the host token endpoint only returns tokens for signed-in users;
 - token `boardId`, `aud`, `iss`, and `exp` match the hosted Worker expectations;
 - `externalUserId` is stable for each signed-in user;
-- the embed script uses the provisioned `data-board-id`, `data-api-url`, and `data-token-endpoint`;
+- the embed script uses every provisioned identity, endpoint, and presentation attribute;
 - creating an item creates the matching GitHub Issue;
 - two signed-in viewers can see the same board and observe upvote changes after polling;
 - browser source, network logs, screenshots, and receipts do not expose secrets.

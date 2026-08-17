@@ -9,6 +9,13 @@ import {
   type CustomizationVariant,
   type CustomizationVariantConfig,
 } from './customization-variants';
+import type {
+  BoardWidgetComposer,
+  BoardWidgetDensity,
+  BoardWidgetEmptyLaneDisplay,
+  BoardWidgetIssueLinks,
+  BoardWidgetLayout,
+} from '../../src/widget/types';
 
 export const HOST_ORIGIN = 'http://127.0.0.1:5177';
 const DEFAULT_WORKER_ORIGIN = 'http://127.0.0.1:8788';
@@ -43,6 +50,15 @@ interface HostConfig {
   tokenAudience: string;
   tokenIssuer: string;
   pollInterval: string;
+  presentation?: HostPresentation;
+}
+
+interface HostPresentation {
+  composer?: BoardWidgetComposer;
+  density?: BoardWidgetDensity;
+  emptyLaneDisplay?: BoardWidgetEmptyLaneDisplay;
+  issueLinks?: BoardWidgetIssueLinks;
+  layout?: BoardWidgetLayout;
 }
 
 export async function provisionBoard(): Promise<ProvisionedBoard> {
@@ -60,6 +76,7 @@ interface HostOptions {
   inlineMount?: boolean;
   pollInterval?: string;
   variant?: CustomizationVariant;
+  presentation?: HostPresentation;
 }
 
 export async function startHostApp(boardId?: string, options: HostOptions = {}): Promise<HostApp> {
@@ -133,6 +150,7 @@ function hostConfig(boardId: string | undefined, options: HostOptions): HostConf
     tokenIssuer: envValue('BUGDROP_BOARD_TOKEN_ISSUER') ?? DEFAULT_TOKEN_ISSUER,
     pollInterval:
       options.pollInterval ?? envValue('BUGDROP_BOARD_POLL_INTERVAL') ?? DEFAULT_POLL_INTERVAL,
+    presentation: options.presentation,
   };
 }
 
@@ -251,9 +269,22 @@ function renderHostPage(config: HostConfig, viewer: 'a' | 'b'): string {
       ${customization ? '' : 'data-color="#1f883d"'}
       ${customization ? 'data-config-selector="#bugdrop-board-config"' : ''}
       ${config.mountSelector ? `data-mount-selector="${escapeAttribute(config.mountSelector)}"` : ''}
+      ${presentationAttributes(config.presentation)}
     ></script>
   </body>
 </html>`;
+}
+
+function presentationAttributes(presentation: HostPresentation | undefined): string {
+  if (!presentation) return '';
+  const attrs = [
+    ['data-layout', presentation.layout],
+    ['data-density', presentation.density],
+    ['data-composer', presentation.composer],
+    ['data-empty-lane-display', presentation.emptyLaneDisplay],
+    ['data-issue-links', presentation.issueLinks],
+  ].filter((entry): entry is [string, string] => Boolean(entry[1]));
+  return attrs.map(([name, value]) => `${name}="${escapeAttribute(value)}"`).join('\n      ');
 }
 
 function customizationVariant(variant: CustomizationVariant): CustomizationVariantConfig {

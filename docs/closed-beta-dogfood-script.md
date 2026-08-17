@@ -23,7 +23,8 @@ Fill these in before starting:
 
 1. Open the host page as Viewer A.
 2. Confirm the embedded board mounts in the expected location.
-3. Confirm the visible copy, density, layout, and theme match the host app expectation.
+3. Confirm the visible copy, density, layout, composer state, empty-lane behavior, issue-link
+   visibility, and theme match the host app expectation.
 4. Confirm the browser console has no board-related errors.
 
 Evidence:
