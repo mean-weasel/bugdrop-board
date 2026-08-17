@@ -117,6 +117,22 @@ describe('widget DOM rendering', () => {
     );
   });
 
+  it('renders recognizable kanban lanes when the board has no items', () => {
+    const root = render(state({ loading: false }), {}, DEFAULT_COPY, { layout: 'kanban' });
+
+    const lanes = root.querySelectorAll('.bugdrop-board__lane');
+
+    expect(lanes).toHaveLength(4);
+    expect(
+      lanes.map(lane => lane.querySelector('.bugdrop-board__lane-title')?.textContent)
+    ).toEqual(['Open', 'Planned', 'Building', 'Shipped']);
+    expect(
+      lanes.map(lane => lane.querySelector('.bugdrop-board__lane-count')?.textContent)
+    ).toEqual(['0', '0', '0', '0']);
+    expect(root.querySelectorAll('.bugdrop-board__lane-empty')).toHaveLength(4);
+    expect(root.querySelector('.bugdrop-board__empty')).toBeNull();
+  });
+
   it('can collapse the composer so the board list is not pushed below a large form', () => {
     const root = render(
       state({

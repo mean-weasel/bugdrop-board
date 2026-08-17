@@ -81,9 +81,12 @@ test('two viewers persist, poll, and create exactly one attributable Issue', asy
         url.pathname === `/boards/${environment.boardId}/items`
       );
     });
+    const composer = page.locator('[data-bugdrop-board-root]').locator('details');
+    await composer.locator('summary').click();
+    await expect(composer.locator('form')).toBeVisible();
     await page.getByLabel('Idea title').fill(canaryTitle(environment.marker));
     await page.getByLabel('Context').fill(description);
-    await page.getByRole('button', { name: 'Submit' }).click();
+    await composer.locator('form').getByRole('button', { name: 'Submit' }).click();
     const creationResponse = await creation;
     expect(creationResponse.status()).toBe(201);
     const payload = (await creationResponse.json()) as { item: PreviewItem };
