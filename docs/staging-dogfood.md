@@ -183,6 +183,10 @@ Embed:
   data-token-endpoint="/api/bugdrop-board-token"
   data-poll-interval="3000"
   data-color="#1f883d"
+  data-layout="kanban"
+  data-composer="collapsed"
+  data-empty-lane-display="visible"
+  data-issue-links="hidden"
 ></script>
 ```
 

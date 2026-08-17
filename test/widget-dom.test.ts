@@ -315,6 +315,26 @@ describe('widget DOM rendering', () => {
     expect(host.style.getPropertyValue('--bugdrop-board-radius')).toBe('2px');
     expect(host.style.getPropertyValue('--bugdrop-board-danger')).toBe('');
   });
+
+  it('reads every direct presentation attribute without relying on JSON config', () => {
+    const config = readCustomization({
+      dataset: {
+        composer: 'collapsed',
+        density: 'spacious',
+        emptyLaneDisplay: 'compact',
+        issueLinks: 'hidden',
+        layout: 'kanban',
+      },
+    } as unknown as HTMLScriptElement);
+
+    expect(config).toMatchObject({
+      composer: 'collapsed',
+      density: 'spacious',
+      emptyLaneDisplay: 'compact',
+      issueLinks: 'hidden',
+      layout: 'kanban',
+    });
+  });
 });
 
 function render(

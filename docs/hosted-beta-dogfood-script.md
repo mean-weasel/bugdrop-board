@@ -50,6 +50,9 @@ npm run provision:hosted-board -- \
   --api-url https://board.bugdrop.dev \
   --token-endpoint /api/bugdrop-board-token \
   --layout kanban \
+  --composer collapsed \
+  --empty-lane-display visible \
+  --issue-links hidden \
   --dry-run
 ```
 
@@ -57,7 +60,8 @@ Expected:
 
 - output includes SQL, the stable board id, a script embed snippet, and a security checklist;
 - output does not include private keys, bearer tokens, GitHub installation tokens, or HMAC secrets;
-- `data-board-id`, `data-api-url`, and `data-token-endpoint` match the intended host app.
+- `data-board-id`, `data-api-url`, `data-token-endpoint`, and all presentation attributes match the
+  intended host app.
 
 Only after operator review, apply to the selected environment, for example:
 

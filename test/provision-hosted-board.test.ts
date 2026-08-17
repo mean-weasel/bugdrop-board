@@ -38,6 +38,12 @@ const REQUIRED_ARGS = [
   'kanban',
   '--density',
   'compact',
+  '--composer',
+  'collapsed',
+  '--empty-lane-display',
+  'compact',
+  '--issue-links',
+  'hidden',
   '--color',
   '#0f766e',
   '--config-selector',
@@ -62,6 +68,9 @@ describe('provision-hosted-board helpers', () => {
       tokenEndpoint: '/api/bugdrop-board-token',
       layout: 'kanban',
       density: 'compact',
+      composer: 'collapsed',
+      emptyLaneDisplay: 'compact',
+      issueLinks: 'hidden',
       color: '#0f766e',
       configSelector: '#bugdrop-board-config',
       local: false,
@@ -133,6 +142,16 @@ describe('provision-hosted-board helpers', () => {
     );
   });
 
+  it.each([
+    ['--layout', 'cards'],
+    ['--density', 'dense'],
+    ['--composer', 'modal'],
+    ['--empty-lane-display', 'remove'],
+    ['--issue-links', 'private'],
+  ])('rejects unsupported presentation value %s=%s', (flag, value) => {
+    expect(() => parseHostedArgs([...REQUIRED_ARGS, flag, value])).toThrow(`Expected ${flag}`);
+  });
+
   it('builds hosted setup SQL for hmac legacy token verifier metadata', () => {
     const hmacArgs = REQUIRED_ARGS.filter((value, index, args) => {
       const previous = args[index - 1];
@@ -165,6 +184,9 @@ describe('provision-hosted-board helpers', () => {
     expect(plan.handoff.embedSnippet).toContain('data-token-endpoint="/api/bugdrop-board-token"');
     expect(plan.handoff.embedSnippet).toContain('data-layout="kanban"');
     expect(plan.handoff.embedSnippet).toContain('data-density="compact"');
+    expect(plan.handoff.embedSnippet).toContain('data-composer="collapsed"');
+    expect(plan.handoff.embedSnippet).toContain('data-empty-lane-display="compact"');
+    expect(plan.handoff.embedSnippet).toContain('data-issue-links="hidden"');
     expect(plan.handoff.embedSnippet).toContain('data-color="#0f766e"');
     expect(plan.handoff.embedSnippet).toContain('data-config-selector="#bugdrop-board-config"');
     expect(plan.handoff.securityChecklist).toEqual(
@@ -175,6 +197,50 @@ describe('provision-hosted-board helpers', () => {
         expect.stringContaining('GitHub installation'),
       ])
     );
+  });
+
+  it('pins every runtime presentation default in a generated handoff', () => {
+    const presentationFlags = new Set([
+      '--layout',
+      '--density',
+      '--composer',
+      '--empty-lane-display',
+      '--issue-links',
+      '--config-selector',
+    ]);
+    const requiredOnly = REQUIRED_ARGS.filter((value, index, args) => {
+      const previous = args[index - 1];
+      return !presentationFlags.has(value) && !presentationFlags.has(previous);
+    });
+    const plan = buildHostedProvisioningPlan(parseHostedArgs(requiredOnly));
+
+    expect(plan.handoff.embedSnippet).toContain('data-layout="inline"');
+    expect(plan.handoff.embedSnippet).toContain('data-density="comfortable"');
+    expect(plan.handoff.embedSnippet).toContain('data-composer="inline"');
+    expect(plan.handoff.embedSnippet).toContain('data-empty-lane-display="visible"');
+    expect(plan.handoff.embedSnippet).toContain('data-issue-links="visible"');
+  });
+
+  it('does not override presentation values owned by selected JSON config', () => {
+    const presentationFlags = new Set([
+      '--layout',
+      '--density',
+      '--composer',
+      '--empty-lane-display',
+      '--issue-links',
+    ]);
+    const jsonOwned = REQUIRED_ARGS.filter((value, index, args) => {
+      const previous = args[index - 1];
+      return !presentationFlags.has(value) && !presentationFlags.has(previous);
+    });
+    const plan = buildHostedProvisioningPlan(parseHostedArgs(jsonOwned));
+
+    expect(plan.handoff.embedSnippet).toContain('data-config-selector="#bugdrop-board-config"');
+    expect(plan.handoff.embedSnippet).not.toContain('data-layout=');
+    expect(plan.handoff.embedSnippet).not.toContain('data-density=');
+    expect(plan.handoff.embedSnippet).not.toContain('data-composer=');
+    expect(plan.handoff.embedSnippet).not.toContain('data-empty-lane-display=');
+    expect(plan.handoff.embedSnippet).not.toContain('data-issue-links=');
   });
 
   it('redacts secret and token material from setup output', () => {

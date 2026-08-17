@@ -47,6 +47,7 @@ npm run provision:hosted-board -- \
   --api-url https://board.bugdrop.dev \
   --token-endpoint /api/bugdrop-board-token \
   --layout kanban \
+  --composer collapsed \
   --dry-run
 ```
 
@@ -321,19 +322,30 @@ Attributes:
   widget. The widget throws a clear setup error if the selector does not match.
 - `data-poll-interval`: optional polling interval in milliseconds. Values below `500` are ignored.
 - `data-color`: optional accent color for widget controls. Defaults to `#2563eb`.
-- `data-layout`: optional layout mode, `inline` or `panel`. Defaults to `inline`.
+- `data-layout`: optional layout mode, `inline`, `panel`, or `kanban`. Defaults to `inline`.
 - `data-density`: optional density mode, `compact`, `comfortable`, or `spacious`. Defaults to
   `comfortable`.
+- `data-composer`: optional composer mode, `inline` or `collapsed`. Defaults to `inline`.
+- `data-empty-lane-display`: optional empty Kanban lane mode, `visible`, `compact`, or `hidden`.
+  Defaults to `visible` so an empty Kanban remains recognizable as a board.
+- `data-issue-links`: optional GitHub issue-link mode, `visible` or `hidden`. Defaults to `visible`.
 - `data-config-selector`: optional CSS selector for an `application/json` config element that
-  provides deeper `copy`, `layout`, `density`, and `theme` customization.
+  provides deeper `copy`, `layout`, `density`, `composer`, `emptyLaneDisplay`, `issueLinks`, and
+  `theme` customization.
+
+Direct script attributes take precedence over matching JSON settings. The hosted provisioner omits
+unspecified presentation attributes when `--config-selector` is used so the selected JSON remains
+authoritative.
 
 The widget runs in an open Shadow DOM root. By default, when the script is in the page body, it
 inserts its generated root immediately after the script tag, which keeps the board near the install
 snippet. If the script is outside body content, it falls back to appending to the body. When
 `data-mount-selector` is provided, the generated root is appended inside that target element.
 
-When a board has no items, the default empty message is "Tell us what you want to see next." Hosts
-can override that invitation with `copy.emptyLabel`.
+When an inline or panel board has no items, the default empty message is "Tell us what you want to
+see next." Hosts can override that invitation with `copy.emptyLabel`. An empty Kanban renders its
+status lanes according to `emptyLaneDisplay`; the default `visible` mode keeps all four lanes on
+screen.
 
 Host CSS does not style internals directly. That keeps the embedded board from accidentally
 breaking when it is installed in a user's app. Use the stable customization contract instead:

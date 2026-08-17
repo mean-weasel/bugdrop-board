@@ -42,6 +42,10 @@ The page should embed:
   data-token-endpoint="/api/bugdrop-board-token?viewer=a"
   data-poll-interval="750"
   data-color="#1f883d"
+  data-layout="kanban"
+  data-composer="collapsed"
+  data-empty-lane-display="hidden"
+  data-issue-links="hidden"
 ></script>
 ```
 
