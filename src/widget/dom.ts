@@ -76,15 +76,15 @@ export function renderBoard(
     loading.setAttribute('role', 'status');
     loading.textContent = copy.loadingLabel;
     list.append(loading);
+  } else if (renderOptions.layout === 'kanban') {
+    renderKanbanLanes(state.items, handlers, copy, renderOptions).forEach(lane =>
+      list.append(lane)
+    );
   } else if (state.items.length === 0) {
     const empty = document.createElement('p');
     empty.className = 'bugdrop-board__empty';
     empty.textContent = copy.emptyLabel;
     list.append(empty);
-  } else if (renderOptions.layout === 'kanban') {
-    renderKanbanLanes(state.items, handlers, copy, renderOptions).forEach(lane =>
-      list.append(lane)
-    );
   } else {
     state.items.forEach(item => list.append(renderItem(item, handlers, copy, renderOptions)));
   }
